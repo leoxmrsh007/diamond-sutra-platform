@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # 应用服务
+  app:
+    build: .
+    container_name: diamond-sutra-app
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:diamondsutra@db:5432/diamond_sutra?schema=public
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-this-to-a-random-string}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - diamond-network
+
+  # PostgreSQL 数据库
+  db:
+    image: postgres:15-alpine
+    container_name: diamond-sutra-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=diamondsutra
+      - POSTGRES_DB=diamond_sutra
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - diamond-network
+
+  # Nginx 反向代理（可选，用于生产环境）
+  nginx:
+    image: nginx:alpine
+    container_name: diamond-sutra-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - diamond-network
+
+volumes:
+  postgres_data:
+
+networks:
+  diamond-network:
+    driver: bridge

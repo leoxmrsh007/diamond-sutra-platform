@@ -1,0 +1,39 @@
+{
+  "ROSTemplateFormatVersion": "2015-09-01",
+  "Transform": "Aliyun::Serverless-2018-04-03",
+  "Resources": {
+    "nextjs-service": {
+      "Type": "Aliyun::Serverless::Service",
+      "Properties": {
+        "Description": "Diamond Sutra Platform - Next.js Application"
+      },
+      "web": {
+        "Type": "Aliyun::Serverless::Function",
+        "Properties": {
+          "Description": "Next.js web application",
+          "CodeUri": "./",
+          "Handler": "index.handler",
+          "Runtime": "nodejs18",
+          "Timeout": 30,
+          "MemorySize": 1024,
+          "EnvironmentVariables": {
+            "DATABASE_URL": "{{ databaseUrl }}",
+            "NEXTAUTH_URL": "{{ nextauthUrl }}",
+            "NEXTAUTH_SECRET": "{{ nextauthSecret }}",
+            "GEMINI_API_KEY": "{{ geminiApiKey }}"
+          },
+          "Events": {
+            "httpTrigger": {
+              "Type": "HTTP",
+              "Properties": {
+                "AuthType": "ANONYMOUS",
+                "Methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "Path": "/*"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

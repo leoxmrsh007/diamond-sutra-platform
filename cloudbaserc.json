@@ -1,0 +1,25 @@
+{
+  "envId": "{{envId}}",
+  "version": "2.0",
+  "$schema": "https://framework-1258016615.tcloudbaseapp.com/schema/latest.json",
+  "framework": {
+    "name": "diamond-sutra-platform",
+    "plugins": {
+      "client": {
+        "use": "@cloudbase/framework-plugin-website",
+        "inputs": {
+          "buildCommand": "npm run build",
+          "outputPath": ".next",
+          "cloudFunctionPath": "api"
+        }
+      },
+      "server": {
+        "use": "@cloudbase/framework-plugin-next",
+        "inputs": {
+          "entry": "next dev"
+        }
+      }
+    }
+  },
+  "region": "ap-shanghai"
+}
