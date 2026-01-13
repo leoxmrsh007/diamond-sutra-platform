@@ -15,7 +15,7 @@ export async function GET(
   try {
     const { id } = await params;
     const verse = await prisma.verse.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         chapter: {
           include: {
