@@ -338,7 +338,7 @@ export default function HelpPage() {
                     <CardTitle>{selectedArticle.title}</CardTitle>
                   </div>
                   <button
-                    onClick={() => setSelectedArticle(null)}
+                    onClick={() => setSelectedArticle(undefined)}
                     className="text-muted-foreground hover:text-foreground"
                   >
                     ✕
