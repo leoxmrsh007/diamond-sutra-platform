@@ -35,8 +35,8 @@ import {
 interface TestResult {
   name: string;
   status: 'pending' | 'loading' | 'success' | 'error';
-  message?: string;
-  duration?: number;
+  message?: string | undefined;
+  duration?: number | undefined;
 }
 
 interface SystemInfo {
