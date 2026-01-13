@@ -9,7 +9,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const handler = NextAuth({
   adapter: PrismaAdapter(prisma),
 
   providers: [
@@ -86,3 +86,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   secret: process.env.NEXTAUTH_SECRET,
 });
+
+export { handler as GET, handler as POST };
+
+// 导出 auth 函数供其他模块使用
+export const auth = handler.auth;
