@@ -374,8 +374,8 @@ export default function DebugPage() {
                                   </div>
                                 )}
                               </div>
-                            </div>
-                            {result.duration && (
+                              </div>
+                            {'duration' in result && result.duration && (
                               <Badge variant="outline" className="text-xs">
                                 {result.duration}ms
                               </Badge>
