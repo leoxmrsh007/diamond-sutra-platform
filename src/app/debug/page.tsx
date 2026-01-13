@@ -368,7 +368,7 @@ export default function DebugPage() {
                               <StatusIcon status={result.status} />
                               <div>
                                 <div className="font-medium text-sm">{test.name}</div>
-                                {result.message && (
+                                {'message' in result && result.message && (
                                   <div className="text-xs text-muted-foreground mt-1">
                                     {result.message}
                                   </div>
