@@ -23,11 +23,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
 
-     const bookmarks = await prisma.bookmark.findMany({
+    const bookmarks = await prisma.bookmark.findMany({
       where: { userId },
-      include: {
-        verse: true,
-      },
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
