@@ -9,11 +9,12 @@ import { prisma } from '@/lib/prisma';
 // GET - 获取章节详情
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const chapter = await prisma.chapter.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         sutra: true,
         verses: {

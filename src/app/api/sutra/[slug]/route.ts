@@ -9,11 +9,12 @@ import { prisma } from '@/lib/prisma';
 // GET - 获取经文信息
 export async function GET(
   request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await params;
     const sutra = await prisma.sutra.findUnique({
-      where: { slug: params.slug },
+      where: { slug },
       include: {
         chapters: {
           orderBy: { chapterNum: 'asc' },

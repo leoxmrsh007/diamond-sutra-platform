@@ -10,9 +10,10 @@ import { auth } from '@/lib/auth';
 // GET - 获取课程详情
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
     let userId: string | null = null;
 
@@ -21,7 +22,7 @@ export async function GET(
     }
 
     const course = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         lessons: {
           orderBy: { order: 'asc' },
@@ -66,9 +67,10 @@ export async function GET(
 // PATCH - 更新课程（仅管理员/教师）
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
@@ -80,7 +82,7 @@ export async function PATCH(
 
     const user = (session.user as any);
     const course = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!course) {
@@ -104,7 +106,7 @@ export async function PATCH(
     const { title, description, coverImage, level, duration, isPublished } = body;
 
     const updatedCourse = await prisma.course.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(title && { title }),
         ...(description && { description }),
@@ -128,9 +130,10 @@ export async function PATCH(
 // DELETE - 删除课程（仅管理员）
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
@@ -149,7 +152,7 @@ export async function DELETE(
     }
 
     await prisma.course.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

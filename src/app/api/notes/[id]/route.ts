@@ -9,9 +9,10 @@ import { auth } from '@/lib/auth';
 // PUT - 更新笔记
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
@@ -25,7 +26,7 @@ export async function PUT(
 
     // 验证笔记属于当前用户
     const existingNote = await prisma.note.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingNote) {
@@ -46,7 +47,7 @@ export async function PUT(
     const { title, content, isPublic } = body;
 
     const note = await prisma.note.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(title !== undefined && { title }),
         ...(content !== undefined && { content }),
@@ -67,9 +68,10 @@ export async function PUT(
 // DELETE - 删除笔记
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
@@ -83,7 +85,7 @@ export async function DELETE(
 
     // 验证笔记属于当前用户
     const existingNote = await prisma.note.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingNote) {
@@ -101,7 +103,7 @@ export async function DELETE(
     }
 
     await prisma.note.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

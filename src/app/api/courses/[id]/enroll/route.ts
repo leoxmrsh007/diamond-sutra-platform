@@ -10,9 +10,10 @@ import { auth } from '@/lib/auth';
 // POST - 报名课程
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: courseId } = await params;
     const session = await auth();
 
     if (!session?.user) {
@@ -23,7 +24,6 @@ export async function POST(
     }
 
     const userId = (session.user as any).id;
-    const courseId = params.id;
 
     // 验证课程存在且已发布
     const course = await prisma.course.findUnique({
@@ -90,9 +90,10 @@ export async function POST(
 // DELETE - 取消报名
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
@@ -108,7 +109,7 @@ export async function DELETE(
       where: {
         userId_courseId: {
           userId,
-          courseId: params.id,
+          courseId: id,
         },
       },
     });

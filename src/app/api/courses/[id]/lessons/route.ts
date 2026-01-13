@@ -10,9 +10,10 @@ import { auth } from '@/lib/auth';
 // GET - 获取课程的所有课时
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
     let userId: string | null = null;
 
@@ -22,7 +23,7 @@ export async function GET(
 
     // 验证课程存在
     const course = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         id: true,
         isPublished: true,
@@ -46,7 +47,7 @@ export async function GET(
     }
 
     const lessons = await prisma.lesson.findMany({
-      where: { courseId: params.id },
+      where: { courseId: id },
       orderBy: { order: 'asc' },
     });
 
@@ -63,9 +64,10 @@ export async function GET(
 // POST - 创建课时（仅教师/管理员）
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session?.user) {
@@ -77,7 +79,7 @@ export async function POST(
 
     const user = (session.user as any);
     const course = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!course) {
@@ -109,7 +111,7 @@ export async function POST(
 
     // 获取当前最大order
     const maxOrderLesson = await prisma.lesson.findFirst({
-      where: { courseId: params.id },
+      where: { courseId: id },
       orderBy: { order: 'desc' },
     });
 
@@ -117,7 +119,7 @@ export async function POST(
 
     const lesson = await prisma.lesson.create({
       data: {
-        courseId: params.id,
+        courseId: id,
         title,
         content,
         videoUrl,
