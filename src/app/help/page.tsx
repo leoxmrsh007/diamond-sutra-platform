@@ -185,7 +185,7 @@ const helpArticles: HelpArticle[] = [
 const categories = [...new Set(helpArticles.map((a) => a.category))];
 
 export default function HelpPage() {
-  const [selectedArticle, setSelectedArticle] = useState(helpArticles[0]);
+  const [selectedArticle, setSelectedArticle] = useState<HelpArticle | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredArticles = searchQuery
