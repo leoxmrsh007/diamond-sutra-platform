@@ -4,20 +4,24 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 // GET - 获取笔记列表
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    const verseId = searchParams.get('verseId');
+    const session = await auth();
 
-    if (!userId) {
+    if (!session?.user) {
       return NextResponse.json(
-        { error: '用户ID不能为空' },
-        { status: 400 }
+        { error: '未登录' },
+        { status: 401 }
       );
     }
+
+    const userId = (session.user as any).id;
+    const { searchParams } = new URL(request.url);
+    const verseId = searchParams.get('verseId');
+    const limit = parseInt(searchParams.get('limit') || '50');
 
     const where: any = { userId };
     if (verseId) {
@@ -42,9 +46,10 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: 'desc',
       },
+      take: limit,
     });
 
-    return NextResponse.json({ notes });
+    return NextResponse.json(notes);
   } catch (error) {
     console.error('获取笔记失败:', error);
     return NextResponse.json(
@@ -57,13 +62,35 @@ export async function GET(request: NextRequest) {
 // POST - 创建笔记
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId, verseId, title, content, isPublic } = body;
+    const session = await auth();
 
-    if (!userId || !verseId || !content) {
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: '未登录' },
+        { status: 401 }
+      );
+    }
+
+    const userId = (session.user as any).id;
+    const body = await request.json();
+    const { verseId, title, content, isPublic } = body;
+
+    if (!verseId || !content) {
       return NextResponse.json(
         { error: '缺少必要参数' },
         { status: 400 }
+      );
+    }
+
+    // 验证偈颂存在
+    const verse = await prisma.verse.findUnique({
+      where: { id: verseId },
+    });
+
+    if (!verse) {
+      return NextResponse.json(
+        { error: '偈颂不存在' },
+        { status: 404 }
       );
     }
 
@@ -89,7 +116,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ note }, { status: 201 });
+    return NextResponse.json(note, { status: 201 });
   } catch (error) {
     console.error('创建笔记失败:', error);
     return NextResponse.json(

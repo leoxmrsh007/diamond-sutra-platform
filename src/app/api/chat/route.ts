@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
             )) {
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: chunk })}\n\n`));
             }
-            controller.enqueue(encoder.write('data: [DONE]\n\n'));
+            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
             controller.close();
           } catch (error) {
             controller.error(error);

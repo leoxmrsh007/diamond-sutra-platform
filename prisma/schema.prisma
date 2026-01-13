@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ==================== 用户系统 ====================
@@ -28,6 +27,7 @@ model User {
   answers       Answer[]
   enrollments   CourseEnrollment[]
   bookmarks     Bookmark[]
+  checkIns      CheckIn[]
 
   // 社区数据
   posts         Post[]
@@ -138,6 +138,25 @@ model Commentary {
 
   @@index([verseId])
   @@map("commentaries")
+}
+
+// ==================== 每日签到系统 ====================
+
+model CheckIn {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  checkInDate   DateTime  @default(now()) // 签到日期
+  consecutiveDays Int       @default(1)    // 连续签到天数
+  rewardPoints  Int       @default(10)    // 奖励积分
+
+  createdAt     DateTime  @default(now())
+
+  @@unique([userId, checkInDate])
+  @@index([userId])
+  @@index([checkInDate])
+  @@map("check_ins")
 }
 
 // ==================== 学习进度系统 ====================

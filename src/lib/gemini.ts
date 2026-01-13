@@ -285,7 +285,7 @@ export async function* chatStream(
     .filter((msg) => msg.role !== 'system')
     .map((msg) => ({
       role: msg.role === 'assistant' ? 'model' : msg.role,
-      parts: msg.content,
+      parts: [{ text: msg.content }],
     }));
 
   try {

@@ -4,72 +4,73 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
-// 签到记录类型
-interface CheckInRecord {
-  userId: string;
-  checkInDate: string;
-  consecutiveDays: number;
-}
+import { auth } from '@/lib/auth';
 
 // GET - 获取签到记录
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    const year = searchParams.get('year');
-    const month = searchParams.get('month');
+    const session = await auth();
 
-    if (!userId) {
+    if (!session?.user) {
       return NextResponse.json(
-        { error: '用户ID不能为空' },
-        { status: 400 }
+        { error: '未登录' },
+        { status: 401 }
       );
     }
 
-    // 获取用户签到统计
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        studyProgress: {
-          select: {
-            lastStudiedAt: true,
-          },
-          orderBy: {
-            lastStudiedAt: 'desc',
-          },
-          take: 1,
+    const userId = (session.user as any).id;
+    const { searchParams } = new URL(request.url);
+    const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
+    const month = parseInt(searchParams.get('month') || String(new Date().getMonth() + 1));
+
+    // 获取指定月份的签到记录
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+
+    const checkIns = await prisma.checkIn.findMany({
+      where: {
+        userId,
+        checkInDate: {
+          gte: startDate,
+          lte: endDate,
         },
       },
+      orderBy: { checkInDate: 'asc' },
     });
 
-    // 模拟签到记录（实际应该从数据库查询）
-    const today = new Date();
-    const checkInYear = parseInt(year || String(today.getFullYear()));
-    const checkInMonth = parseInt(month || String(today.getMonth() + 1));
-
-    const daysInMonth = new Date(checkInYear, checkInMonth, 0).getDate();
-
-    // 模拟签到日期
-    const checkedDays = Array.from({ length: today.getDate() }, (_, i) => i + 1)
-      .filter(() => Math.random() > 0.3);
+    const checkedDays = checkIns.map((checkIn) => checkIn.checkInDate.getDate());
 
     // 计算连续签到天数
-    let consecutiveDays = 7;
+    const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    // 检查昨天是否签到
-    const yesterdayChecked = checkedDays.includes(yesterday.getDate());
-    if (!yesterdayChecked && checkedDays.includes(today.getDate())) {
-      consecutiveDays = 1;
-    }
+    const todayCheckIn = checkIns.find(
+      (c) => c.checkInDate.toDateString() === today.toDateString()
+    );
+
+    const yesterdayCheckIn = checkIns.find(
+      (c) => c.checkInDate.toDateString() === yesterday.toDateString()
+    );
+
+    const latestCheckIn = await prisma.checkIn.findFirst({
+      where: { userId },
+      orderBy: { checkInDate: 'desc' },
+    });
+
+    const consecutiveDays = latestCheckIn?.consecutiveDays || 0;
+
+    // 计算总签到天数
+    const totalCheckIns = await prisma.checkIn.count({
+      where: { userId },
+    });
 
     return NextResponse.json({
       checkedDays,
       consecutiveDays,
-      totalDays: 45,
-      lastCheckIn: user?.studyProgress[0]?.lastStudiedAt,
+      totalDays: totalCheckIns,
+      lastCheckIn: latestCheckIn?.checkInDate,
+      hasCheckedToday: !!todayCheckIn,
     });
   } catch (error) {
     console.error('获取签到记录失败:', error);
@@ -83,33 +84,77 @@ export async function GET(request: NextRequest) {
 // POST - 执行签到
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId } = body;
+    const session = await auth();
 
-    if (!userId) {
+    if (!session?.user) {
       return NextResponse.json(
-        { error: '用户ID不能为空' },
-        { status: 400 }
+        { error: '未登录' },
+        { status: 401 }
       );
     }
 
+    const userId = (session.user as any).id;
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    today.setHours(0, 0, 0, 0);
 
     // 检查今天是否已经签到
-    // 实际实现中应该查询数据库
-    const alreadyChecked = Math.random() > 0.8;
+    const existingCheckIn = await prisma.checkIn.findUnique({
+      where: {
+        userId_checkInDate: {
+          userId,
+          checkInDate: today,
+        },
+      },
+    });
 
-    if (alreadyChecked) {
+    if (existingCheckIn) {
       return NextResponse.json(
         { error: '今天已经签到过了' },
         { status: 400 }
       );
     }
 
-    // 执行签到
-    // 实际实现中应该创建签到记录或更新学习进度
-    const consecutiveDays = Math.floor(Math.random() * 30) + 1;
+    // 计算连续签到天数
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const yesterdayCheckIn = await prisma.checkIn.findUnique({
+      where: {
+        userId_checkInDate: {
+          userId,
+          checkInDate: yesterday,
+        },
+      },
+    });
+
+    const consecutiveDays = yesterdayCheckIn
+      ? yesterdayCheckIn.consecutiveDays + 1
+      : 1;
+
+    // 计算奖励（连续签到奖励）
+    let rewardPoints = 10;
+    let rewardMessage = '+10 经验值';
+
+    if (consecutiveDays === 7) {
+      rewardPoints = 20;
+      rewardMessage = '+20 经验值（连续签到7天奖励）';
+    } else if (consecutiveDays === 30) {
+      rewardPoints = 50;
+      rewardMessage = '+50 经验值（连续签到30天奖励）';
+    } else if (consecutiveDays === 100) {
+      rewardPoints = 100;
+      rewardMessage = '+100 经验值（连续签到100天奖励）';
+    }
+
+    // 创建签到记录
+    const checkIn = await prisma.checkIn.create({
+      data: {
+        userId,
+        checkInDate: today,
+        consecutiveDays,
+        rewardPoints,
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -117,8 +162,8 @@ export async function POST(request: NextRequest) {
       consecutiveDays,
       reward: {
         type: 'exp',
-        amount: 10,
-        message: '+10 经验值',
+        amount: rewardPoints,
+        message: rewardMessage,
       },
     });
   } catch (error) {

@@ -172,7 +172,7 @@ export function ReadingMode({ content, title, onClose }: ReadingModeProps) {
             <div>
               <span className="text-sm">背景主题</span>
               <div className="grid grid-cols-4 gap-2 mt-2">
-                {([
+                {[
                   { key: 'light' as Theme, icon: Sun, label: '明亮' },
                   { key: 'warm' as Theme, icon: Moon, label: '温暖' },
                   { key: 'dark' as Theme, icon: Moon, label: '深色' },

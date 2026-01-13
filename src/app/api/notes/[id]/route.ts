@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 // PUT - 更新笔记
 export async function PUT(
@@ -11,6 +12,36 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await auth();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: '未登录' },
+        { status: 401 }
+      );
+    }
+
+    const userId = (session.user as any).id;
+
+    // 验证笔记属于当前用户
+    const existingNote = await prisma.note.findUnique({
+      where: { id: params.id },
+    });
+
+    if (!existingNote) {
+      return NextResponse.json(
+        { error: '笔记不存在' },
+        { status: 404 }
+      );
+    }
+
+    if (existingNote.userId !== userId) {
+      return NextResponse.json(
+        { error: '无权修改此笔记' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { title, content, isPublic } = body;
 
@@ -23,7 +54,7 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({ note });
+    return NextResponse.json(note);
   } catch (error) {
     console.error('更新笔记失败:', error);
     return NextResponse.json(
@@ -39,6 +70,36 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await auth();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: '未登录' },
+        { status: 401 }
+      );
+    }
+
+    const userId = (session.user as any).id;
+
+    // 验证笔记属于当前用户
+    const existingNote = await prisma.note.findUnique({
+      where: { id: params.id },
+    });
+
+    if (!existingNote) {
+      return NextResponse.json(
+        { error: '笔记不存在' },
+        { status: 404 }
+      );
+    }
+
+    if (existingNote.userId !== userId) {
+      return NextResponse.json(
+        { error: '无权删除此笔记' },
+        { status: 403 }
+      );
+    }
+
     await prisma.note.delete({
       where: { id: params.id },
     });

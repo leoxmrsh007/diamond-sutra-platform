@@ -1,7 +1,10 @@
 /**
- * 系统课程页面 - 完整版
+ * 系统课程页面 - 从数据库读取数据
  */
 
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -9,6 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LoadingSpinner } from '@/components/ui/loading';
 import {
   BookOpen,
   Clock,
@@ -17,174 +21,20 @@ import {
   CheckCircle2,
   Lock,
   Video,
-  FileText,
   Star,
 } from 'lucide-react';
 
-const courses = {
-  beginner: [
-    {
-      id: 1,
-      title: '《金刚经》入门导读',
-      description: '了解《金刚经》的缘起、核心思想和基本概念，适合初学者建立正确的知见。',
-      level: 'BEGINNER',
-      duration: 120,
-      lessons: 8,
-      students: 1234,
-      image: '📿',
-      isPublished: true,
-      isFree: true,
-      instructor: '慧明法师',
-    },
-    {
-      id: 2,
-      title: '般若波罗蜜多概说',
-      description: '深入讲解"般若"（智慧）的概念，理解空性思想的基础。',
-      level: 'BEGINNER',
-      duration: 90,
-      lessons: 6,
-      students: 856,
-      image: '🌙',
-      isPublished: true,
-      isFree: true,
-      instructor: '妙音法师',
-    },
-    {
-      id: 3,
-      title: '佛法基本常识',
-      description: '佛教的历史、基本教义、术语解释等基础知识。',
-      level: 'BEGINNER',
-      duration: 150,
-      lessons: 10,
-      students: 2341,
-      image: '📖',
-      isPublished: true,
-      isFree: true,
-      instructor: '觉悟法师',
-    },
-    {
-      id: 4,
-      title: '如何正确理解空性',
-      description: '空性不是什么，什么是缘起性空，如何避免落入常见误区。',
-      level: 'BEGINNER',
-      duration: 100,
-      lessons: 7,
-      students: 1567,
-      image: '☯️',
-      isPublished: true,
-      isFree: true,
-      instructor: '清净法师',
-    },
-  ],
-  intermediate: [
-    {
-      id: 5,
-      title: '《金刚经》逐句精讲（上）',
-      description: '详细讲解前十六分，深入理解经文的深层含义。',
-      level: 'INTERMEDIATE',
-      duration: 300,
-      lessons: 16,
-      students: 523,
-      image: '🪷',
-      isPublished: true,
-      isFree: false,
-      instructor: '慧明法师',
-    },
-    {
-      id: 6,
-      title: '中观思想入门',
-      description: '学习龙树菩萨的中观思想，理解缘起性空的哲学体系。',
-      level: 'INTERMEDIATE',
-      duration: 240,
-      lessons: 12,
-      students: 342,
-      image: '☸️',
-      isPublished: true,
-      isFree: false,
-      instructor: '宗性法师',
-    },
-    {
-      id: 7,
-      title: '《金刚经》与中国文化',
-      description: '探讨《金刚经》对中国传统文化、文学、艺术的影响。',
-      level: 'INTERMEDIATE',
-      duration: 180,
-      lessons: 10,
-      students: 467,
-      image: '🎨',
-      isPublished: true,
-      isFree: false,
-      instructor: '文化学者',
-    },
-    {
-      id: 8,
-      title: '禅宗与金刚经',
-      description: '六祖惠能以《金刚经》开悟，深入探讨禅宗与金刚经的关系。',
-      level: 'INTERMEDIATE',
-      duration: 200,
-      lessons: 11,
-      students: 589,
-      image: '🧘',
-      isPublished: true,
-      isFree: false,
-      instructor: '禅心法师',
-    },
-  ],
-  advanced: [
-    {
-      id: 9,
-      title: '《金刚经》逐句精讲（下）',
-      description: '完成后十六分的深入讲解，完整掌握整部经文。',
-      level: 'ADVANCED',
-      duration: 300,
-      lessons: 16,
-      students: 189,
-      image: '🏔️',
-      isPublished: true,
-      isFree: false,
-      instructor: '慧明法师',
-    },
-    {
-      id: 10,
-      title: '《金刚经》与大乘佛法',
-      description: '探讨《金刚经》在整个大乘佛法体系中的地位和意义。',
-      level: 'ADVANCED',
-      duration: 180,
-      lessons: 10,
-      students: 156,
-      image: '📜',
-      isPublished: false,
-      isFree: false,
-      instructor: '大愿法师',
-    },
-    {
-      id: 11,
-      title: '梵汉《金刚经》版本比较研究',
-      description: '通过对梵文原典与汉译本的对照，分析各译本的特点与差异。',
-      level: 'ADVANCED',
-      duration: 240,
-      lessons: 12,
-      students: 98,
-      image: '🔍',
-      isPublished: true,
-      isFree: false,
-      instructor: '梵文学者',
-    },
-    {
-      id: 12,
-      title: '金刚经思想与现代生活',
-      description: '将《金刚经》的智慧应用到现代生活、工作中的实践课程。',
-      level: 'ADVANCED',
-      duration: 160,
-      lessons: 9,
-      students: 234,
-      image: '💼',
-      isPublished: true,
-      isFree: false,
-      instructor: '妙音法师',
-    },
-  ],
-};
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  duration: number | null;
+  isPublished: boolean;
+  lessons: any[];
+  studentCount: number;
+  isEnrolled: boolean;
+}
 
 const levelLabels = {
   BEGINNER: { label: '初级', color: 'bg-green-100 text-green-800' },
@@ -192,7 +42,53 @@ const levelLabels = {
   ADVANCED: { label: '高级', color: 'bg-purple-100 text-purple-800' },
 };
 
+const levelEmojis = {
+  BEGINNER: '📿',
+  INTERMEDIATE: '🪷',
+  ADVANCED: '🏔️',
+};
+
 export default function CoursesPage() {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch('/api/courses');
+      if (response.ok) {
+        const data = await response.json();
+        setCourses(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch courses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const coursesByLevel = (level: string) => {
+    return courses.filter((c) => c.level === level);
+  };
+
+  const enrolledCourses = courses.filter((c) => c.isEnrolled);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container max-w-6xl mx-auto px-4 py-8 flex items-center justify-center min-h-[500px]">
+          <LoadingSpinner />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -216,28 +112,27 @@ export default function CoursesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground mb-4">
-              登录后查看您的学习进度和已报名课程
-            </p>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-amber-700">0</div>
+                <div className="text-2xl font-bold text-amber-700">{enrolledCourses.length}</div>
                 <div className="text-sm text-muted-foreground">已报名课程</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-amber-700">0</div>
+                <div className="text-2xl font-bold text-amber-700">
+                  {enrolledCourses.reduce((sum, c) => sum + c.lessons.length, 0)}
+                </div>
                 <div className="text-sm text-muted-foreground">已完成课时</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-amber-700">0</div>
-                <div className="text-sm text-muted-foreground">学习天数</div>
+                <div className="text-2xl font-bold text-amber-700">{enrolledCourses.length > 0 ? '学习中' : '-'}</div>
+                <div className="text-sm text-muted-foreground">当前状态</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Course Tabs */}
-        <Tabs defaultValue="beginner" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
             <TabsTrigger value="beginner">初级课程</TabsTrigger>
             <TabsTrigger value="intermediate">中级课程</TabsTrigger>
@@ -245,21 +140,36 @@ export default function CoursesPage() {
           </TabsList>
 
           <TabsContent value="beginner" className="space-y-6">
-            {courses.beginner.map((course) => (
+            {coursesByLevel('BEGINNER').map((course) => (
               <CourseCard key={course.id} course={course} />
             ))}
+            {coursesByLevel('BEGINNER').length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                暂无初级课程
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="intermediate" className="space-y-6">
-            {courses.intermediate.map((course) => (
+            {coursesByLevel('INTERMEDIATE').map((course) => (
               <CourseCard key={course.id} course={course} />
             ))}
+            {coursesByLevel('INTERMEDIATE').length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                暂无中级课程
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="advanced" className="space-y-6">
-            {courses.advanced.map((course) => (
+            {coursesByLevel('ADVANCED').map((course) => (
               <CourseCard key={course.id} course={course} />
             ))}
+            {coursesByLevel('ADVANCED').length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                暂无高级课程
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
@@ -269,14 +179,15 @@ export default function CoursesPage() {
   );
 }
 
-function CourseCard({ course }: { course: any }) {
-  const levelInfo = levelLabels[course.level as keyof typeof levelLabels];
+function CourseCard({ course }: { course: Course }) {
+  const levelInfo = levelLabels[course.level];
+  const emoji = levelEmojis[course.level];
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="md:flex">
         <div className="md:w-48 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center text-6xl">
-          {course.image}
+          {emoji}
         </div>
         <div className="flex-1 p-6">
           <div className="flex items-start justify-between mb-2">
@@ -292,8 +203,8 @@ function CourseCard({ course }: { course: any }) {
                 即将上线
               </Badge>
             )}
-            {course.isFree && (
-              <Badge className="bg-green-100 text-green-700">免费</Badge>
+            {course.isEnrolled && (
+              <Badge className="bg-amber-100 text-amber-700">已报名</Badge>
             )}
           </div>
 
@@ -303,30 +214,37 @@ function CourseCard({ course }: { course: any }) {
 
           <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
             <div className="flex items-center gap-1">
-              <Star className="w-4 h-4" />
-              {course.instructor}
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              {course.duration} 分钟
-            </div>
-            <div className="flex items-center gap-1">
               <Video className="w-4 h-4" />
-              {course.lessons} 课时
+              {course.lessons.length} 课时
             </div>
+            {course.duration && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                {course.duration} 分钟
+              </div>
+            )}
             <div className="flex items-center gap-1">
               <Users className="w-4 h-4" />
-              {course.students.toLocaleString()} 人学习
+              {course.studentCount} 人学习
             </div>
           </div>
 
           <CardFooter className="p-0">
-            <Button asChild className="w-full md:w-auto">
-              <Link href={`/courses/${course.id}`}>
-                <PlayCircle className="w-4 h-4 mr-2" />
-                {course.isFree ? '免费开始学习' : '立即报名'}
-              </Link>
-            </Button>
+            {course.isEnrolled ? (
+              <Button asChild className="w-full md:w-auto">
+                <Link href={`/courses/${course.id}`}>
+                  <PlayCircle className="w-4 h-4 mr-2" />
+                  继续学习
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild className="w-full md:w-auto" disabled={!course.isPublished}>
+                <Link href={`/courses/${course.id}`}>
+                  <PlayCircle className="w-4 h-4 mr-2" />
+                  {course.isPublished ? '立即报名' : '敬请期待'}
+                </Link>
+              </Button>
+            )}
           </CardFooter>
         </div>
       </div>
