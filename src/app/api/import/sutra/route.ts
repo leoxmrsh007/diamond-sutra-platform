@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
     for (const ch of chapters) {
       const chapter = await prisma.chapter.upsert({
         where: { sutraId_chapterNum: { sutraId: sutra.id, chapterNum: ch.chapterNum } },
-        update: { title: ch.title, summary: ch.summary },
-        create: { sutraId: sutra.id, chapterNum: ch.chapterNum, title: ch.title, summary: ch.summary, order: ch.chapterNum },
+        update: { title: ch.title ?? null, summary: ch.summary ?? null },
+        create: { sutraId: sutra.id, chapterNum: ch.chapterNum, title: ch.title ?? null, summary: ch.summary ?? null, order: ch.chapterNum },
       })
       chapterCount++
 
