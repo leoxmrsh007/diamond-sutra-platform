@@ -91,3 +91,5 @@ export { handler as GET, handler as POST };
 
 // 导出 auth 函数供其他模块使用
 export const auth = handler.auth;
+// 导出 handlers 供其他模块使用
+export const handlers = { GET, POST };
