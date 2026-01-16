@@ -198,8 +198,6 @@ export async function POST() {
           sanskrit: verse.sanskrit || null,
           tibetan: null,
           aiKeyword: ['经典名句', '核心偈颂'],
-          aiAnalysis: null,
-          embedding: null,
           order: verse.num,
         },
       })
@@ -221,7 +219,6 @@ export async function POST() {
           nameSanskrit: concept.nameSanskrit,
           nameTibetan: concept.nameTibetan,
           description: concept.description,
-          embedding: null,
         },
       })
       results.concepts++
