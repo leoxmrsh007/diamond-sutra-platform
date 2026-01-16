@@ -1,15 +1,11 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+/**
+ * 金刚般若波罗蜜经完整数据
+ * Diamond Sutra Complete Seed Data
+ */
 
-type SeedStats = {
-  sutra: string | null
-  chapters: number
-  verses: number
-  courses: number
-  concepts: number
-  success: boolean
-  errors: string[]
-}
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 // 金刚经32章完整数据
 const diamondSutraChapters = [
@@ -33,7 +29,7 @@ const diamondSutraChapters = [
   { num: 18, title: '一体同观分第十八', summary: '五眼者，如来说非五眼，是名五眼。三千大千世界所有微尘，如来说非微尘，是名微尘。' },
   { num: 19, title: '法界通化分第十九', summary: '若三千大千世界中所有诸须弥山王，如是等七宝聚，有人持用布施。' },
   { num: 20, title: '离色离相分第二十', summary: '佛说具足色身，即非具足色身，是名具足色身。诸相具足，即非具足，是名诸相具足。' },
-  { num: 21, title: '非说所说分第二十一', summary: '汝等勿谓如来作是念：我当有所说法。莫作是念！何以故？若人言如来有所说法，即为谤佛，不能解我所说故。' },
+  { num: 21, title: '非说所说分第二十一', summary: '汝勿谓如来作是念：我当有所说法。莫作是念！何以故？若人言如来有所说法，即为谤佛，不能解我所说故。' },
   { num: 22, title: '无法可得分第二十二', summary: '须菩提意谓：如来如来得阿耨多罗三藐三菩提，如来于无所著、无所得。' },
   { num: 23, title: '净心行善分第二十三', summary: '是法平等，无有高下，是名阿耨多罗三藐三菩提。以无我、无人、无众生、无寿者，修一切善法，则得阿耨多罗三藐三菩提。' },
   { num: 24, title: '福智无比分第二十四', summary: '若人以此七宝满尔所恒河沙数三千大千世界以用布施，得福多不？甚多，世尊！' },
@@ -45,13 +41,13 @@ const diamondSutraChapters = [
   { num: 30, title: '一合相理分第三十', summary: '若世界实有者，即是一合相。如来说一合相，即非一合相，是名一合相。' },
   { num: 31, title: '知见不生分第三十一', summary: '若菩萨通达无我法者，如来说名真是菩萨。若菩萨有我相、人相、众生相、寿者相，则非菩萨。' },
   { num: 32, title: '应化非真分第三十二', summary: '一切有为法，如梦幻泡影，如露亦如电，应作如是观。此为全经之总结。' },
-]
+];
 
 // 金刚经核心偈颂
 const diamondSutraVerses = [
   // 第一章
   { chapter: 1, num: 1, chinese: '如是我闻：一时，佛在舍卫国祇树给孤独园，与大比丘众千二百五十人俱。', english: 'Thus have I heard. At one time the Buddha dwelled in Śrāvastī, in the Jeta Grove, with a great assembly of twelve hundred fifty bhikṣus.', sanskrit: 'Evam mayā śrutam - ekasmin samaye bhagavān śrāvastīyām viharati jetavane anāthapindikasya ārāme mahatā bhikṣusaṃghena sārdham ardhatrayodasaśatibhi bhikṣuśataih.' },
-  { chapter: 1, num: 2, chinese: '尔时，世尊食时，着衣持钵，入舍卫大城乞食。于其城中次第乞已，还至本处。饭食讫，收衣钵，洗足已，敷座而坐。', english: 'At mealtime, the World-Honored One put on his robe, took his bowl, and entered the great city of Śrāvastī to beg for food. After finishing his meal and returning, he put away his robe and bowl, washed his feet, and sat down properly.' },
+  { chapter: 1, num: 2, chinese: '尔时，世尊食时，着衣持钵，入舍卫大城乞食。于其城中次第乞已，还至本处。饭食讫，收衣钵，洗足已，敷座而坐。', english: 'At mealtime, the World-Honored One put on his robe, took his bowl, and entered the great city of Śrāvastī to beg for food. After finishing his meal and returning, he put away his robe and bowl, washed his feet, and sat down properly.', sanskrit: 'Atha khalu bhagavān bhiksāpātraṃ pragrahītvā śrāvastīṃ prāviśat, tatra piṇḍapātapatteś chānvuśayo bhutvā kālaṃ kālaṃ pindapātaṃ pariyesamāno, gṛham pratyākṛamāṇo bhojito paścād chīvaram ādāya pādim prakkhālvā āsane nisīdati.' },
 
   // 第二章
   { chapter: 2, num: 1, chinese: '时，长老须菩提在大众中即从座起，偏袒右肩，右膝着地，合掌恭敬而白佛言："希有！世尊！如来善护念诸菩萨，善付嘱诸菩萨。"', english: 'Then Elder Subhūti arose from his seat in the assembly, bared his right shoulder, knelt on his right knee, joined his palms respectfully and addressed the Buddha: "How rare, World-Honored One! The Tathāgata well supports and instructs bodhisattvas."' },
@@ -82,7 +78,7 @@ const diamondSutraVerses = [
   { chapter: 7, num: 3, chinese: '佛言："如是如是！须菩提！乃至无有法可得，是名阿耨多罗三藐三菩提。"', english: 'The Buddha said: "So it is, so it is! Subhūti! Even to the point where there is no dharma that can be attained—this is called unexcelled perfect enlightenment."' },
 
   // 第八章
-  { chapter: 8, num: 1, chinese: '须菩提！若菩萨作是念："我当庄严佛土。"是不名菩萨。', english: '"Subhūti! If a bodhisattva thinks: "I should adorn Buddha lands," they are not called a bodhisattva.' },
+  { chapter: 8, num: 1, chinese: '须菩提！若菩萨作是念："我当庄严佛土。"是不名菩萨。', english: '"Subhūti! If a bodhisattva thinks: "I should adorn Buddha lands," they are not called a bodhisattva."' },
   { chapter: 8, num: 2, chinese: '何以故？如来说庄严佛土者，即非庄严，是名庄严。', english: '"Why? What the Tathāgata calls adorning Buddha lands is not truly adorning; therefore it is called adorning.' },
   { chapter: 8, num: 3, chinese: '须菩提！若菩萨通达无我法者，如来说名真是菩萨。', english: '"Subhūti! If a bodhisattva understands the dharma of no-self, the Tathāgata calls them truly a bodhisattva."' },
 
@@ -96,11 +92,12 @@ const diamondSutraVerses = [
 
   // 第十四章
   { chapter: 14, num: 1, chinese: '尔时，须菩提闻说是经，深解义趣，涕泪悲泣，而白佛言："希有！世尊！佛说如是甚深经典，我从昔来所得慧眼，未曾得闻如是之说。"', english: 'Then Subhūti, hearing this teaching, deeply understood its meaning and wept tears, saying to the Buddha: "How rare! World-Honored One! The Buddha expounds such a profound teaching. Since ancient times, I have never heard such an explanation with my wisdom eye."' },
+  { chapter: 14, num: 2, chinese: '须菩提！"佛言："若有善男子、善女人，于此法中，乃至受持四句偈等，为他人说，其福胜彼。"', english: '"Subhūti!" The Buddha said: "If there are good men and women who, in this dharma, receive and uphold even four lines of verse and explain them to others, their merit surpasses that."' },
 
   // 第三十二章
   { chapter: 32, num: 1, chinese: '一切有为法，如梦幻泡影，如露亦如电，应作如是观。', english: 'All conditioned dharmas are like dreams, illusions, bubbles, and shadows; like dew and lightning—thus should you contemplate them.', sanskrit: 'Sarve saṃskārā gṛdhraprasavāḥ svapnadrśyopamāḥ | Śmaśānagṛhā gṛdhraprasavāḥ viddhi mamṛptikāḥ tathā ||' },
-  { chapter: 32, num: 2, chinese: '说是经已，长老须菩提，及诸比丘、比丘尼、优婆塞、优婆夷，一切世间天人阿修罗，闻佛所说，皆大欢喜，信受奉行。', english: 'After the Buddha expounded this sūtra, Elder Subhūti, along with bhikṣus, bhikṣuṇīs, upāsakas, upāsikās, and all the world\'s gods, humans, and asuras, having heard the Buddha\'s teaching, were greatly filled with joy, faithfully accepted, and upheld it.' },
-]
+  { chapter: 32, num: 2, chinese: '说是经已，长老须菩提，及诸比丘、比丘尼、优婆塞、优婆夷，一切世间天人阿修罗，闻佛所说，皆大欢喜，信受奉行。', english: 'After the Buddha expounded this sūtra, Elder Subhūti, along with bhikṣus, bhikṣuṇīs, upāsakas, upāsikās, and all the world's gods, humans, and asuras, having heard the Buddha\'s teaching, were greatly filled with joy, faithfully accepted, and upheld it.' },
+];
 
 // 关键概念
 const diamondSutraConcepts = [
@@ -114,179 +111,237 @@ const diamondSutraConcepts = [
   { name: '忍辱', nameSanskrit: 'Kṣānti', nameTibetan: 'བཟོད་པ་', description: '忍受恼辱而不生嗔恨，为六度之一。' },
   { name: '涅槃', nameSanskrit: 'Nirvāṇa', nameTibetan: 'མྱ་ངེས་', description: '远离烦恼与生死轮回的寂静安稳境界。' },
   { name: '有为法', nameSanskrit: 'Saṃskṛta-dharma', nameTibetan: 'འདུས་བྱུང་', description: '因缘和合而生之一切法，无常无我。' },
-]
+];
 
-export async function POST() {
-  const results: SeedStats = {
-    sutra: null,
-    chapters: 0,
-    verses: 0,
-    courses: 0,
-    concepts: 0,
-    success: true,
-    errors: [],
-  }
+// 课程数据
+const diamondSutraCourses = [
+  {
+    id: 'course-intro',
+    title: '《金刚经》入门导读',
+    description: '适合初学者的入门课程，系统讲解《金刚经》的基本概念、核心思想和修学方法。',
+    coverImage: null,
+    teacherId: null,
+    level: 'BEGINNER' as const,
+    duration: 120,
+    isPublished: true,
+    lessons: [
+      { order: 1, title: '《金刚经》的缘起与传承', content: '介绍《金刚经》的翻译历史、在中国佛教的地位，以及历代祖师的注疏传统。' },
+      { order: 2, title: '般若思想概说', content: '讲解般若（智慧）的含义，空性思想的基础，以及为何般若是六度之母。' },
+      { order: 3, title: '经文结构分析', content: '分析《金刚经》三分结构：序分、正宗分、流通分，以及三十二分的组织方式。' },
+      { order: 4, title: '核心教义（一）：无住生心', content: '深入讲解"应无所住而生其心"这一核心思想，如何在日常生活中实践。' },
+      { order: 5, title: '核心教义（二）：凡所有相皆是虚妄', content: '分析"四相"的执着，如何破除对现象的执著。' },
+      { order: 6, title: '修行指导：六度万行', content: '六度（布施、持戒、忍辱、精进、禅定、般若）的修学方法与实践要点。' },
+    ],
+  },
+  {
+    id: 'course-intermediate',
+    title: '《金刚经》精读',
+    description: '对《金刚经》三十二分进行逐章讲解，深入理解经文的含义。',
+    coverImage: null,
+    teacherId: null,
+    level: 'INTERMEDIATE' as const,
+    duration: 240,
+    isPublished: true,
+    lessons: [
+      { order: 1, title: '第一分：法会因由', content: '详解法会的缘起、地点、参与者，以及佛陀日常行持所示现的法义。' },
+      { order: 2, title: '第二分：善现启请', content: '分析须菩提所问的核心问题：发心与降心。' },
+      { order: 3, title: '第三分：大乘正宗', content: '讲解"无相布施"和"度无量众生而无众生可度"的深义。' },
+      { order: 4, title: '第四至六分：无住与正信', content: '综合讲解无住行施、破除身相执著、生起正信的内容。' },
+      { order: 5, title: '第七至十分：法身与净土', content: '讲解"无得无说"、"无我相"、"庄严净土"等重要内容。' },
+      { order: 6, title: '第十一至十五分：福德与业障', content: '讲解持经功德、净除业障、离相寂灭等修行方法。' },
+      { order: 7, title: '第十六至二十分：福智与法身', content: '讲解能净业障分、究竟无我分、一体同观分等深义。' },
+      { order: 8, title: '第二十一至二十五分：无为与化度', content: '讲解非说所说、无法可得、净心行善、福智无比、化无所化等内容。' },
+      { order: 9, title: '第二十六至三十分：无断无灭', content: '讲解法身非相、无断无灭、不受不贪、威仪寂净、一合相理。' },
+      { order: 10, title: '第三十一至三十二分：知见与总结', content: '讲解知见不生分，以及全经总结的著名偈颂。' },
+    ],
+  },
+];
 
-  try {
-    console.log('开始填充金刚经完整数据...')
+// 社区帖子示例
+const diamondSutraPosts = [
+  {
+    title: '如何理解"应无所住而生其心"？',
+    content: '最近在读《金刚经》，对"应无所住而生其心"这句话很感兴趣。但是在实际生活中，我们应该如何做到"心无所住"呢？比如工作时要专注，这算不算"住"呢？请大家指教。',
+    tags: ['无住生心', '修行实践', '疑问'],
+  },
+  {
+    title: '分享我的每日诵读心得',
+    content: '每天早晨诵读《金刚经》已经成为我的习惯。经过三个月的坚持，感觉内心平静了许多，对生活的看法也慢慢在变化。推荐大家也试试！',
+    tags: ['修行心得', '每日功课', '诵读'],
+  },
+  {
+    title: '《金刚经》与中观思想的关系',
+    content: '《金刚经》体现了龙树菩萨中观思想的核心——缘起性空。经中反复强调的"凡所有相皆是虚妄"，正是对空性最直接的表达。',
+    tags: ['中观', '空性', '佛学理论'],
+  },
+];
 
-    // Step 1: Create/Update the Diamond Sutra
-    const sutra = await prisma.sutra.upsert({
-      where: { slug: 'diamond-sutra' },
-      update: {},
-      create: {
-        title: '金刚般若波罗蜜经',
-        titleSanskrit: 'Vajracchedikā Prajñāpāramitā Sūtra',
-        titleTibetan: 'རྡོ་རྗེ་ཤེས་རབ་ཀྱི་ཕ་རོལ་ཏ་པའི་མདོ།',
-        slug: 'diamond-sutra',
-        description: '简称《金刚经》，是大乘佛教般若部的重要经典，由姚秦鸠摩罗什译，共一卷，三十二分。经名取自"般若如金刚，能破坏一切法"之意。',
-        order: 1,
-      },
-    })
-    results.sutra = sutra.id
-    console.log('✓ 经文已创建:', sutra.title)
+async function seedDiamondSutraData() {
+  console.log('开始填充金刚经数据...');
 
-    // Step 2: Create 32 chapters
-    const chapterMap = new Map<number, string>()
+  // 1. 创建经文
+  const sutra = await prisma.sutra.upsert({
+    where: { slug: 'diamond-sutra' },
+    update: {},
+    create: {
+      title: '金刚般若波罗蜜经',
+      titleSanskrit: 'Vajracchedikā Prajñāpāramitā Sūtra',
+      titleTibetan: 'རྡོ་རྗེ་ཤེས་རབ་ཀྱི་ཕ་རོལ་ཏ་པའི་མདོ།',
+      slug: 'diamond-sutra',
+      description: '简称《金刚经》，是大乘佛教般若部的重要经典，由姚秦鸠摩罗什译，共一卷，三十二分。经名取自"般若如金刚，能破坏一切法"之意。',
+      order: 1,
+    },
+  });
+  console.log('✓ 经文已创建:', sutra.title);
 
-    for (const chapter of diamondSutraChapters) {
-      const created = await prisma.chapter.upsert({
-        where: {
-          sutraId_chapterNum: { sutraId: sutra.id, chapterNum: chapter.num },
-        },
-        update: {
-          title: chapter.title,
-          summary: chapter.summary,
-          order: chapter.num,
-        },
-        create: {
+  // 2. 创建章节
+  for (const chapter of diamondSutraChapters) {
+    await prisma.chapter.upsert({
+      where: {
+        sutraId_chapterNum: {
           sutraId: sutra.id,
           chapterNum: chapter.num,
-          title: chapter.title,
-          summary: chapter.summary,
-          order: chapter.num,
         },
-      })
-      chapterMap.set(chapter.num, created.id)
-      results.chapters++
-    }
-    console.log(`✓ 已创建 ${results.chapters} 个章节`)
+      },
+      update: {
+        title: chapter.title,
+        summary: chapter.summary,
+        order: chapter.num,
+      },
+      create: {
+        sutraId: sutra.id,
+        chapterNum: chapter.num,
+        title: chapter.title,
+        summary: chapter.summary,
+        order: chapter.num,
+      },
+    });
+  }
+  console.log(`✓ 已创建 ${diamondSutraChapters.length} 个章节`);
 
-    // Step 3: Create verses
-    for (const verse of diamondSutraVerses) {
-      const chapterId = chapterMap.get(verse.chapter)
-      if (!chapterId) {
-        console.error(`Chapter ${verse.chapter} not found`)
-        continue
-      }
+  // 3. 创建偈颂
+  let verseCount = 0;
+  for (const verse of diamondSutraVerses) {
+    const chapter = await prisma.chapter.findFirst({
+      where: {
+        sutraId: sutra.id,
+        chapterNum: verse.chapter,
+      },
+    });
 
+    if (chapter) {
       await prisma.verse.upsert({
         where: {
-          chapterId_verseNum: { chapterId: chapterId, verseNum: verse.num },
+          chapterId_verseNum: {
+            chapterId: chapter.id,
+            verseNum: verse.num,
+          },
         },
         update: {
           chinese: verse.chinese,
           english: verse.english,
-          sanskrit: verse.sanskrit || null,
+          sanskrit: verse.sanskrit,
           aiKeyword: ['经典名句', '核心偈颂'],
         },
         create: {
-          chapterId: chapterId,
+          chapterId: chapter.id,
           verseNum: verse.num,
           chinese: verse.chinese,
           english: verse.english,
-          sanskrit: verse.sanskrit || null,
+          sanskrit: verse.sanskrit,
           tibetan: null,
           aiKeyword: ['经典名句', '核心偈颂'],
           aiAnalysis: null,
           embedding: null,
           order: verse.num,
         },
-      })
-      results.verses++
+      });
+      verseCount++;
     }
-    console.log(`✓ 已创建 ${results.verses} 个偈颂`)
+  }
+  console.log(`✓ 已创建 ${verseCount} 个偈颂`);
 
-    // Step 4: Create concepts
-    for (const concept of diamondSutraConcepts) {
-      await prisma.concept.upsert({
-        where: { name: concept.name },
+  // 4. 创建概念
+  for (const concept of diamondSutraConcepts) {
+    await prisma.concept.upsert({
+      where: { name: concept.name },
+      update: {
+        nameSanskrit: concept.nameSanskrit,
+        nameTibetan: concept.nameTibetan,
+        description: concept.description,
+      },
+      create: {
+        name: concept.name,
+        nameSanskrit: concept.nameSanskrit,
+        nameTibetan: concept.nameTibetan,
+        description: concept.description,
+        embedding: null,
+      },
+    });
+  }
+  console.log(`✓ 已创建 ${diamondSutraConcepts.length} 个概念`);
+
+  // 5. 创建课程
+  for (const courseData of diamondSutraCourses) {
+    const course = await prisma.course.upsert({
+      where: { id: courseData.id },
+      update: {
+        title: courseData.title,
+        description: courseData.description,
+        coverImage: courseData.coverImage,
+        teacherId: courseData.teacherId,
+        level: courseData.level,
+        duration: courseData.duration,
+        isPublished: courseData.isPublished,
+        order: 1,
+      },
+      create: {
+        id: courseData.id,
+        title: courseData.title,
+        description: courseData.description,
+        coverImage: courseData.coverImage,
+        teacherId: courseData.teacherId,
+        level: courseData.level,
+        duration: courseData.duration,
+        isPublished: courseData.isPublished,
+        order: 1,
+      },
+    });
+
+    // 创建课时
+    for (const lessonData of courseData.lessons) {
+      await prisma.lesson.upsert({
+        where: {
+          courseId_order: {
+            courseId: course.id,
+            order: lessonData.order,
+          },
+        },
         update: {
-          nameSanskrit: concept.nameSanskrit,
-          nameTibetan: concept.nameTibetan,
-          description: concept.description,
+          title: lessonData.title,
+          content: lessonData.content,
         },
         create: {
-          name: concept.name,
-          nameSanskrit: concept.nameSanskrit,
-          nameTibetan: concept.nameTibetan,
-          description: concept.description,
-          embedding: null,
+          courseId: course.id,
+          order: lessonData.order,
+          title: lessonData.title,
+          content: lessonData.content,
         },
-      })
-      results.concepts++
+      });
     }
-    console.log(`✓ 已创建 ${results.concepts} 个概念`)
-
-    // Step 5: Create courses
-    const existingCourse = await prisma.course.findFirst({
-      where: { id: 'course-intro' },
-    })
-
-    if (!existingCourse) {
-      const course = await prisma.course.create({
-        data: {
-          id: 'course-intro',
-          title: '《金刚经》入门导读',
-          description: '适合初学者的入门课程，系统讲解《金刚经》的基本概念、核心思想和修学方法。',
-          duration: 120,
-          level: 'BEGINNER',
-          isPublished: true,
-          order: 1,
-        },
-      })
-      results.courses++
-
-      // Create lessons
-      const lessons = [
-        { order: 1, title: '《金刚经》的缘起与传承', content: '介绍《金刚经》的翻译历史、在中国佛教的地位，以及历代祖师的注疏传统。' },
-        { order: 2, title: '般若思想概说', content: '讲解般若（智慧）的含义，空性思想的基础，以及为何般若是六度之母。' },
-        { order: 3, title: '经文结构分析', content: '分析《金刚经》三分结构：序分、正宗分、流通分，以及三十二分的组织方式。' },
-        { order: 4, title: '核心教义（一）：无住生心', content: '深入讲解"应无所住而生其心"这一核心思想，如何在日常生活中实践。' },
-        { order: 5, title: '核心教义（二）：凡所有相皆是虚妄', content: '分析"四相"的执着，如何破除对现象的执著。' },
-        { order: 6, title: '修行指导：六度万行', content: '六度（布施、持戒、忍辱、精进、禅定、般若）的修学方法与实践要点。' },
-      ]
-
-      for (const lesson of lessons) {
-        await prisma.lesson.create({
-          data: {
-            courseId: course.id,
-            order: lesson.order,
-            title: lesson.title,
-            content: lesson.content,
-          },
-        })
-      }
-    }
-    console.log(`✓ 已创建 ${results.courses} 个课程`)
-
-    await prisma.$disconnect()
-
-    return NextResponse.json({
-      success: true,
-      message: '金刚经数据填充成功！',
-      stats: results,
-    })
-  } catch (error) {
-    console.error('填充数据时出错:', error)
-    await prisma.$disconnect()
-    return NextResponse.json(
-      {
-        success: false,
-        error: (error as Error).message,
-        results,
-      },
-      { status: 500 }
-    )
   }
+  console.log(`✓ 已创建 ${diamondSutraCourses.length} 个课程`);
+
+  console.log('数据填充完成！');
 }
+
+seedDiamondSutraData()
+  .catch((e) => {
+    console.error('填充数据时出错:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+
+export { seedDiamondSutraData };
