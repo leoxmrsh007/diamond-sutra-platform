@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/layout/header';
@@ -30,112 +30,111 @@ import {
   BookOpen,
 } from 'lucide-react';
 
-// 课程详情数据（模拟）
-const courseDetails: Record<string, any> = {
-  '1': {
-    id: 1,
-    title: '《金刚经》入门导读',
-    description: '了解《金刚经》的缘起、核心思想和基本概念，适合初学者建立正确的知见。本课程将带领您从零开始，逐步了解这部般若部经典的智慧内涵。',
-    level: 'BEGINNER',
-    levelLabel: '初级',
-    duration: 120,
-    lessons: 8,
-    students: 1234,
-    rating: 4.8,
-    reviews: 256,
-    isFree: true,
-    isPublished: true,
-    image: '📿',
-    instructor: {
-      name: '慧明法师',
-      title: '金刚经研究学者',
-      bio: '毕业于中国佛学院，专精般若经典研究，有二十年弘法经验。',
-      avatar: '慧',
-    },
-    topics: [
-      '《金刚经》的缘起与传承',
-      '般若思想的核心概念',
-      '空性思想入门',
-      '四相与无我',
-      '布施波罗蜜',
-      '忍辱波罗蜜',
-      '如何在生活中应用经义',
-      '常见问题解答',
-    ],
-    lessonsList: [
-      { id: 1, title: '课程介绍与学习指南', duration: '10:00', isFree: true, completed: false },
-      { id: 2, title: '《金刚经》的缘起', duration: '15:30', isFree: true, completed: false },
-      { id: 3, title: '佛陀与须菩提的对话', duration: '12:45', isFree: false, completed: false },
-      { id: 4, title: '什么是"般若"？', duration: '18:20', isFree: false, completed: false },
-      { id: 5, title: '理解"空性"', duration: '16:00', isFree: false, completed: false },
-      { id: 6, title: '四相的含义', duration: '14:30', isFree: false, completed: false },
-      { id: 7, title: '六度波罗蜜概述', duration: '20:00', isFree: false, completed: false },
-      { id: 8, title: '经义在生活中的应用', duration: '13:15', isFree: false, completed: false },
-    ],
-    relatedCourses: [2, 5],
-  },
-  '2': {
-    id: 2,
-    title: '般若波罗蜜多概说',
-    description: '深入讲解"般若"（智慧）的概念，理解空性思想的基础。',
-    level: 'BEGINNER',
-    levelLabel: '初级',
-    duration: 90,
-    lessons: 6,
-    students: 856,
-    rating: 4.7,
-    reviews: 128,
-    isFree: true,
-    isPublished: true,
-    image: '🌙',
-    instructor: {
-      name: '妙音法师',
-      title: '佛学讲师',
-      bio: '专精般若思想教学，讲解通俗易懂。',
-      avatar: '妙',
-    },
-    lessonsList: [],
-  },
-};
-
-const allCourses = [
-  { id: 2, title: '般若波罗蜜多概说', level: '初级', duration: 90, lessons: 6, isFree: true },
-  { id: 5, title: '《金刚经》逐句精讲（上）', level: '中级', duration: 300, lessons: 16, isFree: false },
-  { id: 6, title: '中观思想入门', level: '中级', duration: 240, lessons: 12, isFree: false },
-];
+const levelLabelMap: Record<string, string> = { BEGINNER: '初级', INTERMEDIATE: '中级', ADVANCED: '高级' };
 
 export default function CourseDetailPage() {
   const params = useParams();
   const courseId = params.id as string;
-  const course = courseDetails[courseId] || courseDetails['1'];
+  const [course, setCourse] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [relatedCourses, setRelatedCourses] = useState<Array<{ id: string; title: string; level: string; duration?: number; lessons?: number; isFree?: boolean }>>([]);
+  const lessonsList: any[] = Array.isArray(course?.lessonsList) ? course.lessonsList : [];
 
   const [currentLesson, setCurrentLesson] = useState(1);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [activeTab, setActiveTab] = useState('lessons');
 
-  const handleEnroll = () => {
-    setIsEnrolled(true);
-    // 这里添加报名逻辑
+  const handleEnroll = async () => {
+    try {
+      const res = await fetch(`/api/courses/${courseId}/enroll`, { method: 'POST' });
+      if (res.ok) setIsEnrolled(true);
+    } catch {}
   };
 
-  const currentLessonData = course.lessonsList.find((l: any) => l.id === currentLesson) || course.lessonsList[0];
+  const currentLessonData = lessonsList.find((l: any) => l.id === currentLesson) || lessonsList[0];
 
-  const progress = course.lessonsList.filter((l: any) => l.completed).length / course.lessonsList.length * 100;
+  const progress = (lessonsList.filter((l: any) => l.completed).length / Math.max(lessonsList.length, 1)) * 100;
+  const topics: string[] = Array.isArray(course?.topics) ? course.topics : [];
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/courses/${courseId}`);
+        if (!res.ok) throw new Error('课程加载失败');
+        const data = await res.json();
+        const lessonsList = (Array.isArray(data.lessons) ? data.lessons : []).map((l: any) => ({
+          id: l.id,
+          title: l.title,
+          duration: '—',
+          isFree: true,
+          completed: false,
+        }));
+        setCourse({
+          id: data.id,
+          title: data.title,
+          description: data.description,
+          levelLabel: levelLabelMap[data.level] || '—',
+          duration: data.duration || 0,
+          lessons: lessonsList.length,
+          students: (Array.isArray(data.enrollments) ? data.enrollments.length : (data.studentCount || 0)),
+          rating: 4.8,
+          reviews: 0,
+          isFree: true,
+          isPublished: data.isPublished,
+          image: '📿',
+          instructor: { name: '讲师', title: '', bio: '', avatar: '师' },
+          topics: [],
+          lessonsList,
+        });
+        setIsEnrolled(Boolean(data.isEnrolled));
+        setError(null);
+      } catch (e) {
+        setError((e as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+    (async () => {
+      try {
+        const r = await fetch('/api/courses');
+        if (r.ok) {
+          const list = await r.json();
+          setRelatedCourses(
+            (Array.isArray(list) ? list : []).map((c: any) => ({ id: c.id, title: c.title, level: levelLabelMap[c.level] || '—', duration: c.duration, lessons: Array.isArray(c.lessons) ? c.lessons.length : undefined, isFree: true }))
+          );
+        }
+      } catch {}
+    })();
+  }, [courseId]);
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-          <Link href="/courses" className="hover:text-foreground">课程</Link>
-          <span>/</span>
-          <span className="text-foreground">{course.title}</span>
-        </div>
+        {loading && (
+          <div className="text-center py-16 text-muted-foreground">课程加载中…</div>
+        )}
+        {error && (
+          <div className="text-center py-16 text-red-600">
+            {error}
+            <div className="mt-4 text-sm">
+              请返回 <Link href="/courses" className="underline">课程列表</Link> 选择有效课程。
+            </div>
+          </div>
+        )}
+        {!loading && !error && course && (
+        <>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+            <Link href="/courses" className="hover:text-foreground">课程</Link>
+            <span>/</span>
+            <span className="text-foreground">{course.title}</span>
+          </div>
 
-        {/* Header */}
-        <div className="mb-8">
+          {/* Header */}
+          <div className="mb-8">
           <Badge className="mb-4">{course.levelLabel}</Badge>
           <h1 className="text-3xl md:text-4xl font-bold mb-4">{course.title}</h1>
           <p className="text-xl text-muted-foreground mb-6">{course.description}</p>
@@ -152,7 +151,7 @@ export default function CourseDetailPage() {
             </div>
             <div className="flex items-center gap-1">
               <Users className="w-4 h-4" />
-              {course.students.toLocaleString()} 人学习
+              {course.students?.toLocaleString?.() || course.students} 人学习
             </div>
             <div className="flex items-center gap-1">
               <BookOpen className="w-4 h-4" />
@@ -197,9 +196,9 @@ export default function CourseDetailPage() {
               分享
             </Button>
           </div>
-        </div>
+          </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Video Player */}
@@ -232,7 +231,7 @@ export default function CourseDetailPage() {
                     <div className="flex items-center justify-between">
                       <CardTitle>课程课时</CardTitle>
                       <span className="text-sm text-muted-foreground">
-                        {course.lessonsList.filter((l: any) => l.completed).length} / {course.lessonsList.length} 已完成
+                        {lessonsList.filter((l: any) => l.completed).length} / {lessonsList.length} 已完成
                       </span>
                     </div>
                     {isEnrolled && (
@@ -247,7 +246,7 @@ export default function CourseDetailPage() {
                   <CardContent>
                     <ScrollArea className="h-[400px]">
                       <div className="space-y-2 pr-4">
-                        {course.lessonsList.map((lesson: any, index: number) => (
+                        {lessonsList.map((lesson: any, index: number) => (
                           <div
                             key={lesson.id}
                             className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
@@ -306,7 +305,7 @@ export default function CourseDetailPage() {
                     <p>{course.description}</p>
                     <h3>您将学到</h3>
                     <ul className="space-y-2">
-                      {course.topics.map((topic: string, i: number) => (
+                      {topics.map((topic: string, i: number) => (
                         <li key={i} className="flex items-start gap-2">
                           <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
                           {topic}
@@ -429,7 +428,7 @@ export default function CourseDetailPage() {
                 <CardTitle className="text-lg">相关课程</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {allCourses.map((related) => (
+                {relatedCourses.map((related) => (
                   <Link key={related.id} href={`/courses/${related.id}`} className="block">
                     <div className="p-3 rounded-lg border hover:bg-muted transition-colors">
                       <div className="flex items-center gap-3">
@@ -439,7 +438,7 @@ export default function CourseDetailPage() {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{related.title}</p>
                           <p className="text-xs text-muted-foreground">
-                            {related.level} · {related.lessons} 课时
+                            {related.level} · {(related.lessons ?? '—')} 课时
                           </p>
                         </div>
                       </div>
@@ -449,7 +448,9 @@ export default function CourseDetailPage() {
               </CardContent>
             </Card>
           </div>
-        </div>
+          </div>
+        </>
+        )}
       </div>
 
       <Footer />

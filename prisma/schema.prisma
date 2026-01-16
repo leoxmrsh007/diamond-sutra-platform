@@ -7,6 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ==================== 用户系统 ====================
@@ -93,14 +94,14 @@ model Verse {
   chapter     Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   verseNum    Int
-  sanskrit    String?   @db.Text
-  tibetan     String?   @db.Text
-  chinese     String    @db.Text
-  pinyin      String?   @db.Text
+  sanskrit    String?   
+  tibetan     String?   
+  chinese     String    
+  english     String?   
 
   // AI 生成的内容
   aiAnalysis  Json?     // AI 解析
-  aiKeyword   String[]  // AI 提取的关键词
+  aiKeyword   Json  // AI 提取的关键词
   embedding   Json?     // 向量嵌入（用于语义搜索）
 
   // 关联数据
@@ -129,7 +130,7 @@ model Commentary {
   source      String?   // 来源（如：某位法师的讲解）
   language    String    @default("zh")
 
-  content     String    @db.Text
+  content     String    
 
   order       Int       @default(0)
 
@@ -200,7 +201,7 @@ model Note {
   verse       Verse     @relation(fields: [verseId], references: [id], onDelete: Cascade)
 
   title       String?
-  content     String    @db.Text
+  content     String    
   isPublic    Boolean   @default(false)
 
   createdAt   DateTime  @default(now())
@@ -236,10 +237,10 @@ model Question {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title       String
-  content     String    @db.Text
+  content     String    
 
   // AI 关联
-  aiAnswer    String?   @db.Text // AI 生成的答案
+  aiAnswer    String?    // AI 生成的答案
   aiConfidence Float?   // AI 置信度
 
   answers     Answer[]
@@ -261,7 +262,7 @@ model Answer {
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  content     String    @db.Text
+  content     String    
   isAccepted  Boolean   @default(false)
 
   createdAt   DateTime  @default(now())
@@ -277,7 +278,7 @@ model Answer {
 model Course {
   id          String    @id @default(cuid())
   title       String
-  description String    @db.Text
+  description String    
   coverImage  String?
 
   teacherId   String?
@@ -330,7 +331,7 @@ model Lesson {
   course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   title       String
-  content     String    @db.Text
+  content     String    
   videoUrl    String?
   audioUrl    String?
 
@@ -351,8 +352,10 @@ model Post {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title       String
-  content     String    @db.Text
-  tags        String[]
+  content     String    
+  tags        Json
+  likeCount   Int       @default(0)
+  commentCount Int      @default(0)
 
   comments    Comment[]
 
@@ -371,7 +374,7 @@ model Comment {
   postId      String?
   post        Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  content     String    @db.Text
+  content     String    
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -404,7 +407,7 @@ model ChatMessage {
   session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   role        String    // user | assistant | system
-  content     String    @db.Text
+  content     String    
 
   createdAt   DateTime  @default(now())
 
@@ -419,7 +422,7 @@ model Concept {
   name        String
   nameSanskrit String?
   nameTibetan  String?
-  description String?   @db.Text
+  description String?   
 
   embedding   Json?
 

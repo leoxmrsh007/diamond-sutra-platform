@@ -1,0 +1,56 @@
+{
+  "chapters": [
+    { "num": 1, "title": "Fa Hui You Fen Di Yi", "summary": "Describes the origin of the Dharma assembly." },
+    { "num": 2, "title": "Shan Xian Qi Qing Fen Di Er", "summary": "Subhuti asks about bodhicitta." },
+    { "num": 3, "title": "Da Cheng Zheng Zong Fen Di San", "summary": "Buddha explains giving without attachment." },
+    { "num": 4, "title": "Miao Xing Wu Zhu Fen Di Si", "summary": "Giving without dwelling on forms." },
+    { "num": 5, "title": "Ru Li Shi Jian Fen Di Wu", "summary": "Cannot see Tathagata by physical marks." }
+  ],
+  "verses": [
+    {
+      "chapter": 1,
+      "num": 1,
+      "chinese": "Thus I have heard. At one time the Buddha was in Jeta Grove.",
+      "english": "Thus have I heard. At one time the Buddha was dwelling in the Jeta Grove at Sravasti.",
+      "keywords": ["Evam maya", "Jeta Grove"]
+    },
+    {
+      "chapter": 2,
+      "num": 1,
+      "chinese": "Then the venerable Subhuti rose from his seat.",
+      "english": "Then the venerable Subhuti rose from his seat, bared his right shoulder, and addressed the Buddha.",
+      "keywords": ["Subhuti", "rose"]
+    },
+    {
+      "chapter": 2,
+      "num": 2,
+      "chinese": "World-Honored One! How should one set forth bodhicitta?",
+      "english": "World-Honored One, how should those who bring forth bodhicitta dwell and tame their minds?",
+      "keywords": ["bodhicitta", "set forth"]
+    },
+    {
+      "chapter": 3,
+      "num": 1,
+      "chinese": "All bodhisattva-mahasattvas should thus subdue their minds.",
+      "english": "All bodhisattva-mahasattvas should subdue their minds like this, guiding every being to liberation without grasping at beings.",
+      "keywords": ["subdue minds", "liberate beings"]
+    }
+  ],
+  "concepts": [
+    {
+      "name": "Prajna",
+      "nameSanskrit": "Prajna",
+      "description": "Wisdom, ultimate understanding of reality."
+    },
+    {
+      "name": "Paramita",
+      "nameSanskrit": "Paramita",
+      "description": "Perfection, complete practice methods."
+    },
+    {
+      "name": "Sunyata",
+      "nameSanskrit": "Sunyata",
+      "description": "Emptiness, dependent origination of all phenomena."
+    }
+  ]
+}

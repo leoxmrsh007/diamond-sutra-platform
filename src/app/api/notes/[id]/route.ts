@@ -1,121 +1,28 @@
-/**
- * 单个笔记 API 路由
- */
+import { NextRequest, NextResponse } from 'next/server'
+import prisma from '@/lib/prisma'
+import { auth } from '@/app/api/auth/[...nextauth]/route'
 
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const body = await req.json()
+  const data: any = {}
+  if (typeof body.title === 'string') data.title = body.title
+  if (typeof body.content === 'string') data.content = body.content
+  if (typeof body.isPublic === 'boolean') data.isPublic = body.isPublic
+  if (Object.keys(data).length === 0) return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
 
-// PUT - 更新笔记
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const session = await auth();
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: '未登录' },
-        { status: 401 }
-      );
-    }
-
-    const userId = (session.user as any).id;
-
-    // 验证笔记属于当前用户
-    const existingNote = await prisma.note.findUnique({
-      where: { id },
-    });
-
-    if (!existingNote) {
-      return NextResponse.json(
-        { error: '笔记不存在' },
-        { status: 404 }
-      );
-    }
-
-    if (existingNote.userId !== userId) {
-      return NextResponse.json(
-        { error: '无权修改此笔记' },
-        { status: 403 }
-      );
-    }
-
-    const body = await request.json();
-    const { title, content, isPublic } = body;
-
-    const note = await prisma.note.update({
-      where: { id },
-      data: {
-        ...(title !== undefined && { title }),
-        ...(content !== undefined && { content }),
-        ...(isPublic !== undefined && { isPublic }),
-      },
-    });
-
-    return NextResponse.json(note);
-  } catch (error) {
-    console.error('更新笔记失败:', error);
-    return NextResponse.json(
-      { error: '更新笔记失败' },
-      { status: 500 }
-    );
-  }
+  const updated = await prisma.note.update({
+    where: { id: params.id },
+    data,
+  })
+  return NextResponse.json(updated)
 }
 
-// DELETE - 删除笔记
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const session = await auth();
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: '未登录' },
-        { status: 401 }
-      );
-    }
-
-    const userId = (session.user as any).id;
-
-    // 验证笔记属于当前用户
-    const existingNote = await prisma.note.findUnique({
-      where: { id },
-    });
-
-    if (!existingNote) {
-      return NextResponse.json(
-        { error: '笔记不存在' },
-        { status: 404 }
-      );
-    }
-
-    if (existingNote.userId !== userId) {
-      return NextResponse.json(
-        { error: '无权删除此笔记' },
-        { status: 403 }
-      );
-    }
-
-    await prisma.note.delete({
-      where: { id },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('删除笔记失败:', error);
-    return NextResponse.json(
-      { error: '删除笔记失败' },
-      { status: 500 }
-    );
-  }
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  await prisma.note.delete({ where: { id: params.id } })
+  return NextResponse.json({ success: true })
 }
 
-// 配置
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';

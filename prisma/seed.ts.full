@@ -1,0 +1,319 @@
+/**
+ * 金刚经数据种子脚本
+ * 用于初始化《金刚经》经文数据
+ */
+
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+// 金刚经章节数据
+const chapters = [
+  { num: 1, title: '法会因由分第一', summary: '描述法会的缘起，佛陀在舍卫国祇树给孤独园说法。' },
+  { num: 2, title: '善现启请分第二', summary: '须菩提请法，问如何发菩提心、如何降伏其心。' },
+  { num: 3, title: '大乘正宗分第三', summary: '佛陀阐述菩萨于法应无所住而行布施。' },
+  { num: 4, title: '妙行无住分第四', summary: '说明无论身在何处，应无所住而行布施。' },
+  { num: 5, title: '如理实见分第五', summary: '阐述不可以身相得见如来。' },
+  { num: 6, title: '正信希有分第六', summary: '说明持经修行的福德不可思议。' },
+  { num: 7, title: '无得无说分第七', summary: '阐述如来所说法，皆不可取、不可说。' },
+  { num: 8, title: '依法出生分第八', summary: '说明诸佛菩提皆从此经出。' },
+  { num: 9, title: '一相无相分第九', summary: '阐述须陀洹等圣果亦无有定相可得。' },
+  { num: 10, title: '庄严净土分第十', summary: '说明庄严佛土者，即非庄严，是名庄严。' },
+  { num: 11, title: '无为福胜分第十一', summary: '比较持经福德与七宝布施福德。' },
+  { num: 12, title: '尊重正教分第十二', summary: '说明随处说此经，乃至四句偈等，皆应供养。' },
+  { num: 13, title: '如法受持分第十三', summary: '佛陀回答经名为何，如何受持。' },
+  { num: 14, title: '离相寂灭分第十四', summary: '阐述忍辱波罗蜜，以及离一切诸相即名诸佛。' },
+  { num: 15, title: '持经功德分第十五', summary: '说明持经功德的不可思议。' },
+  { num: 16, title: '能净业障分第十六', summary: '说明持经能净业障，并举例说明。' },
+  { num: 17, title: '究竟无我分第十七', summary: '阐述一切法无我，得果亦无得。' },
+  { num: 18, title: '一体同观分第十八', summary: '阐述五眼、恒河沙等法，说明一如之义。' },
+  { num: 19, title: '法界通化分第十九', summary: '说明福德即非福德，是名福德。' },
+  { num: 20, title: '离色离相分第二十', summary: '阐述不可以具足色身见佛，不可以具足诸相见佛。' },
+  { num: 21, title: '非说所说分第二十一', summary: '阐述如来无所说法，是名说法。' },
+  { num: 22, title: '无法可得分第二十二', summary: '说明无法可得，是名阿耨多罗三藐三菩提。' },
+  { num: 23, title: '净心行善分第二十三', summary: '阐述是法平等，无有高下，是名阿耨多罗三藐三菩提。' },
+  { num: 24, title: '福智无比分第二十四', summary: '比较七宝布施与受持四句偈的福德。' },
+  { num: 25, title: '化无所化分第二十五', summary: '阐述凡所有相皆是虚妄，无有一法是实。' },
+  { num: 26, title: '法身非相分第二十六', summary: '阐述不应以三十二相观如来，即色即空之义。' },
+  { num: 27, title: '无断无灭分第二十七', summary: '阐述法不属断，不属灭，是名圆满。' },
+  { num: 28, title: '不受不贪分第二十八', summary: '说明菩萨不受福德，以无所受故。' },
+  { num: 29, title: '威仪寂净分第二十九', summary: '阐述如来者，无所从来，亦无所去。' },
+  { num: 30, title: '一合相理分第三十', summary: '阐述一合相即非一合相，是名一合相。' },
+  { num: 31, title: '知见不生分第三十一', summary: '阐述发心者，于法不说断灭相。' },
+  { num: 32, title: '应化非真分第三十二', summary: '总结全经，一切有为法如梦幻泡影。' },
+];
+
+// 金刚经偈颂数据（精选）
+const verses = [
+  // 第一分
+  { chapter: 1, num: 1, chinese: '如是我闻：一时，佛在舍卫国祇树给孤独园，与大比丘众千二百五十人俱。', sanskrit: 'Evam maya srutam | ekasmin samaye bhagavan sravastyam viharati...', pinyin: 'Rú shì wǒ wén: yī shí, fó zài Shèwèi guó Qíshù Gěigūdú yuán...', keywords: ['如是我闻', '舍卫国', '祇树给孤独园'] },
+  { chapter: 1, num: 2, chinese: '尔时，世尊食时，着衣持钵，入舍卫大城乞食。于其城中，次第乞已，还至本处。饭食讫，收衣钵，洗足已，敷座而坐。', sanskrit: 'atha bhagavan...', pinyin: 'Ěr shí, Shìzūn shí shí, zhuó yī chí bō...', keywords: ['乞食', '次第乞', '敷座而坐'] },
+
+  // 第二分
+  { chapter: 2, num: 1, chinese: '时，长老须菩提在大众中即从座起，偏袒右肩，右膝着地，合掌恭敬而白佛言："希有！世尊！如来善护念诸菩萨，善付嘱诸菩萨。"', sanskrit: 'atha ayusman subutir...', pinyin: 'Shí, zhǎnglǎo Xūpútí zài dàzhòng zhōng...', keywords: ['须菩提', '善护念', '善付嘱'] },
+  { chapter: 2, num: 2, chinese: '"世尊！善男子、善女人，发阿耨多罗三藐三菩提心，应云何住？云何降伏其心？"', sanskrit: 'astu bhagavan...', pinyin: '"Shìzūn! Shàn nánzǐ, shàn nǚrén, fĀnòuduōluó sānmiǎo sān pútíxīn..."', keywords: ['阿耨多罗三藐三菩提', '云何住', '降伏其心'] },
+  { chapter: 2, num: 3, chinese: '佛言："善哉！善哉！善男子！如汝所说，如来善护念诸菩萨，善付嘱诸菩萨。汝今谛听，当为汝说。善男子、善女人，发阿耨多罗三藐三菩提心，应如是住，如是降伏其心。"', sanskrit: 'bhagavan aha...', pinyin: 'Fó yán: "Shànzāi! Shànzāi!..."', keywords: ['谛听', '如是住', '如是降伏其心'] },
+  { chapter: 2, num: 4, chinese: '"唯然！世尊！愿乐欲闻。"', sanskrit: 'evam bhagavan...', pinyin: '"Wéirán! Shìzūn! Yuàn lè yù wén."', keywords: ['愿乐欲闻'] },
+
+  // 第三分
+  { chapter: 3, num: 1, chinese: '佛告须菩提："诸菩萨摩诃萨，应如是降伏其心：所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。"', sanskrit: 'sri bhagavan uvaca...', pinyin: 'Fó gào Xūpútí: "Zhū púsà móhēsuà, yīng rúshì jiāngfú qí xīn..."', keywords: ['众生', '卵生胎生', '无余涅槃'] },
+  { chapter: 3, num: 2, chinese: '"如是灭度无量无数无边众生，实无众生得灭度者。何以故？须菩提！若菩萨有我相、人相、众生相、寿者相，即非菩萨。"', sanskrit: 'tasya kasya ci...', pinyin: '"Rúshì mièdù wúliàng wúshǔ wúbiān zhòngshēng..."', keywords: ['我相', '人相', '众生相', '寿者相'] },
+
+  // 第六分
+  { chapter: 6, num: 1, chinese: '须菩提白佛言："世尊！颇有众生，于未来世，闻说是法，生信心否？"佛言："须菩提！彼非众生，非不众生。何以故？须菩提！众生、众生者，如来说非众生，是名众生。"', sanskrit: 'bhagavan aha...', pinyin: 'Xūpútí bái fó yán: "Shìzūn! Pōyǒu zhòngshēng..."', keywords: ['信心', '非众生', '是名众生'] },
+
+  // 第四分：妙行无住分
+  { chapter: 4, num: 1, chinese: '复次，须菩提！菩萨于法应无所住行于布施，所谓不住色布施，不住声、香、味、触、法布施。须菩提！菩萨应如是布施，不住于相。', sanskrit: 'punah subhute...', pinyin: 'Fùcì, Xūpútí! Púsà yú fǎ yīng wú suǒ zhù xíng yú bùshī...', keywords: ['无所住', '布施', '不住色布施', '不住声香味触法布施'] },
+  { chapter: 4, num: 2, chinese: '须菩提！于意云何？东方虚空可思量不？不也，世尊。须菩提！南、西、北方、四维、上、下虚空可思量不？不也，世尊。须菩提！菩萨无住相布施。福德亦复如是不可思量。', sanskrit: 'subhute kim manyase...', pinyin: 'Xūpútí! Yú yì yún hé? Dōngfāng xūkōng kě sīliàng bù...', keywords: ['虚空', '福德不可思量', '无住相布施'] },
+
+  // 第五分：如理实见分
+  { chapter: 5, num: 1, chinese: '须菩提！于意云何？可以身相见如来不？不也，世尊！不可以身相得见如来。何以故？如来所说身相，即非身相。', sanskrit: 'subhute kim manyase...', pinyin: 'Xūpútí! Yú yì yún hé? Kěyǐ shēn xiāng jiàn Rúlái bù...', keywords: ['身相', '见如来', '即非身相'] },
+  { chapter: 5, num: 2, chinese: '佛告须菩提："凡所有相，皆是虚妄，若见诸相非相，即见如来。"', sanskrit: 'bhagavan aha: sarva-rūpāni...', pinyin: 'Fó gào Xūpútí: "Fán suǒyǒu xiāng, jiē shì xūwàng...', keywords: ['凡所有相', '皆是虚妄', '见诸相非相'] },
+
+  // 第七分：无得无说分
+  { chapter: 7, num: 1, chinese: '须菩提！于意云何？如来得阿耨多罗三藐三菩提耶？如来有所说法耶？须菩提言："如我解佛所说义，无有定法名阿耨多罗三藐三菩提，亦无有定法，如来可说。"', sanskrit: 'subhute kim manyase...', pinyin: 'Xūpútí! Yú yì yún hé? Rúlái dé Ānòuduōluó sānmiǎo sān pútí yě...', keywords: ['阿耨多罗三藐三菩提', '无有定法', '无法可说'] },
+  { chapter: 7, num: 2, chinese: '何以故？如来所说法，皆不可取、不可说、非法、非非法。所以者何？一切圣贤，皆以无为法而有差别。', sanskrit: 'tathāgata-śāsanā bhagavatas...', pinyin: 'Héyǐgù? Rúlái suǒ shuō fǎ, jiē bùkě qǔ, bùkě shuō, fēifǎ, fēifēifǎ...', keywords: ['不可取', '不可说', '无为法'] },
+
+  // 第八分：依法出生分
+  { chapter: 8, num: 1, chinese: '须菩提！于意云何？若人满三千大千世界七宝以用布施，是人所得福德，宁为多不？须菩提言："甚多，世尊！何以故？是福德即非福德性，是故如来说福德多。"', sanskrit: 'subhute kim manyase...', pinyin: 'Xūpútí! Yú yì yún hé? Ruò rén mǎn sānqiān dàqiān shìjiè qībǎo yǐ yòng bùshī...', keywords: ['三千大千世界', '七宝布施', '福德性'] },
+  { chapter: 8, num: 2, chinese: '若复有人，于此经中受持，乃至四句偈等，为他人说，其福胜彼。何以故？须菩提！一切诸佛及诸佛阿耨多罗三藐三菩提法，皆从此经出。', sanskrit: 'yadi ca kasyacid bhikṣoṇo...', pinyin: 'Ruò fù yǒu rén, yú cǐjīng zhōng shòuchí, nǎizhì sìjù jì děng, wèi tārén shuō, qífú shèng bǐ...', keywords: ['四句偈', '为他人说', '诸佛从此经出'] },
+
+  // 第九分：一相无相分
+  { chapter: 9, num: 1, chinese: '须菩提！于意云何？须陀洹能作是念："我得须陀洹果"不？须菩提言："不也，世尊！何以故？须陀洹名为入流，而无所入，不入色、声、香、味、触、法，是名须陀洹。"', sanskrit: 'subhute kim manyase...', pinyin: 'Xūpútí! Yú yì yún hé? Xūtuóhuán néng zuò shì niàn: "Wǒ dé xūtuóhuán guǒ" bù...', keywords: ['须陀洹', '入流', '不入色声香味触法'] },
+  { chapter: 9, num: 2, chinese: '须菩提！于意云何？阿罗汉能作是念："我得阿罗汉道"不？须菩提言："不也，世尊！何以故？实无有法名阿罗汉。"', sanskrit: 'subhute kim manyase arhān...', pinyin: 'Xūpútí! Yú yì yún hé? Āluóhàn néng zuò shì niàn: "Wǒ dé āluóhàn dào" bù...', keywords: ['阿罗汉', '无有法名阿罗汉'] },
+
+  // 第十分：庄严净土分
+  { chapter: 10, num: 1, chinese: '佛告须菩提："于意云何？如来昔在然灯佛所，于法有所得不？不也，世尊！如来在然灯佛所，于法实无所得。"', sanskrit: 'bhagavan aha subhute...', pinyin: 'Fó gào Xūpútí: "Yú yì yún hé? Rúlái xī zài Rándēngfó suǒ, yú fǎ yǒu suǒdé bù...', keywords: ['然灯佛', '于法无所得'] },
+  { chapter: 10, num: 2, chinese: '须菩提！于意云何？菩萨庄严佛土不？不也，世尊！何以故？庄严佛土者，即非庄严，是名庄严。是故须菩提！诸菩萨摩诃萨，应如是生清净心：不应住色生心，不应住声、香、味、触、法生心，应无所住而生其心。', sanskrit: 'subhute kim manyase...', pinyin: 'Xūpútí! Yú yì yún hé? Púsà zhuāngyán fótǔ bù...', keywords: ['庄严佛土', '即非庄严', '生清净心', '应无所住而生其心'] },
+
+// 第十一分：无为福胜分
+  { chapter: 11, num: 1, chinese: '须菩提！若善男子、善女人，以三千大千世界七宝，持用布施，得福多不？甚多，世尊！何以故？是福德，即非福德性，是故如来说福德多。', sanskrit: 'subhute yadi kaścid...', pinyin: 'Xūpútí! Ruò shàn nánzǐ, shàn nǚrén, yǐ sānqiān dàqiān shìjiè qībǎo, chíyòng bùshī...', keywords: ['七宝布施', '福德性', '无为福胜'] },
+
+  // 第十二分：尊重正教分
+  { chapter: 12, num: 1, chinese: '复次，须菩提！随说是经，乃至四句偈等，当知此处，一切世间天人阿修罗，皆应供养，如佛塔庙。', sanskrit: 'punah subhute yatra...', pinyin: 'Fùcì, Xūpútí! Suí shuō shìjīng, nǎizhì sìjù jì děng, dāng zhī cǐchù...', keywords: ['四句偈', '天人阿修罗', '供养', '如佛塔庙'] },
+  { chapter: 12, num: 2, chinese: '何况有人，尽能受持读诵！须菩提！当知是人，成就最上第一希有之法。若是经典所在之处，则为有佛，若尊重弟子。', sanskrit: 'kuto punah yah kaścid...', pinyin: 'Hékuàng yǒu rén, jìn néng shòuchí dúsòng! Xūpútí! Dāng zhī shìrén, chéngjiù zuìshàng dìyī xīyǒu zhīfǎ...', keywords: ['受持读诵', '最上第一希有之法', '经典所在之处'] },
+
+  // 第十三分：如法受持分
+  { chapter: 13, num: 1, chinese: '尔时，须菩提白佛言："世尊！当何名此经？我等云何奉持？"佛告须菩提："是经名为《金刚般若波罗蜜》，以是名字，汝当奉持。"', sanskrit: 'atha ayusman subutir...', pinyin: 'Ěrshí, Xūpútí bái fó yán: "Shìzūn! Dāng hé míng cǐjīng? Wǒ děng yúhé fèngchí?"...', keywords: ['金刚般若波罗蜜', '奉持'] },
+  { chapter: 13, num: 2, chinese: '所以者何？须菩提！佛说般若波罗蜜，即非般若波罗蜜，是名般若波罗蜜。', sanskrit: 'tat kasya hetoh subhute...', pinyin: 'Suǒyǐzhěhé? Xūpútí! Fó shuō bōruò bōluómì, jí fēi bōruò bōluómì, shì míng bōruò bōluómì.', keywords: ['即非', '是名'] },
+
+  // 第十四分
+  { chapter: 14, num: 1, chinese: '须菩提！忍辱波罗蜜，如来说非忍辱波罗蜜，是名忍辱波罗蜜。何以故？须菩提！如我昔为歌利王割截身体，我于尔时，无我相、无人相、无众生相、无寿者相。', sanskrit: 'ksanti paramita...', pinyin: 'Xūpútí! Rěnrǔ bōluómì...', keywords: ['忍辱波罗蜜', '歌利王', '无相'] },
+
+  // 第十五分：持经功德分
+  { chapter: 15, num: 1, chinese: '须菩提！若有善男子、善女人，初日分以恒河沙等身布施，中日分复以恒河沙等身布施，后日分亦以恒河沙等身布施，如是无量百千万亿劫，以身布施。', sanskrit: 'subhute yadi kaścid...', pinyin: 'Xūpútí! Ruò yǒu shàn nánzǐ, shàn nǚrén, chūrìfēn yǐ Hénghéshā děng shēn bùshī...', keywords: ['恒河沙', '以身布施', '无量百千万亿劫'] },
+  { chapter: 15, num: 2, chinese: '若复有人，闻此经典，信心不逆，其福胜彼。何况书写、受持、读诵、为人解说！须菩提！以要言之，是经有不可思议、不可称量、无边功德。', sanskrit: 'yadi ca kasyacid...', pinyin: 'Ruò fù yǒu rén, wén cǐjīngdiǎn, xìnxīn bùnì, qífú shèng bǐ...', keywords: ['信心不逆', '书写受持读诵', '不可思议功德'] },
+
+  // 第十六分：能净业障分
+  { chapter: 16, num: 1, chinese: '复次，须菩提！善男子、善女人，受持读诵此经，若为人轻贱，是人先世罪业，应堕恶道。以今世人轻贱故，先世罪业，即为消灭，当得阿耨多罗三藐三菩提。', sanskrit: 'punah subhute yadi...', pinyin: 'Fùcì, Xūpútí! Shàn nánzǐ, shàn nǚrén, shòuchí dúsòng cǐjīng, ruò wéi rén qīngjiàn...', keywords: ['先世罪业', '应堕恶道', '轻贱', '罪业消灭'] },
+  { chapter: 16, num: 2, chinese: '须菩提！我念过去无量阿僧祇劫，于然灯佛前，得值八百四千万亿那由他诸佛，悉皆供养承事，无空过者。', sanskrit: 'subhute smarāmi aham...', pinyin: 'Xūpútí! Wǒ niàn guòqù wúliàng Āsēngqíjié, yú Rándēngfó qián, dé zhí bābǎi sìqiān wàn yì nămóutā zhūfó...', keywords: ['无量阿僧祇劫', '供养诸佛'] },
+
+  // 第十七分：究竟无我分
+  { chapter: 17, num: 1, chinese: '须菩提白佛言："世尊！善男子、善女人，发阿耨多罗三藐三菩提心，云何应住？云何降伏其心？"', sanskrit: 'atha ayusman subutir...', pinyin: 'Xūpútí bái fó yán: "Shìzūn! Shàn nánzǐ, shàn nǚrén, fā Ānòuduōluó sānmiǎo sān pútíxīn, yúhé yīng zhù? Yúhé jiàngfú qí xīn?"', keywords: ['发菩提心', '云何住', '降伏其心'] },
+  { chapter: 17, num: 2, chinese: '佛告须菩提："善男子、善女人，发阿耨多罗三藐三菩提心者，当生如是心：我应灭度一切众生，灭度一切众生已，而无有一众生实灭度者。"', sanskrit: 'bhagavan aha subhute...', pinyin: 'Fó gào Xūpútí: "Shàn nánzǐ, shàn nǚrén, fā Ānòuduōluó sānmiǎo sān pútíxīn zhě, dāng shēng rúshì xīn: wǒ yīng mièdù yīqiè zhòngshēng...', keywords: ['灭度众生', '无有众生实灭度', '无我'] },
+
+  // 第十八分：一体同观分
+  { chapter: 18, num: 1, chinese: '须菩提！于意云何？如来有肉眼不？如是，世尊！如来有肉眼。须菩提！于意云何？如来有天眼不？如是，世尊！如来有天眼。须菩提！于意云何？如来有慧眼不？如是，世尊！如来有慧眼。须菩提！于意云何？如来有法眼不？如是，世尊！如来有法眼。须菩提！于意云何？如来有佛眼不？如是，世尊！如来有佛眼。', sanskrit: 'subhute kim manyase...', pinyin: 'Xūpútí! Yú yì yún hé? Rúlái yǒu ròuyǎn bù? Rúshì, Shìzūn! Rúlái yǒu ròuyǎn...', keywords: ['五眼', '肉眼', '天眼', '慧眼', '法眼', '佛眼'] },
+  { chapter: 18, num: 2, chinese: '佛告须菩提："尔所国土中，所有众生若干种心，如来悉知。何以故？如来说诸心，皆为非心，是名为心。所以者何？须菩提！过去心不可得，现在心不可得，未来心不可得。"', sanskrit: 'bhagavan aha subhute...', pinyin: 'Fó gào Xūpútí: "Ěr suǒ guótǔ zhōng, suǒyǒu zhòngshēng ruògān zhǒng xīn, Rúlái xī zhī. Héyǐgù? Rúlái shuō zhūxīn, jiē wéi fēixīn, shì míng wéi xīn...', keywords: ['若干种心', '皆为非心', '过去心不可得', '现在心不可得', '未来心不可得'] },
+
+  // 第十九分：法界通化分
+  { chapter: 19, num: 1, chinese: '须菩提！于意云何？若有人满三千大千世界七宝，持用布施，是人以是因缘，得福多不？甚多，世尊！', sanskrit: 'subhute kim manyase...', pinyin: 'Xūpútí! Yú yì yún hé? Ruò yǒu rén mǎn sānqiān dàqiān shìjiè qībǎo, chíyòng bùshī...', keywords: ['三千大千世界', '七宝布施', '因缘'] },
+  { chapter: 19, num: 2, chinese: '佛告须菩提："若善男子、善女人，以三千大千世界七宝，持用布施；若复有人，于此经中，受持乃至四句偈等，为他人说，其福甚多。"', sanskrit: 'bhagavan aha subhute...', pinyin: 'Fó gào Xūpútí: "Ruò shàn nánzǐ, shàn nǚrén, yǐ sānqiān dàqiān shìjiè qībǎo, chíyòng bùshī; ruò fù yǒu rén, yú cǐjīng zhōng, shòuchí nǎizhì sìjù jì děng, wèi tārén shuō, qífú shèn duō."', keywords: ['四句偈', '为他人说', '福德甚多'] },
+
+  // 第二十分：离色离相分
+  { chapter: 20, num: 1, chinese: '须菩提！于意云何？佛可以具足色身见不？不也，世尊！如来不应以具足色身见。何以故？如来说：具足色身，即非具足色身，是名具足色身。', sanskrit: 'subhute kim manyase...', pinyin: 'Xūpútí! Yú yì yún hé? Fó kěyǐ jùzú sèshēn jiàn bù? Bù yě, Shìzūn! Rúlái bùyīng yǐ jùzú sèshēn jiàn...', keywords: ['具足色身', '即非具足色身', '离色离相'] },
+  { chapter: 20, num: 2, chinese: '须菩提！于意云何？如来可以具足诸相见不？不也，世尊！如来不应以具足诸相见。何以故？如来说：诸相具足，即非具足，是名诸相具足。', sanskrit: 'subhute kim manyase...', pinyin: 'Xūpútí! Yú yì yún hé? Rúlái kěyǐ jùzú zhūxiāng jiàn bù? Bù yě, Shìzūn! Rúlái bùyīng yǐ jùzú zhūxiāng jiàn...', keywords: ['具足诸相', '即非具足', '诸相具足'] },
+
+  // 第二十一分：非说所说分
+  { chapter: 21, num: 1, chinese: '须菩提！汝勿谓如来作是念："我当有所说法。"莫作是念！何以故？若人言：如来有所说法，即为谤佛，不能解我所说故。', sanskrit: 'subhute na manyetha...', pinyin: 'Xūpútí! Rǔ wù wèi Rúlái zuò shì niàn: "Wǒ dāng yǒu suǒ shuōfǎ." Mò zuò shì niàn! Héyǐgù? Ruò rén yán: Rúlái yǒu suǒ shuōfǎ, jí wéi bàng fó, bùnéng jiě wǒ suǒ shuō gù.', keywords: ['有所说法', '谤佛', '非说所说'] },
+  { chapter: 21, num: 2, chinese: '须菩提！说法者，无法可说，是名说法。', sanskrit: 'subhute dharmapradhānā...', pinyin: 'Xūpútí! Shuōfǎzhě, wúfǎ kě shuō, shì míng shuōfǎ.', keywords: ['无法可说', '是名说法'] },
+
+  // 第二十二分：无法可得分
+  { chapter: 22, num: 1, chinese: '须菩提白佛言："世尊！佛得阿耨多罗三藐三菩提，为无所得耶？"', sanskrit: 'atha ayusman subutir...', pinyin: 'Xūpútí bái fó yán: "Shìzūn! Fó dé Ānòuduōluó sānmiǎo sān pútí, wèi wúsuǒdé yě?"', keywords: ['阿耨多罗三藐三菩提', '无所得'] },
+
+  // 第二十三分：净心行善分
+  { chapter: 23, num: 1, chinese: '复次，须菩提！是法平等，无有高下，是名阿耨多罗三藐三菩提。', sanskrit: 'punah subhute etat dharma...', pinyin: 'Fùcì, Xūpútí! Shì fǎ píngděng, wúyǒu gāoxià, shì míng Ānòuduōluó sānmiǎo sān pútí.', keywords: ['是法平等', '无有高下', '净心行善'] },
+  { chapter: 23, num: 2, chinese: '以无我、无人、无众生、无寿者，修一切善法，即得阿耨多罗三藐三菩提。', sanskrit: 'anātmānam anahamkāram...', pinyin: 'Yǐ wúwǒ, wúrén, wúzhòngshēng, wúshòuzhě, xiū yīqiè shàn fǎ, jí dé Ānòuduōluó sānmiǎo sān pútí.', keywords: ['无我', '无人', '无众生', '无寿者', '修一切善法'] },
+
+  // 第二十四分：福智无比分
+  { chapter: 24, num: 1, chinese: '须菩提！若三千大千世界中，所有诸须弥山王，如是等七宝聚，有人持用布施；若人以此般若波罗蜜经，乃至四句偈等，受持读诵，为他人说，于前福德，百分不及一，千万亿分，乃至算数譬喻所不能及。', sanskrit: 'subhute yadi sāhasram...', pinyin: 'Xūpútí! Ruò sānqiān dàqiān shìjiè zhōng, suǒyǒu zhū Xūmíshānwáng, rúshì děng qībǎo jù...', keywords: ['须弥山王', '七宝聚', '般若波罗蜜经', '四句偈'] },
+
+  // 第二十五分：化无所化分
+  { chapter: 25, num: 1, chinese: '须菩提！汝等勿谓如来作是念："我当度众生。"须菩提！莫作是念！何以故？实无有众生如来度者。', sanskrit: 'subhute mā manyetha...', pinyin: 'Xūpútí! Rǔ děng wù wèi Rúlái zuò shì niàn: "Wǒ dāng dù zhòngshēng." Xūpútí! Mò zuò shì niàn! Héyǐgù? Shí wúyǒu zhòngshēng Rúlái dùzhě.', keywords: ['我当度众生', '实无有众生如来度者', '化无所化'] },
+  { chapter: 25, num: 2, chinese: '若有众生如来度者，如来则有我、人、众生、寿者。', sanskrit: 'sattva-upalambho yadi syāt...', pinyin: 'Ruò yǒu zhòngshēng Rúlái dùzhě, Rúlái zé yǒu wǒ, rén, zhòngshēng, shòuzhě.', keywords: ['有我', '有人', '有众生', '有寿者'] },
+
+  // 第二十六分：法身非相分
+  { chapter: 26, num: 1, chinese: '须菩提！于意云何？可以三十二相观如来不？须菩提言："如是，如是！以三十二相观如来。"', sanskrit: 'subhute kim manyase...', pinyin: 'Xūpútí! Yú yì yún hé? Kěyǐ sānshí'èr xiāng guān Rúlái bù? Xūpútí yán: "Rúshì, rúshì! Yǐ sānshí'èr xiāng guān Rúlái."', keywords: ['三十二相', '观如来', '法身非相'] },
+  { chapter: 26, num: 2, chinese: '佛言："须菩提！若以三十二相观如来者，转轮圣王则是如来。"须菩提白佛言："世尊！如我解佛所说义，不应以三十二相观如来。"', sanskrit: 'bhagavan aha subhute...', pinyin: 'Fó yán: "Xūpútí! Ruò yǐ sānshí'èr xiāng guān Rúlái zhě, zhuǎnlún shèngwáng zé shì Rúlái." Xūpútí bái fó yán: "Shìzūn! Rú wǒ jiě fó suǒ shuō yì, bùyīng yǐ sānshí'èr xiāng guān Rúlái."', keywords: ['转轮圣王', '不应以三十二相观如来'] },
+
+  // 第二十七分：无断无灭分
+  { chapter: 27, num: 1, chinese: '须菩提！汝若作是念："如来不以具足相故，得阿耨多罗三藐三菩提。"须菩提！莫作是念："如来不以具足相故，得阿耨多罗三藐三菩提。"', sanskrit: 'subhute yadi manye...', pinyin: 'Xūpútí! Rǔ ruò zuò shì niàn: "Rúlái bù yǐ jùzú xiāng gù, dé Ānòuduōluó sānmiǎo sān pútí." Xūpútí! Mò zuò shì niàn: "Rúlái bù yǐ jùzú xiāng gù, dé Ānòuduōluó sānmiǎo sān pútí."', keywords: ['不以具足相', '得菩提', '无断无灭'] },
+  { chapter: 27, num: 2, chinese: '须菩提！汝若作是念："发阿耨多罗三藐三菩提心者，说诸法断灭。"莫作是念！何以故？发阿耨多罗三藐三菩提心者，于法不说断灭相。', sanskrit: 'subhute yadi manye...', pinyin: 'Xūpútí! Rǔ ruò zuò shì niàn: "Fā Ānòuduōluó sānmiǎo sān pútíxīn zhě, shuō zhūfǎ duānmiè." Mò zuò shì niàn! Héyǐgù? Fā Ānòuduōluó sānmiǎo sān pútíxīn zhě, yú fǎ bùshuō duānmiè xiàng.', keywords: ['断灭相', '不说断灭', '无断无灭'] },
+
+  // 第二十八分：不受不贪分
+  { chapter: 28, num: 1, chinese: '须菩提！若菩萨以满恒河沙等世界七宝，持用布施；若复有人，知一切法无我，得成于忍，此菩萨胜前菩萨福德。', sanskrit: 'subhute yadi bodhisattva...', pinyin: 'Xūpútí! Ruò púsà yǐ mǎn Hénghéshā děng shìjiè qībǎo, chíyòng bùshī; ruò fù yǒu rén, zhī yīqiè fǎ wúwǒ, dé chéng yú rěn, cǐ púsà shèng qián púsà fúdé.', keywords: ['恒河沙', '一切法无我', '得成于忍'] },
+  { chapter: 28, num: 2, chinese: '何以故？须菩提！诸菩萨不受福德故。须菩提白佛言："世尊！云何菩萨不受福德？"', sanskrit: 'tat kasya hetoh subhute...', pinyin: 'Héyǐgù? Xūpútí! Zhū púsà bù shòu fúdé gù. Xūpútí bái fó yán: "Shìzūn! Yúhé púsà bù shòu fúdé?"', keywords: ['不受福德', '无受福者'] },
+
+  // 第二十九分：威仪寂静分
+  { chapter: 29, num: 1, chinese: '须菩提！若有人言："如来若来、若去、若坐、若卧。"是人不解我所说义。何以故？如来者，无所从来，亦无所去，故名如来。', sanskrit: 'subhute yadi kaścid...', pinyin: 'Xūpútí! Ruò yǒu rén yán: "Rúlái ruò lái, ruò qù, ruò zuò, ruò wò." Shì rén bùjiě wǒ suǒ shuō yì. Héyǐgù? Rúlái zhě, wúsuǒ cóng lái, yì wúsuǒ qù, gù míng Rúlái.', keywords: ['无所从来', '亦无所去', '威仪寂静', '名如来'] },
+
+  // 第三十分：一合相理分
+  { chapter: 30, num: 1, chinese: '须菩提！若善男子、善女人，以三千大千世界碎为微尘，于意云何？是微尘众，宁为多不？甚多，世尊！', sanskrit: 'subhute yadi kula-putra...', pinyin: 'Xūpútí! Ruò shàn nánzǐ, shàn nǚrén, yǐ sānqiān dàqiān shìjiè suì wéi wēichén, yú yì yún hé? Shì wēichén zhòng, níng wéi duō bù? Shèn duō, Shìzūn!', keywords: ['三千大千世界', '微尘', '微尘众', '一合相'] },
+  { chapter: 30, num: 2, chinese: '何以故？若是微尘众实有者，佛则不说是微尘众。所以者何？佛说微尘众，即非微尘众，是名微尘众。', sanskrit: 'tat kasya hetoh subhute...', pinyin: 'Héyǐgù? Ruòshì wēichén zhòng shíyǒu zhě, fó zé bùshuō shì wēichén zhòng. Suǒyǐzhěhé? Fó shuō wēichén zhòng, jí fēi wēichén zhòng, shì míng wēichén zhòng.', keywords: ['微尘众', '即非微尘众', '是名微尘众'] },
+
+  // 第三十一分：知见不生分
+  { chapter: 31, num: 1, chinese: '须菩提！若人言："佛说我见、人见、众生见、寿者见。"须菩提！于意云何？是人解我所说义不？不也，世尊！', sanskrit: 'subhute yadi kaścid...', pinyin: 'Xūpútí! Ruò rén yán: "Fó shuō wǒjiàn, rénjiàn, zhòngshēngjiàn, shòuzhějiàn." Xūpútí! Yú yì yún hé? Shì rén jiě wǒ suǒ shuō yì bù? Bù yě, Shìzūn!', keywords: ['我见', '人见', '众生见', '寿者见', '知见不生'] },
+  { chapter: 31, num: 2, chinese: '世尊！是人不解如来所说义。何以故？世尊说：我见、人见、众生见、寿者见，即非我见、人见、众生见、寿者见，是名我见、人见、众生见、寿者见。', sanskrit: 'bhagavan na sa eṣa...', pinyin: 'Shìzūn! Shì rén bùjiě Rúlái suǒ shuō yì. Héyǐgù? Shìzūn shuō: wǒjiàn, rénjiàn, zhòngshēngjiàn, shòuzhějiàn, jí fēi wǒjiàn, rénjiàn, zhòngshēngjiàn, shòuzhějiàn, shì míng wǒjiàn, rénjiàn, zhòngshēngjiàn, shòuzhějiàn.', keywords: ['即非', '是名'] },
+
+  // 第三十二分
+  { chapter: 32, num: 1, chinese: '一切有为法，如梦幻泡影，如露亦如电，应作如是观。', sanskrit: 'sarve dharma...', pinyin: 'Yīqiè yǒuwéi fǎ, rú mèng huàn pào yǐng...', keywords: ['有为法', '梦幻泡影', '如露如电'] },
+  { chapter: 32, num: 2, chinese: '"说是经已，长老须菩提，及诸比丘、比丘尼、优婆塞、优婆夷，一切世间天人阿修罗，闻佛所说，皆大欢喜，信受奉行。"', sanskrit: 'bhagavan etad avyavadat...', pinyin: '"Shuō shì jīng yǐ, zhǎnglǎo Xūpútí..."', keywords: ['皆大欢喜', '信受奉行'] },
+];
+
+async function main() {
+  console.log('开始初始化金刚经数据...');
+
+  // 创建经文记录
+  const sutra = await prisma.sutra.upsert({
+    where: { slug: 'diamond-sutra' },
+    update: {},
+    create: {
+      title: '金刚般若波罗蜜经',
+      titleSanskrit: 'Vajracchedikā Prajñāpāramitā Sūtra',
+      titleTibetan: 'རྡོ་རྗེ་གཅོད་པ་ཤེས་རབ་ཀྱི་ཕ་རོལ་ཏུ་ཕྱིན་པའི་མདོ',
+      slug: 'diamond-sutra',
+      description: '《金刚般若波罗蜜经》，简称《金刚经》，是大乘佛教般若部的重要经典，流传最广、影响最深。经文围绕"般若"（智慧）展开，阐述"缘起性空"的中观思想。',
+      order: 1,
+    },
+  });
+
+  console.log(`✓ 创建经文: ${sutra.title}`);
+
+  // 创建章节
+  for (const chapter of chapters) {
+    await prisma.chapter.upsert({
+      where: {
+        sutraId_chapterNum: {
+          sutraId: sutra.id,
+          chapterNum: chapter.num,
+        },
+      },
+      update: {},
+      create: {
+        sutraId: sutra.id,
+        chapterNum: chapter.num,
+        title: chapter.title,
+        summary: chapter.summary,
+        order: chapter.num,
+      },
+    });
+  }
+
+  console.log(`✓ 创建 ${chapters.length} 个章节`);
+
+  // 获取所有章节映射
+  const allChapters = await prisma.chapter.findMany({
+    where: { sutraId: sutra.id },
+    orderBy: { chapterNum: 'asc' },
+  });
+
+  const chapterMap = new Map(allChapters.map((c) => [c.chapterNum, c.id]));
+
+  // 创建偈颂
+  for (const verse of verses) {
+    const chapterId = chapterMap.get(verse.chapter);
+    if (!chapterId) continue;
+
+    await prisma.verse.upsert({
+      where: {
+        chapterId_verseNum: {
+          chapterId,
+          verseNum: verse.num,
+        },
+      },
+      update: {},
+      create: {
+        chapterId,
+        verseNum: verse.num,
+        chinese: verse.chinese,
+        sanskrit: verse.sanskrit,
+        pinyin: verse.pinyin,
+        aiKeyword: verse.keywords,
+        order: verse.num,
+      },
+    });
+  }
+
+  console.log(`✓ 创建 ${verses.length} 个偈颂`);
+
+  // 创建示例注释
+  const versesList = await prisma.verse.findMany({
+    where: { chapter: { sutraId: sutra.id } },
+    take: 5,
+  });
+
+  for (const verse of versesList) {
+    await prisma.commentary.upsert({
+      where: { id: `comm-${verse.id}` },
+      update: {},
+      create: {
+        id: `comm-${verse.id}`,
+        verseId: verse.id,
+        author: '六祖慧能',
+        source: '金刚经口诀',
+        content: `此偈颂揭示般若深意，修行者应离相无住，方能证得实相。`,
+      },
+    });
+  }
+
+  console.log(`✓ 创建示例注释`);
+
+  // 创建示例课程
+  await prisma.course.upsert({
+    where: { id: 'course-1' },
+    update: {},
+    create: {
+      id: 'course-1',
+      title: '《金刚经》入门导读',
+      description: '了解《金刚经》的缘起、核心思想和基本概念，适合初学者建立正确的知见。',
+      level: 'BEGINNER',
+      duration: 120,
+      isPublished: true,
+      order: 1,
+    },
+  });
+
+  console.log(`✓ 创建示例课程`);
+
+  // 创建佛学概念
+  const concepts = [
+    { name: '般若', nameSanskrit: 'Prajñā', description: '智慧，超越世俗智慧的终极智慧，能如实认知一切事物和真理。' },
+    { name: '波罗蜜', nameSanskrit: 'Pāramitā', description: '到彼岸，圆满的修行方法，共分六度。' },
+    { name: '空性', nameSanskrit: 'Śūnyatā', description: '诸法无自性，缘起性空，是中观思想的核心。' },
+    { name: '菩提心', nameSanskrit: 'Bodhicitta', description: '为利益众生而追求成佛的发心。' },
+    { name: '涅槃', nameSanskrit: 'Nirvāna', description: '烦恼止息、脱离轮回的寂静境界。' },
+    { name: '布施', nameSanskrit: 'Dāna', description: '给予而不求回报，是六度波罗蜜之首。' },
+    { name: '忍辱', nameSanskrit: 'Kṣānti', description: '忍受侮辱而不起嗔恨心，是菩萨重要修行。' },
+  ];
+
+  for (const concept of concepts) {
+    await prisma.concept.upsert({
+      where: { name: concept.name },
+      update: {},
+      create: concept,
+    });
+  }
+
+  console.log(`✓ 创建 ${concepts.length} 个佛学概念`);
+
+  console.log('\n✅ 数据初始化完成！');
+}
+
+main()
+  .catch((e) => {
+    console.error('数据初始化失败:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

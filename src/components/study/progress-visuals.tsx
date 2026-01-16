@@ -36,39 +36,91 @@ export function StudyStatsCard({
   exp = 1250,
   nextLevelExp = 2000,
 }: StudyStatsProps) {
-  const progress = (studiedVerses / totalVerses) * 100;
-  const levelProgress = (exp / nextLevelExp) * 100;
+  const completionPercent = totalVerses > 0 ? Math.min(100, Math.round((studiedVerses / totalVerses) * 100)) : 0;
+  const levelProgress = nextLevelExp > 0 ? Math.min(100, Math.round((exp / nextLevelExp) * 100)) : 0;
+
+  const statCards: StatCardProps[] = [
+    {
+      icon: <Flame className="w-5 h-5 text-orange-500" />,
+      label: '连续签到',
+      value: consecutiveDays,
+      unit: '天',
+      color: 'orange',
+    },
+    {
+      icon: <Calendar className="w-5 h-5 text-blue-500" />,
+      label: '累计学习',
+      value: studiedDays,
+      unit: '天',
+      color: 'blue',
+    },
+    {
+      icon: <Target className="w-5 h-5 text-green-500" />,
+      label: '已学偈颂',
+      value: studiedVerses,
+      unit: '偈',
+      color: 'green',
+    },
+    {
+      icon: <Trophy className="w-5 h-5 text-amber-500" />,
+      label: '修行等级',
+      value: level,
+      unit: '',
+      color: 'amber',
+    },
+  ];
+
+  if (typeof notes === 'number') {
+    statCards.push({
+      icon: <CardTitle className="text-lg font-semibold">📝</CardTitle>,
+      label: '学习笔记',
+      value: notes,
+      unit: '条',
+      color: 'purple',
+    });
+  }
+
+  if (typeof bookmarks === 'number') {
+    statCards.push({
+      icon: <CardTitle className="text-lg font-semibold">🔖</CardTitle>,
+      label: '书签收藏',
+      value: bookmarks,
+      unit: '条',
+      color: 'red',
+    });
+  }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <StatCard
-        icon={<Flame className="w-5 h-5 text-orange-500" />}
-        label="连续签到"
-        value={consecutiveDays}
-        unit="天"
-        color="orange"
-      />
-      <StatCard
-        icon={<Calendar className="w-5 h-5 text-blue-500" />}
-        label="累计学习"
-        value={studiedDays}
-        unit="天"
-        color="blue"
-      />
-      <StatCard
-        icon={<Target className="w-5 h-5 text-green-500" />}
-        label="已学偈颂"
-        value={studiedVerses}
-        unit="偈"
-        color="green"
-      />
-      <StatCard
-        icon={<Trophy className="w-5 h-5 text-amber-500" />}
-        label="修行等级"
-        value={level}
-        unit=""
-        color="amber"
-      />
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
+        {statCards.map((card) => (
+          <StatCard key={`${card.label}-${card.unit}`} {...card} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span>整体进度</span>
+            <span className="font-medium">{completionPercent}%</span>
+          </div>
+          <Progress value={completionPercent} className="h-2" />
+          <p className="text-xs text-muted-foreground">
+            已完成 {studiedVerses}/{totalVerses} 偈颂
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span>等级经验</span>
+            <span className="font-medium">{levelProgress}%</span>
+          </div>
+          <Progress value={levelProgress} className="h-2" />
+          <p className="text-xs text-muted-foreground">
+            当前经验 {exp} / {nextLevelExp}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

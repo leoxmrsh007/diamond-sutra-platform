@@ -18,7 +18,6 @@ import { LoadingSpinner } from '@/components/ui/loading';
 import {
   BookOpen,
   Volume2,
-  VolumeX,
   Bookmark,
   FileText,
   Sparkles,
@@ -32,8 +31,14 @@ import {
 } from 'lucide-react';
 import { NoteDialog } from '@/components/study/note-dialog';
 import { BookmarkDialog, BookmarkList } from '@/components/study/bookmark-dialog';
+import type { BookmarkItem } from '@/components/study/bookmark-dialog';
 import { DailyCheckIn } from '@/components/study/daily-check-in';
 import { useSession } from 'next-auth/react';
+
+interface AiAnalysis {
+  summary?: string;
+  [key: string]: unknown;
+}
 
 interface Chapter {
   id: string;
@@ -48,9 +53,9 @@ interface Verse {
   verseNum: number;
   chinese: string;
   sanskrit?: string;
-  pinyin?: string;
+  english?: string;
   aiKeyword: string[];
-  aiAnalysis?: any;
+  aiAnalysis?: AiAnalysis | null;
 }
 
 interface StudyProgress {
@@ -61,6 +66,34 @@ interface StudyProgress {
   lastStudiedAt: Date | null;
 }
 
+type BookmarkResponse = {
+  id: string;
+  verseId: string;
+  note?: string | null;
+  createdAt: string | Date;
+  verse?: {
+    chinese?: string | null;
+    chapter?: {
+      title?: string | null;
+    } | null;
+  } | null;
+};
+
+const isBookmarkResponse = (value: unknown): value is BookmarkResponse => {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  return typeof candidate.id === 'string' && typeof candidate.verseId === 'string';
+};
+
+const normalizeBookmark = (bookmark: BookmarkResponse): BookmarkItem => ({
+  id: bookmark.id,
+  verseId: bookmark.verseId,
+  verse: bookmark.verse?.chinese ?? '经文不可用',
+  chapter: bookmark.verse?.chapter?.title ?? '未知章节',
+  note: bookmark.note ?? undefined,
+  createdAt: new Date(bookmark.createdAt).toISOString().split('T')[0],
+});
+
 export default function StudyPage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
@@ -70,6 +103,7 @@ export default function StudyPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('chinese');
   const [studyProgress, setStudyProgress] = useState<Record<string, StudyProgress>>({});
+  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   
   const { data: session } = useSession();
 
@@ -116,6 +150,7 @@ export default function StudyPage() {
   useEffect(() => {
     if (session?.user) {
       fetchStudyProgress();
+      fetchBookmarks();
     }
   }, [session]);
 
@@ -132,6 +167,21 @@ export default function StudyPage() {
       }
     } catch (error) {
       console.error('Failed to fetch study progress:', error);
+    }
+  };
+
+  const fetchBookmarks = async () => {
+    try {
+      const res = await fetch('/api/bookmarks');
+      if (res.ok) {
+        const data: unknown = await res.json();
+        if (Array.isArray(data)) {
+          const normalized = data.filter(isBookmarkResponse).map(normalizeBookmark);
+          setBookmarks(normalized);
+        }
+      }
+    } catch {
+      setBookmarks([]);
     }
   };
 
@@ -383,7 +433,10 @@ export default function StudyPage() {
                     size="icon" 
                     variant="outline" 
                     onClick={goToNextVerse}
-                    disabled={!currentChapter || selectedChapter.chapterNum === 32 && selectedVerseIndex === verses.length - 1}
+                    disabled={
+                      !currentChapter ||
+                      (currentChapter.chapterNum === 32 && selectedVerseIndex === verses.length - 1)
+                    }
                   >
                     <ChevronRight className="w-4 h-4" />
                   </Button>
@@ -470,8 +523,8 @@ export default function StudyPage() {
                       </TabsContent>
 
                       <TabsContent value="english" className="space-y-4">
-                        <div className="text-lg leading-relaxed text-muted-foreground">
-                          英译文本正在准备中...
+                        <div className="text-lg leading-relaxed text-muted-foreground font-serif">
+                          {selectedVerse.english || '英译文本正在整理中...'}
                         </div>
                       </TabsContent>
 
@@ -491,7 +544,7 @@ export default function StudyPage() {
                             {selectedVerse.aiAnalysis?.summary || '正在生成解析...'}
                           </p>
                           <div className="flex flex-wrap gap-2">
-                            {(selectedVerse.aiKeyword || []).map((kw) => (
+                            {(Array.isArray(selectedVerse.aiKeyword) ? selectedVerse.aiKeyword : []).map((kw) => (
                               <Badge key={kw} variant="secondary" className="bg-amber-100 text-amber-800">
                                 {kw}
                               </Badge>
@@ -604,14 +657,14 @@ export default function StudyPage() {
             </Card>
 
             {/* Keywords */}
-            {selectedVerse && (selectedVerse.aiKeyword || []).length > 0 && (
+            {selectedVerse && Array.isArray(selectedVerse.aiKeyword) && selectedVerse.aiKeyword.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm">关键词</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {selectedVerse.aiKeyword.map((kw) => (
+                    {(Array.isArray(selectedVerse.aiKeyword) ? selectedVerse.aiKeyword : []).map((kw) => (
                       <Badge key={kw} variant="outline" className="cursor-pointer hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300">
                         {kw}
                       </Badge>
@@ -631,7 +684,7 @@ export default function StudyPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <BookmarkList currentId={selectedVerse?.id || ''} />
+                  <BookmarkList bookmarks={bookmarks} currentId={selectedVerse?.id || ''} />
                 </CardContent>
               </Card>
             )}

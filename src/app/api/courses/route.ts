@@ -14,6 +14,9 @@ export async function GET(request: NextRequest) {
     const level = searchParams.get('level'); // BEGINNER, INTERMEDIATE, ADVANCED
     const isPublished = searchParams.get('published') !== 'false'; // 默认只显示已发布的课程
 
+    const session = await auth();
+    const userId = session?.user ? (session.user as any).id : null;
+
     const where: any = {};
     if (level) {
       where.level = level;
@@ -48,22 +51,10 @@ export async function GET(request: NextRequest) {
     });
 
     // 如果用户已登录，标记已报名的课程
-    const session = await auth();
-    let enrolledCourseIds: string[] = [];
-
-    if (session?.user) {
-      const userId = (session.user as any).id;
-      const enrollments = await prisma.courseEnrollment.findMany({
-        where: { userId },
-        select: { courseId: true },
-      });
-      enrolledCourseIds = enrollments.map((e) => e.courseId);
-    }
-
-    const coursesWithEnrollment = courses.map((course) => ({
-      ...course,
-      isEnrolled: enrolledCourseIds.includes(course.id),
-      studentCount: course.enrollments.length,
+    const coursesWithEnrollment = courses.map(({ enrollments, ...courseData }) => ({
+      ...courseData,
+      studentCount: enrollments.length,
+      isEnrolled: userId ? enrollments.some((enrollment) => enrollment.userId === userId) : false,
     }));
 
     return NextResponse.json(coursesWithEnrollment);

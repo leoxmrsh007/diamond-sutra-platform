@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+// 无需会话即可获取课程详情；是否已报名在客户端基于会话判断
 
 // GET - 获取课程详情
 export async function GET(
@@ -14,27 +14,20 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const session = await auth();
-    let userId: string | null = null;
-
-    if (session?.user) {
-      userId = (session.user as any).id;
-    }
+    const userId: string | null = null;
 
     const course = await prisma.course.findUnique({
       where: { id },
       include: {
-        lessons: {
-          orderBy: { order: 'asc' },
-        },
-        enrollments: {
-          where: userId ? { userId } : undefined,
-          select: {
-            id: true,
-            progress: true,
-            completedAt: true,
-          },
-        },
+        lessons: { orderBy: { order: 'asc' } },
+        ...(userId
+          ? {
+              enrollments: {
+                where: { userId },
+                select: { id: true, progress: true, completedAt: true },
+              },
+            }
+          : {}),
       },
     });
 
@@ -46,14 +39,13 @@ export async function GET(
     }
 
     // 检查用户是否已报名
-    const enrollment = course.enrollments[0];
-    const isEnrolled = !!enrollment;
+    const isEnrolled = false;
 
     return NextResponse.json({
       ...course,
       isEnrolled,
-      userProgress: enrollment?.progress || 0,
-      completedAt: enrollment?.completedAt || null,
+      userProgress: 0,
+      completedAt: null,
     });
   } catch (error) {
     console.error('获取课程详情失败:', error);

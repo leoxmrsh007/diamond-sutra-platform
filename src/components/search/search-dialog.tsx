@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,6 @@ import {
   X,
   BookOpen,
   MessageSquare,
-  Users,
   FileText,
   ArrowRight,
 } from 'lucide-react';
@@ -87,17 +86,8 @@ const typeIcons = {
   note: FileText,
 };
 
-const typeLabels = {
-  verse: '偈颂',
-  chapter: '章节',
-  course: '课程',
-  post: '帖子',
-  note: '笔记',
-};
-
 export function SearchDialog({ open, onClose }: SearchDialogProps) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -108,22 +98,20 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
     }
   }, [open]);
 
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      setSelectedIndex(-1);
-      return;
+  const trimmedQuery = query.trim();
+
+  const results = useMemo(() => {
+    if (!trimmedQuery) {
+      return [] as SearchResult[];
     }
 
-    // 模拟搜索
-    const filtered = mockSearchResults.filter(
+    const lower = trimmedQuery.toLowerCase();
+    return mockSearchResults.filter(
       (item) =>
-        item.title.toLowerCase().includes(query.toLowerCase()) ||
-        item.content.toLowerCase().includes(query.toLowerCase())
+        item.title.toLowerCase().includes(lower) ||
+        item.content.toLowerCase().includes(lower)
     );
-    setResults(filtered);
-    setSelectedIndex(-1);
-  }, [query]);
+  }, [trimmedQuery]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
@@ -161,7 +149,10 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
             <Input
               ref={inputRef}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setSelectedIndex(-1);
+              }}
               onKeyDown={handleKeyDown}
               placeholder="搜索经文、课程、社区讨论..."
               className="border-0 focus-visible:ring-0 text-base"
@@ -178,12 +169,12 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
 
           {/* Search Results */}
           <ScrollArea className="h-[400px]">
-            {query.trim() && results.length === 0 ? (
+            {trimmedQuery && results.length === 0 ? (
               <div className="py-12 text-center text-muted-foreground">
                 <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>没有找到与 "{query}" 相关的内容</p>
+                <p>没有找到与 “{trimmedQuery}” 相关的内容</p>
               </div>
-            ) : query.trim() && results.length > 0 ? (
+            ) : trimmedQuery && results.length > 0 ? (
               <div className="p-2">
                 <div className="text-xs text-muted-foreground px-3 py-2">
                   找到 {results.length} 条结果

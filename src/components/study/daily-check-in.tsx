@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   Trophy,
   Sparkles,
-  Award,
 } from 'lucide-react';
 
 interface CheckInRecord {
@@ -24,19 +23,14 @@ interface CheckInRecord {
 }
 
 interface DailyCheckInProps {
-  userId?: string;
   onCheckIn?: (streak: number) => void;
 }
 
-export function DailyCheckIn({ userId, onCheckIn }: DailyCheckInProps) {
+export function DailyCheckIn({ onCheckIn }: DailyCheckInProps) {
   const [todayChecked, setTodayChecked] = useState(false);
   const [consecutiveDays, setConsecutiveDays] = useState(7);
   const [totalDays, setTotalDays] = useState(45);
-  const [weekRecords, setWeekRecords] = useState<CheckInRecord[]>([]);
-  const [showAnimation, setShowAnimation] = useState(false);
-
-  useEffect(() => {
-    // 生成本周签到记录
+  const weekRecords = useMemo<CheckInRecord[]>(() => {
     const records: CheckInRecord[] = [];
     const today = new Date();
 
@@ -53,8 +47,9 @@ export function DailyCheckIn({ userId, onCheckIn }: DailyCheckInProps) {
       });
     }
 
-    setWeekRecords(records);
+    return records;
   }, [todayChecked, consecutiveDays]);
+  const [showAnimation, setShowAnimation] = useState(false);
 
   const handleCheckIn = () => {
     if (todayChecked) return;
@@ -253,7 +248,7 @@ export function CheckInCalendar({ year, month }: { year?: number; month?: number
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDay = new Date(currentYear, currentMonth, 1).getDay();
 
-  const [checkedDays, setCheckedDays] = useState<number[]>(() => {
+  const [checkedDays] = useState<number[]>(() => {
     // 模拟已签到日期
     return Array.from({ length: today.getDate() }, (_, i) => i + 1).filter(() => Math.random() > 0.3);
   });

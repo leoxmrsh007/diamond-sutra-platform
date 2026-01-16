@@ -29,17 +29,6 @@ export function formatDateZh(date: Date): string {
 }
 
 /**
- * 转换拼音标记
- */
-export function pinyinify(text: string): string {
-  return text
-    .replace(/，/g, ', ')
-    .replace(/。/g, '. ')
-    .replace(/？/g, '? ')
-    .replace(/！/g, '! ');
-}
-
-/**
  * 延迟函数
  */
 export function delay(ms: number): Promise<void> {

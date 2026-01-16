@@ -341,7 +341,7 @@ function PostCard({ post }: { post: any }) {
       <CardContent>
         <p className="text-muted-foreground line-clamp-3">{post.content}</p>
         <div className="flex flex-wrap gap-2 mt-3">
-          {post.tags.map((tag: string) => (
+          {(Array.isArray(post.tags) ? post.tags : []).map((tag: string) => (
             <Badge key={tag} variant="secondary" className="text-xs">
               #{tag}
             </Badge>

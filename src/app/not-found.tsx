@@ -5,7 +5,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Home, Search, BookOpen } from 'lucide-react';
+import { Home, BookOpen } from 'lucide-react';
 
 export default function NotFound() {
   return (

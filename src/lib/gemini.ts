@@ -114,7 +114,7 @@ export async function askQuestion(
 export async function analyzeVerse(verse: {
   chinese: string;
   sanskrit?: string;
-  pinyin?: string;
+  english?: string;
   verseNum: number;
 }): Promise<{
   summary: string;
@@ -130,7 +130,7 @@ export async function analyzeVerse(verse: {
 【偈颂编号】第 ${verse.verseNum} 偈
 【汉译】${verse.chinese}
 ${verse.sanskrit ? `【梵文】${verse.sanskrit}` : ''}
-${verse.pinyin ? `【拼音】${verse.pinyin}` : ''}
+${verse.english ? `【英译】${verse.english}` : ''}
 
 请以 JSON 格式返回以下内容：
 {
@@ -232,17 +232,21 @@ export async function getStudyAdvice(progress: {
 }> {
   const gemini = getModel(GEMINI_MODELS.THINKING, SYSTEM_PROMPTS.studyGuide);
 
+  const stuck = Array.isArray(progress.stuckPoints) ? progress.stuckPoints : []
+  const recent = Array.isArray(progress.recentQuestions) ? progress.recentQuestions : []
+  const percent = progress.totalVerses > 0 ? ((progress.studiedVerses / progress.totalVerses) * 100).toFixed(1) : '0.0'
+
   const prompt = `根据学员的学习情况，提供个性化学习建议：
 
 【学习进度】
 - 已学习偈颂：${progress.studiedVerses} / ${progress.totalVerses}
-- 学习进度：${((progress.studiedVerses / progress.totalVerses) * 100).toFixed(1)}%
+- 学习进度：${percent}%
 
 【困惑点】
-${progress.stuckPoints.map((p, i) => `${i + 1}. ${p}`).join('\n') || '无'}
+${stuck.map((p, i) => `${i + 1}. ${p}`).join('\n') || '无'}
 
 【最近问题】
-${progress.recentQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n') || '无'}
+${recent.map((q, i) => `${i + 1}. ${q}`).join('\n') || '无'}
 
 请以 JSON 格式返回：
 {

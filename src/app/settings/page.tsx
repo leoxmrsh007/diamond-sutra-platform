@@ -17,7 +17,6 @@ import {
   User,
   Bell,
   Lock,
-  Eye,
   Palette,
   Globe,
   Mail,

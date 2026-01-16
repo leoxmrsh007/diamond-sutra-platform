@@ -36,6 +36,30 @@ export interface BookmarkItem {
   createdAt: string;
 }
 
+type ApiBookmarkResponse = {
+  id: string;
+  verseId: string;
+  verse?: string | null;
+  chapter?: string | null;
+  note?: string | null;
+  createdAt?: string | Date;
+};
+
+const isApiBookmarkResponse = (value: unknown): value is ApiBookmarkResponse => {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  return typeof candidate.id === 'string' && typeof candidate.verseId === 'string';
+};
+
+const normalizeBookmark = (bookmark: ApiBookmarkResponse): BookmarkItem => ({
+  id: bookmark.id,
+  verseId: bookmark.verseId,
+  verse: bookmark.verse ?? '',
+  chapter: bookmark.chapter ?? '',
+  note: bookmark.note ?? undefined,
+  createdAt: bookmark.createdAt ? new Date(bookmark.createdAt).toISOString().split('T')[0] : '',
+});
+
 interface BookmarkDialogProps {
   verseId: string;
   verse: string;
@@ -45,7 +69,7 @@ interface BookmarkDialogProps {
   trigger?: React.ReactNode;
 }
 
-// 模拟书签数据
+// 模拟书签数据（作为未登录或 API 不可用的回退）
 const mockBookmarks: BookmarkItem[] = [
   {
     id: '1',
@@ -97,46 +121,81 @@ export function BookmarkDialog({
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const existing = mockBookmarks.find((b) => b.verseId === verseId);
-    setIsBookmarked(!!existing);
-    if (existing?.note) {
-      setBookmarkNote(existing.note);
-    }
+    (async () => {
+      try {
+        const res = await fetch(`/api/bookmarks?verseId=${encodeURIComponent(verseId)}`);
+        if (res.ok) {
+          const data: unknown = await res.json();
+          if (Array.isArray(data)) {
+            const normalized = data.filter(isApiBookmarkResponse).map(normalizeBookmark);
+            setBookmarks(normalized);
+            const existing = normalized.find((b) => b.verseId === verseId);
+            setIsBookmarked(Boolean(existing));
+            if (existing?.note) setBookmarkNote(existing.note);
+          }
+        } else {
+          const existing = mockBookmarks.find((b) => b.verseId === verseId);
+          setIsBookmarked(!!existing);
+          if (existing?.note) setBookmarkNote(existing.note);
+          setBookmarks(mockBookmarks);
+        }
+      } catch {
+        const existing = mockBookmarks.find((b) => b.verseId === verseId);
+        setIsBookmarked(!!existing);
+        if (existing?.note) setBookmarkNote(existing.note);
+        setBookmarks(mockBookmarks);
+      }
+    })();
   }, [verseId]);
 
   const handleToggleBookmark = () => {
     if (isBookmarked) {
-      // 移除书签
-      setBookmarks(bookmarks.filter((b) => b.verseId !== verseId));
-      setIsBookmarked(false);
-      if (onToggle) onToggle(false);
+      // 移除书签（优先调用 API，失败回退本地）
+      (async () => {
+        try {
+          const res = await fetch(`/api/bookmarks?verseId=${encodeURIComponent(verseId)}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('failed');
+        } catch {}
+        setBookmarks((prev) => prev.filter((b) => b.verseId !== verseId));
+        setIsBookmarked(false);
+        if (onToggle) onToggle(false);
+      })();
     } else {
-      // 添加书签
-      const newBookmark: BookmarkItem = {
-        id: Date.now().toString(),
-        verse,
-        verseId,
-        chapter,
-        note: bookmarkNote,
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      setBookmarks([...bookmarks, newBookmark]);
-      setIsBookmarked(true);
-      if (onToggle) onToggle(true, bookmarkNote);
+      // 添加书签（优先调用 API，失败回退本地）
+      (async () => {
+        try {
+          const res = await fetch(`/api/bookmarks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ verseId, note: bookmarkNote }),
+          });
+          if (!res.ok) throw new Error('failed');
+        } catch {}
+        const newBookmark: BookmarkItem = {
+          id: Date.now().toString(),
+          verse,
+          verseId,
+          chapter,
+          note: bookmarkNote,
+          createdAt: new Date().toISOString().split('T')[0],
+        };
+        setBookmarks((prev) => [...prev, newBookmark]);
+        setIsBookmarked(true);
+        if (onToggle) onToggle(true, bookmarkNote);
+      })();
     }
   };
 
   const handleUpdateNote = () => {
-    const updated = bookmarks.map((b) =>
-      b.verseId === verseId ? { ...b, note: bookmarkNote } : b
+    setBookmarks((prev) =>
+      prev.map((b) => (b.verseId === verseId ? { ...b, note: bookmarkNote } : b))
     );
-    setBookmarks(updated);
     setIsAddingNote(false);
     if (onToggle) onToggle(true, bookmarkNote);
   };
 
   const handleDelete = (id: string) => {
-    setBookmarks(bookmarks.filter((b) => b.id !== id));
+    setBookmarks((prev) => prev.filter((b) => b.id !== id));
     if (id === verseId) {
       setIsBookmarked(false);
     }

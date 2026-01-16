@@ -8,12 +8,12 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type FontFamily = 'system' | 'serif' | 'sans' | 'mono';
 export type FontSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+type LineHeightOption = 'tight' | 'normal' | 'relaxed';
 
 const fontFamilies = {
   system: { name: '系统默认', className: 'font-sans' },
@@ -34,8 +34,8 @@ const fontSizeMap = {
 interface FontSettingsProps {
   fontFamily?: FontFamily;
   fontSize?: FontSize;
-  lineHeight?: 'tight' | 'normal' | 'relaxed';
-  onChange?: (settings: { fontFamily: FontFamily; fontSize: FontSize; lineHeight: string }) => void;
+  lineHeight?: LineHeightOption;
+  onChange?: (settings: { fontFamily: FontFamily; fontSize: FontSize; lineHeight: LineHeightOption }) => void;
 }
 
 export function FontSettings({
@@ -46,7 +46,7 @@ export function FontSettings({
 }: FontSettingsProps) {
   const [currentFont, setCurrentFont] = useState<FontFamily>(defaultFont);
   const [currentSize, setCurrentSize] = useState<FontSize>(defaultSize);
-  const [currentLineHeight, setCurrentLineHeight] = useState(lineHeight);
+  const [currentLineHeight, setCurrentLineHeight] = useState<LineHeightOption>(lineHeight);
 
   const sizes: FontSize[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
   const sizeIndex = sizes.indexOf(currentSize);
@@ -64,8 +64,8 @@ export function FontSettings({
   };
 
   const handleLineHeightChange = () => {
-    const heights: Array<'tight' | 'normal' | 'relaxed'> = ['tight', 'normal', 'relaxed'];
-    const currentIndex = heights.indexOf(currentLineHeight as any);
+    const heights: LineHeightOption[] = ['tight', 'normal', 'relaxed'];
+    const currentIndex = heights.indexOf(currentLineHeight);
     const newHeight = heights[(currentIndex + 1) % heights.length];
     setCurrentLineHeight(newHeight);
     onChange?.({ fontFamily: currentFont, fontSize: currentSize, lineHeight: newHeight });
@@ -204,7 +204,7 @@ export function FontContent({
   children: React.ReactNode;
   fontFamily?: FontFamily;
   fontSize?: FontSize;
-  lineHeight?: 'tight' | 'normal' | 'relaxed';
+  lineHeight?: LineHeightOption;
 }) {
   const fontFamilyClass = fontFamily ? fontFamilies[fontFamily].className : '';
   const fontSizeClass = fontSize ? fontSizeMap[fontSize] : 'text-base';

@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -17,14 +17,13 @@ import {
   Search,
   BookOpen,
   MessageSquare,
-  Users,
   FileText,
   Filter,
 } from 'lucide-react';
 
 interface SearchResult {
   id: string;
-  type: 'verse' | 'chapter' | 'course' | 'post';
+  type: 'verse' | 'chapter' | 'course' | 'post' | 'note';
   title: string;
   content: string;
   category: string;
@@ -71,7 +70,7 @@ const allResults: SearchResult[] = [
     id: 'c1',
     type: 'chapter',
     title: '大乘正宗分第三',
-    content: '佛陀回答须菩提的问题，阐述菩萨应如何发心、如何降伏其心。核心是"无住生心"的菩萨精神。',
+    content: '佛陀回答须菩提的问题，阐述菩萨应如何发心、如何降伏其心。核心是“无住生心”的菩萨精神。',
     category: '章节',
     href: '/study?chapter=3',
   },
@@ -96,7 +95,7 @@ const allResults: SearchResult[] = [
     id: 'co2',
     type: 'course',
     title: '般若波罗蜜概说',
-    content: '深入讲解"般若"（智慧）的概念，理解空性思想的基础。',
+    content: '深入讲解“般若”（智慧）的概念，理解空性思想的基础。',
     category: '初级课程',
     href: '/courses/2',
   },
@@ -104,8 +103,8 @@ const allResults: SearchResult[] = [
   {
     id: 'p1',
     type: 'post',
-    title: '如何理解"无住生心"在日常生活中的应用？',
-    content: '最近在研读《金刚经》，对"无住生心"这个概念很感兴趣。但是在实际生活中，我们应该如何做到"心无所住"呢？',
+    title: '如何理解“无住生心”在日常生活中的应用？',
+    content: '最近在研读《金刚经》，对“无住生心”这个概念很感兴趣。但是在实际生活中，我们应该如何做到“心无所住”呢？',
     category: '修行实践',
     href: '/community',
   },
@@ -124,6 +123,29 @@ const typeIcons = {
   chapter: BookOpen,
   course: FileText,
   post: MessageSquare,
+  note: FileText,
+} as const;
+
+type ApiSearchResult = {
+  id: string;
+  type: SearchResult['type'];
+  title: string;
+  content: string;
+  category?: string;
+  href: string;
+  chapter?: string;
+};
+
+const isApiSearchResult = (value: unknown): value is ApiSearchResult => {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.type === 'string' &&
+    typeof candidate.title === 'string' &&
+    typeof candidate.content === 'string' &&
+    typeof candidate.href === 'string'
+  );
 };
 
 export default function SearchPage() {
@@ -132,35 +154,43 @@ export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState(query);
   const [activeTab, setActiveTab] = useState('all');
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+
+  const performSearch = useCallback(async (q: string) => {
+    if (!q.trim()) {
+      setResults(allResults);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      const data: unknown = await res.json();
+      const rawResults = Array.isArray((data as { results?: unknown })?.results)
+        ? (data as { results: unknown[] }).results
+        : [];
+      const apiResults = rawResults.filter(isApiSearchResult).map((r) => ({
+        id: r.id,
+        type: r.type,
+        title: r.title,
+        content: r.content,
+        category: r.category ?? '未分类',
+        href: r.href,
+        chapter: r.chapter,
+      }));
+      setResults(apiResults);
+    } catch {
+      setResults([]);
+    }
+  }, []);
 
   useEffect(() => {
     if (query) {
-      performSearch(query);
+      void performSearch(query);
     } else {
       setResults(allResults);
     }
-  }, [query]);
-
-  const performSearch = (q: string) => {
-    setIsSearching(true);
-    setTimeout(() => {
-      if (!q.trim()) {
-        setResults(allResults);
-      } else {
-        const filtered = allResults.filter(
-          (item) =>
-            item.title.toLowerCase().includes(q.toLowerCase()) ||
-            item.content.toLowerCase().includes(q.toLowerCase())
-        );
-        setResults(filtered);
-      }
-      setIsSearching(false);
-    }, 300);
-  };
+  }, [performSearch, query]);
 
   const handleSearch = () => {
-    performSearch(searchQuery);
+    void performSearch(searchQuery);
   };
 
   const filteredResults = activeTab === 'all'
@@ -173,6 +203,7 @@ export default function SearchPage() {
     chapter: results.filter((r) => r.type === 'chapter').length,
     course: results.filter((r) => r.type === 'course').length,
     post: results.filter((r) => r.type === 'post').length,
+    note: results.filter((r) => r.type === 'note').length,
   };
 
   return (
@@ -213,7 +244,7 @@ export default function SearchPage() {
         {query && (
           <div className="mb-4 text-sm text-muted-foreground">
             找到 <span className="font-medium text-foreground">{results.length}</span> 条
-            与 "<span className="font-medium text-foreground">{query}</span>" 相关的结果
+            与 “<span className="font-medium text-foreground">{query}</span>” 相关的结果
           </div>
         )}
 
@@ -233,6 +264,9 @@ export default function SearchPage() {
             </TabsTrigger>
             <TabsTrigger value="post">
               社区 ({typeCounts.post})
+            </TabsTrigger>
+            <TabsTrigger value="note">
+              笔记 ({typeCounts.note})
             </TabsTrigger>
           </TabsList>
 

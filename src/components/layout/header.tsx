@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -44,8 +44,8 @@ const navItems = [
 
 export function Header() {
   const pathname = usePathname();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [consecutiveDays, setConsecutiveDays] = useState(7);
+  const [isLoggedIn] = useState(false);
+  const [consecutiveDays] = useState(7);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (

@@ -14,9 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   Share2,
   Link2,
@@ -26,7 +24,6 @@ import {
   Copy,
   Check,
   QrCode,
-  Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -270,6 +267,7 @@ export function FloatingShareButton({
 }) {
   const [open, setOpen] = useState(false);
   const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+  const buttonLabel = `${title} 分享`;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareUrl);
@@ -285,6 +283,8 @@ export function FloatingShareButton({
           open && "rotate-45"
         )}
         onClick={() => setOpen(!open)}
+        aria-label={buttonLabel}
+        title={buttonLabel}
       >
         <Share2 className="w-5 h-5" />
       </Button>
@@ -297,6 +297,7 @@ export function FloatingShareButton({
             className="rounded-full bg-background shadow-md hover:bg-red-50 hover:text-red-600"
             onClick={handleCopy}
             title="复制链接"
+            aria-label="复制链接"
           >
             <Link2 className="w-4 h-4" />
           </Button>
@@ -305,6 +306,7 @@ export function FloatingShareButton({
             variant="outline"
             className="rounded-full bg-background shadow-md hover:bg-green-50 hover:text-green-600"
             title="微信"
+            aria-label="微信"
           >
             <MessageCircle className="w-4 h-4" />
           </Button>

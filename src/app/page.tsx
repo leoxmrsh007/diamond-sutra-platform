@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -144,13 +144,13 @@ export default function HomePage() {
                     你
                   </div>
                   <div className="bg-gray-100 rounded-lg p-3 text-sm">
-                    什么是"无住生心"？
+                    什么是“无住生心”？
                   </div>
                 </div>
                 <div className="flex items-start space-x-3 justify-end">
                   <div className="bg-amber-50 rounded-lg p-3 text-sm max-w-xs">
                     <p className="text-amber-900">
-                      "无住生心"是《金刚经》的核心思想之一。意指心不执着于任何事物而生起清净心...
+                      “无住生心”是《金刚经》的核心思想之一。意指心不执着于任何事物而生起清净心...
                     </p>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-xs">

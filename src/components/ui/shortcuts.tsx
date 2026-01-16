@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Shortcut {
@@ -17,80 +17,83 @@ interface Shortcut {
 export function useShortcuts() {
   const router = useRouter();
 
-  const shortcuts: Shortcut[] = [
+  const shortcuts = useMemo<Shortcut[]>(
+    () => [
     // 搜索
-    {
-      key: '/',
-      description: '打开搜索',
-      action: () => {
-        // 触发搜索对话框
-        document.dispatchEvent(new CustomEvent('open-search'));
+      {
+        key: '/',
+        description: '打开搜索',
+        action: () => {
+          // 触发搜索对话框
+          document.dispatchEvent(new CustomEvent('open-search'));
+        },
+        enabled: true,
       },
-      enabled: true,
-    },
     // 导航
-    {
-      key: 'g h',
-      description: '返回首页',
-      action: () => router.push('/'),
-      enabled: true,
-    },
-    {
-      key: 'g s',
-      description: '前往学习',
-      action: () => router.push('/study'),
-      enabled: true,
-    },
-    {
-      key: 'g a',
-      description: '前往AI问答',
-      action: () => router.push('/ai'),
-      enabled: true,
-    },
-    {
-      key: 'g c',
-      description: '前往课程',
-      action: () => router.push('/courses'),
-      enabled: true,
-    },
-    {
-      key: 'g p',
-      description: '前往个人中心',
-      action: () => router.push('/profile'),
-      enabled: true,
-    },
+      {
+        key: 'g h',
+        description: '返回首页',
+        action: () => router.push('/'),
+        enabled: true,
+      },
+      {
+        key: 'g s',
+        description: '前往学习',
+        action: () => router.push('/study'),
+        enabled: true,
+      },
+      {
+        key: 'g a',
+        description: '前往AI问答',
+        action: () => router.push('/ai'),
+        enabled: true,
+      },
+      {
+        key: 'g c',
+        description: '前往课程',
+        action: () => router.push('/courses'),
+        enabled: true,
+      },
+      {
+        key: 'g p',
+        description: '前往个人中心',
+        action: () => router.push('/profile'),
+        enabled: true,
+      },
     // 主题
-    {
-      key: 't',
-      description: '切换主题',
-      action: () => {
-        document.dispatchEvent(new CustomEvent('toggle-theme'));
+      {
+        key: 't',
+        description: '切换主题',
+        action: () => {
+          document.dispatchEvent(new CustomEvent('toggle-theme'));
+        },
+        enabled: true,
       },
-      enabled: true,
-    },
     // 其他
-    {
-      key: '?',
-      description: '显示快捷键帮助',
-      action: () => {
-        document.dispatchEvent(new CustomEvent('toggle-shortcuts'));
+      {
+        key: '?',
+        description: '显示快捷键帮助',
+        action: () => {
+          document.dispatchEvent(new CustomEvent('toggle-shortcuts'));
+        },
+        enabled: true,
       },
-      enabled: true,
-    },
-    {
-      key: 'Escape',
-      description: '关闭对话框',
-      action: () => {
-        document.dispatchEvent(new CustomEvent('close-dialog'));
+      {
+        key: 'Escape',
+        description: '关闭对话框',
+        action: () => {
+          document.dispatchEvent(new CustomEvent('close-dialog'));
+        },
+        enabled: true,
       },
-      enabled: true,
-    },
-  ];
+    ],
+    [router],
+  );
 
   // 处理按键
   useEffect(() => {
     let keySequence = '';
-    let keySequenceTimeout: NodeJS.Timeout;
+    let keySequenceTimeout: ReturnType<typeof setTimeout>;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // 忽略在输入框中的按键
@@ -141,7 +144,7 @@ export function useShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [router]);
+  }, [router, shortcuts]);
 
   return shortcuts;
 }

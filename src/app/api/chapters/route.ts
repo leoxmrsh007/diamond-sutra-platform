@@ -22,7 +22,6 @@ export async function GET(request: Request) {
       include: {
         verses: {
           orderBy: { verseNum: 'asc' },
-          take: 5, // 只返回前5个偈颂预览
         },
       },
     });

@@ -68,23 +68,73 @@ const mockNotes: Note[] = [
   },
 ];
 
+type ApiNoteResponse = {
+  id: string;
+  title?: string | null;
+  content: string;
+  createdAt: string | Date;
+  tags?: string[] | null;
+};
+
+const isApiNoteResponse = (value: unknown): value is ApiNoteResponse => {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.id !== 'string' || typeof candidate.content !== 'string') {
+    return false;
+  }
+  const createdAt = candidate.createdAt;
+  return typeof createdAt === 'string' || createdAt instanceof Date;
+};
+
+const toNote = (apiNote: ApiNoteResponse, verse: string, chapter: string): Note => ({
+  id: apiNote.id,
+  title: apiNote.title ?? undefined,
+  content: apiNote.content,
+  tags: Array.isArray(apiNote.tags)
+    ? apiNote.tags.filter((tag): tag is string => typeof tag === 'string')
+    : [],
+  verse,
+  chapter,
+  createdAt: new Date(apiNote.createdAt).toISOString().split('T')[0],
+});
+
+type EditableNote = {
+  title: string;
+  content: string;
+  tags: string[];
+};
+
 export function NoteDialog({ verse, chapter, verseId, trigger, onSave }: NoteDialogProps) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentNote, setCurrentNote] = useState({
+  const [currentEditId, setCurrentEditId] = useState<string | null>(null);
+  const [currentNote, setCurrentNote] = useState<EditableNote>({
     title: '',
     content: '',
-    tags: [] as string[],
+    tags: [],
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [tagInput, setTagInput] = useState('');
 
-  // 加载笔记（实际应该从API加载）
+  // 加载笔记（优先 API，失败回退模拟）
   useEffect(() => {
-    const verseNotes = mockNotes.filter((n) => n.verse === verse);
-    setNotes(verseNotes);
-  }, [verse]);
+    (async () => {
+      try {
+        const res = await fetch(`/api/notes?verseId=${encodeURIComponent(verseId)}`);
+        if (res.ok) {
+          const data: unknown = await res.json();
+          if (Array.isArray(data)) {
+            const mapped = data.filter(isApiNoteResponse).map((item) => toNote(item, verse, chapter));
+            setNotes(mapped);
+            return;
+          }
+        }
+      } catch {}
+      const verseNotes = mockNotes.filter((n) => n.verse === verse);
+      setNotes(verseNotes);
+    })();
+  }, [verse, verseId, chapter]);
 
   const handleSave = () => {
     if (!currentNote.content.trim()) return;
@@ -101,21 +151,64 @@ export function NoteDialog({ verse, chapter, verseId, trigger, onSave }: NoteDia
       onSave(newNote);
     }
 
-    // 模拟保存到本地
-    const noteWithId: Note = {
-      ...newNote,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setNotes([...notes, noteWithId]);
+    // 优先保存到 API：编辑走 PUT，新增走 POST；失败回退本地
+    (async () => {
+      try {
+        if (currentEditId) {
+          const res = await fetch(`/api/notes/${currentEditId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: newNote.content, title: newNote.title }),
+          });
+          if (!res.ok) throw new Error('failed');
+          const saved = (await res.json()) as ApiNoteResponse;
+          const normalized = toNote(saved, verse, chapter);
+          setNotes((prev) =>
+            prev.map((n) => (n.id === currentEditId ? { ...n, title: normalized.title, content: normalized.content } : n))
+          );
+        } else {
+          const res = await fetch('/api/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ verseId, content: newNote.content, title: newNote.title }),
+          });
+          if (!res.ok) throw new Error('failed');
+          const saved = (await res.json()) as ApiNoteResponse;
+          const normalized = toNote(saved, verse, chapter);
+          setNotes((prev) => [...prev, normalized]);
+        }
+      } catch {
+        if (currentEditId) {
+          setNotes((prev) =>
+            prev.map((n) =>
+              n.id === currentEditId ? { ...n, content: newNote.content, title: newNote.title || undefined } : n
+            )
+          );
+        } else {
+          const noteWithId: Note = {
+            ...newNote,
+            id: Date.now().toString(),
+            createdAt: new Date().toISOString().split('T')[0],
+          };
+          setNotes((prev) => [...prev, noteWithId]);
+        }
+      }
+    })();
 
     // 重置表单
     setCurrentNote({ title: '', content: '', tags: [] });
     setIsEditing(false);
+    setCurrentEditId(null);
   };
 
   const handleDelete = (id: string) => {
-    setNotes(notes.filter((n) => n.id !== id));
+    (async () => {
+      try {
+        const res = await fetch(`/api/notes/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('failed');
+      } catch {}
+      setNotes(notes.filter((n) => n.id !== id));
+    })();
   };
 
   const handleEdit = (note: Note) => {
@@ -125,6 +218,7 @@ export function NoteDialog({ verse, chapter, verseId, trigger, onSave }: NoteDia
       tags: note.tags,
     });
     setIsEditing(true);
+    setCurrentEditId(note.id);
   };
 
   const addTag = () => {

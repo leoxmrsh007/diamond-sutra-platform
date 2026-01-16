@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+import { auth } from '@/app/api/auth/[...nextauth]/route';
 
 // POST - 报名课程
 export async function POST(

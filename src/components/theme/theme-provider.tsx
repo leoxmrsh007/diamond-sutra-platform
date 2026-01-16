@@ -17,23 +17,22 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else {
-      // 检测系统偏好
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === 'undefined') {
+      return 'light';
     }
-  }, []);
+
+    const savedTheme = localStorage.getItem('theme') as Theme | null;
+    if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'amber') {
+      return savedTheme;
+    }
+
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return prefersDark ? 'dark' : 'light';
+  });
 
   useEffect(() => {
-    if (!mounted) return;
+    if (typeof document === 'undefined') return;
 
     const root = document.documentElement;
     root.classList.remove('light', 'dark', 'amber');
@@ -51,15 +50,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.style.setProperty('--background', '0 0% 100%');
       root.style.setProperty('--foreground', '222.2 84% 4.9%');
     }
-  }, [theme, mounted]);
+  }, [theme]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : prev === 'dark' ? 'amber' : 'light'));
   };
-
-  if (!mounted) {
-    return <>{children}</>;
-  }
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
