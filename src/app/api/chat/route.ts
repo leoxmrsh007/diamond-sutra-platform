@@ -1,10 +1,11 @@
 /**
  * AI 聊天 API 路由
  * 支持流式响应和对话历史
+ * 支持 Gemini 和 DeepSeek
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { askQuestion, chatStream } from '@/lib/gemini';
+import { askQuestion, chatStream, getAIProvider } from '@/lib/ai';
 
 // 金刚经系统提示词
 const DIAMOND_SUTRA_SYSTEM = `你是一位深入研究中观的佛学学者，专精于《金刚般若波罗蜜经》（简称《金刚经》）。
@@ -30,7 +31,7 @@ const DIAMOND_SUTRA_SYSTEM = `你是一位深入研究中观的佛学学者，�
 // POST 请求 - 发送消息
 export async function POST(request: NextRequest) {
   try {
-    const { message, history, stream } = await request.json();
+    const { message, history, stream, provider } = await request.json();
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(
@@ -45,13 +46,23 @@ export async function POST(request: NextRequest) {
       const streamResponse = new ReadableStream({
         async start(controller) {
           try {
-            for await (const chunk of chatStream(
-              message,
-              history || [],
-              DIAMOND_SUTRA_SYSTEM
-            )) {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: chunk })}\n\n`));
+            // 使用 DeepSeek 的流式响应需要特殊处理
+            const aiProvider = provider || getAIProvider();
+
+            if (aiProvider === 'deepseek') {
+              // DeepSeek SSE 格式
+              const { chatStreamDeepSeek } = await import('@/lib/ai');
+              for await (const chunk of chatStreamDeepSeek(message, history || [])) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: chunk })}\n\n`));
+              }
+            } else {
+              // Gemini 流式响应
+              const { chatStreamGemini } = await import('@/lib/ai');
+              for await (const chunk of chatStreamGemini(message, history || [], DIAMOND_SUTRA_SYSTEM)) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: chunk })}\n\n`));
+              }
             }
+
             controller.enqueue(encoder.encode('data: [DONE]\n\n'));
             controller.close();
           } catch (error) {
@@ -70,10 +81,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 普通响应
-    const answer = await askQuestion(message, DIAMOND_SUTRA_SYSTEM);
+    const answer = await askQuestion(message, undefined, provider);
 
     return NextResponse.json({
       message: answer,
+      provider: getAIProvider(),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -85,7 +97,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET 请求 - 获取推荐问题
+// GET 请求 - 获取推荐问题和配置
 export async function GET() {
   const suggestedQuestions = [
     '什么是"般若"（智慧）？',
@@ -100,6 +112,7 @@ export async function GET() {
 
   return NextResponse.json({
     suggestedQuestions,
+    provider: getAIProvider(),
   });
 }
 
