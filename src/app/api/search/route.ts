@@ -74,7 +74,6 @@ export async function GET(req: NextRequest) {
         OR: [
           { title: { contains: like, mode: 'insensitive' } },
           { content: { contains: like, mode: 'insensitive' } },
-          { tags: { path: '$[*]', string_contains: like, array_contains: [like] } },
         ],
       },
       take: Math.ceil(limit / 2),
