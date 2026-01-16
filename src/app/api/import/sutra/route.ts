@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       const chapter = await prisma.chapter.upsert({
         where: { sutraId_chapterNum: { sutraId: sutra.id, chapterNum: ch.chapterNum } },
         update: updateData,
-        create: { sutraId: sutra.id, chapterNum: ch.chapterNum, title: ch.title || null, summary: ch.summary || null, order: ch.chapterNum },
+        create: { sutraId: sutra.id, chapterNum: ch.chapterNum, title: ch.title || `第${ch.chapterNum}章`, summary: ch.summary || null, order: ch.chapterNum },
       })
       chapterCount++
 
