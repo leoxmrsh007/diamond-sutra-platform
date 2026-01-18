@@ -150,23 +150,37 @@ export async function POST() {
     const chapterMap = new Map<number, string>()
 
     for (const chapter of diamondSutraChapters) {
-      const created = await prisma.chapter.upsert({
+      // First try to find existing chapter
+      const existing = await prisma.chapter.findFirst({
         where: {
-          sutraId_chapterNum: { sutraId: sutra.id, chapterNum: chapter.num },
-        },
-        update: {
-          title: chapter.title,
-          summary: chapter.summary,
-          order: chapter.num,
-        },
-        create: {
           sutraId: sutra.id,
           chapterNum: chapter.num,
-          title: chapter.title,
-          summary: chapter.summary,
-          order: chapter.num,
         },
       })
+
+      let created
+      if (existing) {
+        // Update existing
+        created = await prisma.chapter.update({
+          where: { id: existing.id },
+          data: {
+            title: chapter.title,
+            summary: chapter.summary,
+            order: chapter.num,
+          },
+        })
+      } else {
+        // Create new
+        created = await prisma.chapter.create({
+          data: {
+            sutraId: sutra.id,
+            chapterNum: chapter.num,
+            title: chapter.title,
+            summary: chapter.summary,
+            order: chapter.num,
+          },
+        })
+      }
       chapterMap.set(chapter.num, created.id)
       results.chapters++
     }
@@ -180,27 +194,40 @@ export async function POST() {
         continue
       }
 
-      await prisma.verse.upsert({
+      // First try to find existing verse
+      const existing = await prisma.verse.findFirst({
         where: {
-          chapterId_verseNum: { chapterId: chapterId, verseNum: verse.num },
-        },
-        update: {
-          chinese: verse.chinese,
-          english: verse.english,
-          sanskrit: verse.sanskrit || null,
-          aiKeyword: ['经典名句', '核心偈颂'],
-        },
-        create: {
           chapterId: chapterId,
           verseNum: verse.num,
-          chinese: verse.chinese,
-          english: verse.english,
-          sanskrit: verse.sanskrit || null,
-          tibetan: null,
-          aiKeyword: ['经典名句', '核心偈颂'],
-          order: verse.num,
         },
       })
+
+      if (existing) {
+        // Update existing
+        await prisma.verse.update({
+          where: { id: existing.id },
+          data: {
+            chinese: verse.chinese,
+            english: verse.english,
+            sanskrit: verse.sanskrit || null,
+            aiKeyword: ['经典名句', '核心偈颂'],
+          },
+        })
+      } else {
+        // Create new
+        await prisma.verse.create({
+          data: {
+            chapterId: chapterId,
+            verseNum: verse.num,
+            chinese: verse.chinese,
+            english: verse.english,
+            sanskrit: verse.sanskrit || null,
+            tibetan: null,
+            aiKeyword: ['经典名句', '核心偈颂'],
+            order: verse.num,
+          },
+        })
+      }
       results.verses++
     }
     console.log(`✓ 已创建 ${results.verses} 个偈颂`)
