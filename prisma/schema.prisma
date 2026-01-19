@@ -314,6 +314,7 @@ model CourseEnrollment {
   course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   progress    Float     @default(0) // 0-100
+  lessonProgress Json?  @default("{}") // 每个课时的完成状态 { lessonId: { completed, progressPercent, completedAt } }
   completedAt DateTime?
 
   createdAt   DateTime  @default(now())

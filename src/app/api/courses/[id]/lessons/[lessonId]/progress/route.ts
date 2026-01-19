@@ -1,6 +1,6 @@
 /**
  * Lesson Progress API 路由
- * 课时进度管理
+ * 课时进度管理（使用 CourseEnrollment 的 lessonProgress JSON 字段）
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,7 +13,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string; lessonId: string }> }
 ) {
   try {
-    const { lessonId } = await params;
+    const { lessonId, id: courseId } = await params;
     const session = await auth();
 
     if (!session?.user) {
@@ -25,16 +25,21 @@ export async function GET(
 
     const userId = (session.user as any).id;
 
-    const progress = await prisma.lessonProgress.findUnique({
+    const enrollment = await prisma.courseEnrollment.findUnique({
       where: {
-        userId_lessonId: {
+        userId_courseId: {
           userId,
-          lessonId,
+          courseId,
         },
       },
     });
 
-    return NextResponse.json(progress || { completed: false, progressPercent: 0 });
+    const lessonProgress = (enrollment?.lessonProgress as any)?.[lessonId] || {
+      completed: false,
+      progressPercent: 0,
+    };
+
+    return NextResponse.json(lessonProgress);
   } catch (error) {
     console.error('获取课时进度失败:', error);
     return NextResponse.json(
@@ -79,73 +84,60 @@ export async function POST(
       );
     }
 
-    // 更新或创建课时进度
-    const progress = await prisma.lessonProgress.upsert({
+    // 获取或创建课程报名
+    const enrollment = await prisma.courseEnrollment.findUnique({
       where: {
-        userId_lessonId: {
+        userId_courseId: {
           userId,
-          lessonId,
+          courseId,
         },
-      },
-      update: {
-        completed: completed ?? false,
-        progressPercent,
-        completedAt: completed ? new Date() : null,
-      },
-      create: {
-        userId,
-        lessonId,
-        completed: completed ?? false,
-        progressPercent,
-        completedAt: completed ? new Date() : null,
       },
     });
 
-    // 如果课时完成，更新课程整体进度
-    if (completed) {
-      const allLessons = await prisma.lesson.findMany({
-        where: { courseId },
-      });
+    const currentProgress = (enrollment?.lessonProgress as any) || {};
+    const updatedLessonProgress = {
+      completed: completed ?? false,
+      progressPercent,
+      completedAt: completed ? new Date().toISOString() : null,
+    };
 
-      const completedLessons = await prisma.lessonProgress.count({
-        where: {
+    // 计算整体课程进度
+    const allLessons = await prisma.lesson.findMany({
+      where: { courseId },
+    });
+
+    const updatedProgress = {
+      ...currentProgress,
+      [lessonId]: updatedLessonProgress,
+    };
+
+    const completedCount = Object.values(updatedProgress).filter(
+      (v: any) => v.completed
+    ).length;
+    const courseProgress = (completedCount / allLessons.length) * 100;
+
+    // 更新或创建报名记录
+    await prisma.courseEnrollment.upsert({
+      where: {
+        userId_courseId: {
           userId,
-          lessonId: {
-            in: allLessons.map((l) => l.id),
-          },
-          completed: true,
+          courseId,
         },
-      });
+      },
+      update: {
+        progress: courseProgress,
+        lessonProgress: updatedProgress as any,
+        completedAt: courseProgress >= 100 ? new Date() : null,
+      },
+      create: {
+        userId,
+        courseId,
+        progress: courseProgress,
+        lessonProgress: updatedProgress as any,
+      },
+    });
 
-      const courseProgress = (completedLessons / allLessons.length) * 100;
-
-      // 更新课程报名进度
-      const enrollment = await prisma.enrollment.findUnique({
-        where: {
-          userId_courseId: {
-            userId,
-            courseId,
-          },
-        },
-      });
-
-      if (enrollment) {
-        await prisma.enrollment.update({
-          where: {
-            userId_courseId: {
-              userId,
-              courseId,
-            },
-          },
-          data: {
-            progress: courseProgress,
-            completedAt: courseProgress >= 100 ? new Date() : null,
-          },
-        });
-      }
-    }
-
-    return NextResponse.json(progress);
+    return NextResponse.json(updatedLessonProgress);
   } catch (error) {
     console.error('更新课时进度失败:', error);
     return NextResponse.json(
