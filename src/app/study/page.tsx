@@ -28,12 +28,15 @@ import {
   SkipForward,
   SkipBack,
   Music,
+  List,
 } from 'lucide-react';
 import { NoteDialog } from '@/components/study/note-dialog';
 import { BookmarkDialog, BookmarkList } from '@/components/study/bookmark-dialog';
 import type { BookmarkItem } from '@/components/study/bookmark-dialog';
 import { DailyCheckIn } from '@/components/study/daily-check-in';
 import { useSession } from 'next-auth/react';
+
+type DisplayMode = 'verse' | 'chapter';
 
 interface AiAnalysis {
   summary?: string;
@@ -104,6 +107,7 @@ export default function StudyPage() {
   const [activeTab, setActiveTab] = useState('chinese');
   const [studyProgress, setStudyProgress] = useState<Record<string, StudyProgress>>({});
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('chapter'); // 默认整章显示
   
   const { data: session } = useSession();
 
@@ -417,29 +421,57 @@ export default function StudyPage() {
                     {currentChapter?.title}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    偈颂 {selectedVerseIndex + 1} / {verses.length}
+                    {displayMode === 'chapter'
+                      ? `共 ${verses.length} 偈`
+                      : `偈颂 ${selectedVerseIndex + 1} / ${verses.length}`
+                    }
                   </p>
                 </div>
                 <div className="flex gap-2 ml-4">
-                  <Button 
-                    size="icon" 
-                    variant="outline" 
-                    onClick={goToPrevVerse} 
-                    disabled={!currentChapter || selectedVerseIndex === 0}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    size="icon" 
-                    variant="outline" 
-                    onClick={goToNextVerse}
-                    disabled={
-                      !currentChapter ||
-                      (currentChapter.chapterNum === 32 && selectedVerseIndex === verses.length - 1)
-                    }
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
+                  {/* 显示模式切换 */}
+                  <div className="flex border rounded-md p-0.5 mr-2">
+                    <Button
+                      size="sm"
+                      variant={displayMode === 'chapter' ? 'default' : 'ghost'}
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setDisplayMode('chapter')}
+                    >
+                      <List className="w-3 h-3 mr-1" />
+                      整章
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={displayMode === 'verse' ? 'default' : 'ghost'}
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setDisplayMode('verse')}
+                    >
+                      <FileText className="w-3 h-3 mr-1" />
+                      逐偈
+                    </Button>
+                  </div>
+                  {displayMode === 'verse' && (
+                    <>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={goToPrevVerse}
+                        disabled={!currentChapter || selectedVerseIndex === 0}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={goToNextVerse}
+                        disabled={
+                          !currentChapter ||
+                          (currentChapter.chapterNum === 32 && selectedVerseIndex === verses.length - 1)
+                        }
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -449,10 +481,10 @@ export default function StudyPage() {
                   size="sm"
                   variant={isReading ? "destructive" : "outline"}
                   onClick={isReading ? pauseReading : startReading}
-                  disabled={!selectedVerse}
+                  disabled={!selectedVerse || (displayMode === 'chapter' && verses.length === 0)}
                 >
                   {isReading ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-                  {isReading ? '暂停朗读' : '朗读经文'}
+                  {isReading ? '暂停朗读' : (displayMode === 'chapter' ? '朗读本章' : '朗读经文')}
                 </Button>
 
                 <div className="flex items-center gap-2">
@@ -505,119 +537,240 @@ export default function StudyPage() {
             </CardHeader>
 
             <CardContent className="p-6">
-              {selectedVerse ? (
-                <div className="space-y-6">
-                  <ScrollArea className="h-[350px]">
-                    <Tabs value={activeTab} onValueChange={setActiveTab}>
-                      <TabsList className="grid w-full grid-cols-4 mb-4">
-                        <TabsTrigger value="chinese">汉译</TabsTrigger>
-                        <TabsTrigger value="english">英译</TabsTrigger>
-                        <TabsTrigger value="sanskrit">梵文</TabsTrigger>
-                        <TabsTrigger value="analysis">AI解析</TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="chinese" className="space-y-4">
-                        <div className="text-2xl leading-relaxed font-serif text-foreground">
-                          {selectedVerse.chinese}
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="english" className="space-y-4">
-                        <div className="text-lg leading-relaxed text-muted-foreground font-serif">
-                          {selectedVerse.english || '英译文本正在整理中...'}
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="sanskrit" className="space-y-4">
-                        <div className="text-lg leading-relaxed text-muted-foreground font-serif">
-                          {selectedVerse.sanskrit || '梵文正在整理中...'}
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="analysis" className="space-y-4">
-                        <div className="bg-amber-50 rounded-lg p-4 space-y-3">
-                          <div className="flex items-center gap-2 text-amber-700">
-                            <Sparkles className="w-4 h-4" />
-                            <span className="font-medium">AI 解析</span>
-                          </div>
-                          <p className="text-amber-900">
-                            {selectedVerse.aiAnalysis?.summary || '正在生成解析...'}
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {(Array.isArray(selectedVerse.aiKeyword) ? selectedVerse.aiKeyword : []).map((kw) => (
-                              <Badge key={kw} variant="secondary" className="bg-amber-100 text-amber-800">
-                                {kw}
+              {displayMode === 'chapter' ? (
+                // 整章显示模式
+                verses.length > 0 ? (
+                  <div className="space-y-6">
+                    <ScrollArea className="h-[500px]">
+                      <div className="space-y-6 pr-4">
+                        {verses.map((verse, index) => (
+                          <div key={verse.id} className="border-b pb-6 last:border-0">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Badge variant="outline" className="text-amber-700 border-amber-300">
+                                偈 {verse.verseNum}
                               </Badge>
-                            ))}
+                              {session?.user && studyProgress[verse.id] && (
+                                <Badge
+                                  variant={
+                                    studyProgress[verse.id].status === 'MASTERED'
+                                      ? 'default'
+                                      : 'secondary'
+                                  }
+                                  className={
+                                    studyProgress[verse.id].status === 'MASTERED'
+                                      ? 'bg-green-100 text-green-800'
+                                      : ''
+                                  }
+                                >
+                                  {studyProgress[verse.id].status === 'LEARNING' && '学习中'}
+                                  {studyProgress[verse.id].status === 'MEMORIZED' &&
+                                    `已背诵${studyProgress[verse.id].recitationCount}次`}
+                                  {studyProgress[verse.id].status === 'MASTERED' && '已掌握'}
+                                </Badge>
+                              )}
+                            </div>
+
+                            {/* 中文 */}
+                            <div className="text-xl leading-loose font-serif text-foreground mb-4">
+                              {verse.chinese}
+                            </div>
+
+                            {/* 英文 */}
+                            {verse.english && (
+                              <div className="text-base leading-relaxed text-muted-foreground mb-3 pl-4 border-l-2 border-amber-200">
+                                {verse.english}
+                              </div>
+                            )}
+
+                            {/* 梵文 */}
+                            {verse.sanskrit && (
+                              <div className="text-sm text-muted-foreground italic mb-3">
+                                {verse.sanskrit}
+                              </div>
+                            )}
+
+                            {/* AI解析 */}
+                            {verse.aiAnalysis?.summary && (
+                              <div className="bg-amber-50 rounded-lg p-3 mt-3">
+                                <div className="flex items-center gap-2 text-amber-700 mb-1">
+                                  <Sparkles className="w-3 h-3" />
+                                  <span className="text-sm font-medium">AI 解析</span>
+                                </div>
+                                <p className="text-sm text-amber-900">
+                                  {verse.aiAnalysis.summary}
+                                </p>
+                                {Array.isArray(verse.aiKeyword) && verse.aiKeyword.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {verse.aiKeyword.map((kw) => (
+                                      <Badge
+                                        key={kw}
+                                        variant="secondary"
+                                        className="text-xs bg-amber-100 text-amber-800"
+                                      >
+                                        {kw}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* 操作按钮 */}
+                            <div className="flex gap-2 mt-3">
+                              {session?.user && (
+                                <>
+                                  <BookmarkDialog
+                                    verseId={verse.id}
+                                    verse={verse.chinese}
+                                    chapter={currentChapter?.title || ''}
+                                  />
+                                  <NoteDialog
+                                    verseId={verse.id}
+                                    verse={verse.chinese}
+                                    chapter={currentChapter?.title || ''}
+                                  />
+                                </>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => {
+ setSelectedVerse(verse);
+ setSelectedVerseIndex(index);
+ startReading();
+}}
+                              >
+                                <Volume2 className="w-3 h-3 mr-1" />
+                                朗读
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                  </ScrollArea>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                ) : (
+                  <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+                    该章节内容正在整理中...
+                  </div>
+                )
+              ) : (
+                // 逐偈显示模式
+                selectedVerse ? (
+                  <div className="space-y-6">
+                    <ScrollArea className="h-[350px]">
+                      <Tabs value={activeTab} onValueChange={setActiveTab}>
+                        <TabsList className="grid w-full grid-cols-4 mb-4">
+                          <TabsTrigger value="chinese">汉译</TabsTrigger>
+                          <TabsTrigger value="english">英译</TabsTrigger>
+                          <TabsTrigger value="sanskrit">梵文</TabsTrigger>
+                          <TabsTrigger value="analysis">AI解析</TabsTrigger>
+                        </TabsList>
 
-                  {/* 学习状态 */}
-                  {session?.user && studyProgress[selectedVerse.id] && (
-                    <div className="flex gap-2 pt-2">
-                      {studyProgress[selectedVerse.id].status === 'LEARNING' && (
-                        <Badge variant="outline" className="text-blue-600 border-blue-600">
-                          学习中
-                        </Badge>
-                      )}
-                      {studyProgress[selectedVerse.id].status === 'MEMORIZED' && (
-                        <Badge className="bg-green-100 text-green-800">
-                          已背诵 {studyProgress[selectedVerse.id].recitationCount} 次
-                        </Badge>
-                      )}
-                      {studyProgress[selectedVerse.id].status === 'MASTERED' && (
-                        <Badge className="bg-amber-100 text-amber-800">
-                          已掌握
-                        </Badge>
-                      )}
-                    </div>
-                  )}
+                        <TabsContent value="chinese" className="space-y-4">
+                          <div className="text-2xl leading-relaxed font-serif text-foreground">
+                            {selectedVerse.chinese}
+                          </div>
+                        </TabsContent>
 
-                  {/* Actions */}
-                  <div className="flex justify-between pt-4 border-t">
-                    <div className="flex gap-2">
-                      {session?.user && (
-                        <>
-                          <BookmarkDialog
-                            verseId={selectedVerse.id}
-                            verse={selectedVerse?.chinese || ''}
-                            chapter={currentChapter?.title || ''}
-                          />
-                          <NoteDialog
-                            verseId={selectedVerse.id}
-                            verse={selectedVerse?.chinese || ''}
-                            chapter={currentChapter?.title || ''}
-                          />
-                        </>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={isReading ? pauseReading : startReading}
-                      >
-                        <Volume2 className="w-4 h-4 mr-2" />
-                        朗读此偈
-                      </Button>
-                      {session?.user && studyProgress[selectedVerse.id]?.status !== 'MASTERED' && (
+                        <TabsContent value="english" className="space-y-4">
+                          <div className="text-lg leading-relaxed text-muted-foreground font-serif">
+                            {selectedVerse.english || '英译文本正在整理中...'}
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="sanskrit" className="space-y-4">
+                          <div className="text-lg leading-relaxed text-muted-foreground font-serif">
+                            {selectedVerse.sanskrit || '梵文正在整理中...'}
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="analysis" className="space-y-4">
+                          <div className="bg-amber-50 rounded-lg p-4 space-y-3">
+                            <div className="flex items-center gap-2 text-amber-700">
+                              <Sparkles className="w-4 h-4" />
+                              <span className="font-medium">AI 解析</span>
+                            </div>
+                            <p className="text-amber-900">
+                              {selectedVerse.aiAnalysis?.summary || '正在生成解析...'}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {(Array.isArray(selectedVerse.aiKeyword) ? selectedVerse.aiKeyword : []).map((kw) => (
+                                <Badge key={kw} variant="secondary" className="bg-amber-100 text-amber-800">
+                                  {kw}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </ScrollArea>
+
+                    {/* 学习状态 */}
+                    {session?.user && studyProgress[selectedVerse.id] && (
+                      <div className="flex gap-2 pt-2">
+                        {studyProgress[selectedVerse.id].status === 'LEARNING' && (
+                          <Badge variant="outline" className="text-blue-600 border-blue-600">
+                            学习中
+                          </Badge>
+                        )}
+                        {studyProgress[selectedVerse.id].status === 'MEMORIZED' && (
+                          <Badge className="bg-green-100 text-green-800">
+                            已背诵 {studyProgress[selectedVerse.id].recitationCount} 次
+                          </Badge>
+                        )}
+                        {studyProgress[selectedVerse.id].status === 'MASTERED' && (
+                          <Badge className="bg-amber-100 text-amber-800">
+                            已掌握
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex justify-between pt-4 border-t">
+                      <div className="flex gap-2">
+                        {session?.user && (
+                          <>
+                            <BookmarkDialog
+                              verseId={selectedVerse.id}
+                              verse={selectedVerse?.chinese || ''}
+                              chapter={currentChapter?.title || ''}
+                            />
+                            <NoteDialog
+                              verseId={selectedVerse.id}
+                              verse={selectedVerse?.chinese || ''}
+                              chapter={currentChapter?.title || ''}
+                            />
+                          </>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => saveStudyProgress('MEMORIZED')}
+                          onClick={isReading ? pauseReading : startReading}
                         >
-                          <FileText className="w-4 h-4 mr-2" />
-                          标记已背诵
+                          <Volume2 className="w-4 h-4 mr-2" />
+                          朗读此偈
                         </Button>
-                      )}
+                        {session?.user && studyProgress[selectedVerse.id]?.status !== 'MASTERED' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => saveStudyProgress('MEMORIZED')}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            标记已背诵
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-                  该章节内容正在整理中...
-                </div>
+                ) : (
+                  <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+                    该章节内容正在整理中...
+                  </div>
+                )
               )}
             </CardContent>
           </Card>
