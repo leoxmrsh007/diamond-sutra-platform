@@ -12,16 +12,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LoadingSpinner } from '@/components/ui/loading';
+import { CourseCardSkeleton } from '@/components/ui/skeleton';
 import {
-  BookOpen,
   Clock,
   Users,
   PlayCircle,
   CheckCircle2,
   Lock,
   Video,
-  Star,
 } from 'lucide-react';
 
 interface Course {
@@ -77,18 +75,6 @@ export default function CoursesPage() {
 
   const enrolledCourses = courses.filter((c) => c.isEnrolled);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container max-w-6xl mx-auto px-4 py-8 flex items-center justify-center min-h-[500px]">
-          <LoadingSpinner />
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -112,22 +98,39 @@ export default function CoursesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold text-amber-700">{enrolledCourses.length}</div>
-                <div className="text-sm text-muted-foreground">已报名课程</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-amber-700">
-                  {enrolledCourses.reduce((sum, c) => sum + c.lessons.length, 0)}
+            {loading ? (
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="space-y-2">
+                  <div className="h-8 bg-muted/50 rounded animate-pulse mx-auto w-16" />
+                  <div className="h-4 bg-muted/30 rounded w-24 mx-auto" />
                 </div>
-                <div className="text-sm text-muted-foreground">已完成课时</div>
+                <div className="space-y-2">
+                  <div className="h-8 bg-muted/50 rounded animate-pulse mx-auto w-16" />
+                  <div className="h-4 bg-muted/30 rounded w-24 mx-auto" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-8 bg-muted/50 rounded animate-pulse mx-auto w-16" />
+                  <div className="h-4 bg-muted/30 rounded w-24 mx-auto" />
+                </div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-amber-700">{enrolledCourses.length > 0 ? '学习中' : '-'}</div>
-                <div className="text-sm text-muted-foreground">当前状态</div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-amber-700">{enrolledCourses.length}</div>
+                  <div className="text-sm text-muted-foreground">已报名课程</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-amber-700">
+                    {enrolledCourses.reduce((sum, c) => sum + c.lessons.length, 0)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">已完成课时</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-amber-700">{enrolledCourses.length > 0 ? '学习中' : '-'}</div>
+                  <div className="text-sm text-muted-foreground">当前状态</div>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -140,10 +143,16 @@ export default function CoursesPage() {
           </TabsList>
 
           <TabsContent value="beginner" className="space-y-6">
-            {coursesByLevel('BEGINNER').map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-            {coursesByLevel('BEGINNER').length === 0 && (
+            {loading ? (
+              <>
+                <CourseCardSkeleton />
+                <CourseCardSkeleton />
+              </>
+            ) : coursesByLevel('BEGINNER').length > 0 ? (
+              coursesByLevel('BEGINNER').map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))
+            ) : (
               <div className="text-center py-12 text-muted-foreground">
                 暂无初级课程
               </div>
@@ -151,10 +160,16 @@ export default function CoursesPage() {
           </TabsContent>
 
           <TabsContent value="intermediate" className="space-y-6">
-            {coursesByLevel('INTERMEDIATE').map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-            {coursesByLevel('INTERMEDIATE').length === 0 && (
+            {loading ? (
+              <>
+                <CourseCardSkeleton />
+                <CourseCardSkeleton />
+              </>
+            ) : coursesByLevel('INTERMEDIATE').length > 0 ? (
+              coursesByLevel('INTERMEDIATE').map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))
+            ) : (
               <div className="text-center py-12 text-muted-foreground">
                 暂无中级课程
               </div>
@@ -162,10 +177,16 @@ export default function CoursesPage() {
           </TabsContent>
 
           <TabsContent value="advanced" className="space-y-6">
-            {coursesByLevel('ADVANCED').map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-            {coursesByLevel('ADVANCED').length === 0 && (
+            {loading ? (
+              <>
+                <CourseCardSkeleton />
+                <CourseCardSkeleton />
+              </>
+            ) : coursesByLevel('ADVANCED').length > 0 ? (
+              coursesByLevel('ADVANCED').map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))
+            ) : (
               <div className="text-center py-12 text-muted-foreground">
                 暂无高级课程
               </div>
