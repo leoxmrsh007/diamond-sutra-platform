@@ -48,6 +48,7 @@ interface Chapter {
   chapterNum: number;
   title: string;
   summary: string;
+  imageUrl?: string | null;
   verses: Verse[];
 }
 
@@ -474,6 +475,17 @@ export default function StudyPage() {
                   )}
                 </div>
               </div>
+
+              {/* 章节配图 */}
+              {currentChapter?.imageUrl && (
+                <div className="mt-4 rounded-lg overflow-hidden border">
+                  <img
+                    src={currentChapter.imageUrl}
+                    alt={currentChapter.title}
+                    className="w-full h-48 object-cover"
+                  />
+                </div>
+              )}
 
               {/* 朗读控制 & 背景音乐 */}
               <div className="flex flex-wrap gap-3 mt-4">

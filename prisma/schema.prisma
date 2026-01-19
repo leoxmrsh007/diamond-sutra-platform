@@ -75,6 +75,8 @@ model Chapter {
   title       String
   titleSanskrit String?
   summary     String?
+  imageUrl    String?   // 章节配图 URL
+  imagePrompt String?   // AI 图片生成提示词
 
   verses      Verse[]
 
