@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,8 +33,21 @@ import {
 
 const levelLabelMap: Record<string, string> = { BEGINNER: '初级', INTERMEDIATE: '中级', ADVANCED: '高级' };
 
+interface Lesson {
+  id: string;
+  title: string;
+  duration: string;
+  isFree: boolean;
+  completed: boolean;
+}
+
+interface LessonProgress {
+  [lessonId: string]: { completed: boolean; progressPercent: number };
+}
+
 export default function CourseDetailPage() {
   const params = useParams();
+  const { data: session } = useSession();
   const courseId = params.id as string;
   const [course, setCourse] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,12 +58,84 @@ export default function CourseDetailPage() {
   const [currentLesson, setCurrentLesson] = useState(1);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [activeTab, setActiveTab] = useState('lessons');
+  const [lessonProgress, setLessonProgress] = useState<LessonProgress>({});
 
   const handleEnroll = async () => {
     try {
       const res = await fetch(`/api/courses/${courseId}/enroll`, { method: 'POST' });
       if (res.ok) setIsEnrolled(true);
     } catch {}
+  };
+
+  // 加载课时进度
+  useEffect(() => {
+    if (session?.user && lessonsList.length > 0) {
+      loadLessonProgress();
+    }
+  }, [session, lessonsList]);
+
+  const loadLessonProgress = async () => {
+    try {
+      const progressRes = await fetch(`/api/courses/${courseId}/lessons`);
+      if (progressRes.ok) {
+        const lessons = await progressRes.json();
+        const progressMap: LessonProgress = {};
+        for (const lesson of lessons) {
+          const res = await fetch(`/api/courses/${courseId}/lessons/${lesson.id}/progress`);
+          if (res.ok) {
+            const progress = await res.json();
+            progressMap[lesson.id] = {
+              completed: progress.completed || false,
+              progressPercent: progress.progressPercent || 0,
+            };
+          }
+        }
+        setLessonProgress(progressMap);
+
+        // 更新课程中的课时完成状态
+        if (course?.lessonsList) {
+          setCourse((prev: any) => ({
+            ...prev,
+            lessonsList: prev.lessonsList.map((l: any) => ({
+              ...l,
+              completed: progressMap[l.id]?.completed || false,
+            })),
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('加载课时进度失败:', error);
+    }
+  };
+
+  // 标记课时完成
+  const toggleLessonComplete = async (lessonId: string, completed: boolean) => {
+    if (!session?.user) return;
+
+    try {
+      const res = await fetch(`/api/courses/${courseId}/lessons/${lessonId}/progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed, progressPercent: completed ? 100 : 0 }),
+      });
+
+      if (res.ok) {
+        setLessonProgress((prev) => ({
+          ...prev,
+          [lessonId]: { completed, progressPercent: completed ? 100 : 0 },
+        }));
+
+        // 更新课程中的课时完成状态
+        setCourse((prev: any) => ({
+          ...prev,
+          lessonsList: prev.lessonsList.map((l: any) =>
+            l.id === lessonId ? { ...l, completed } : l
+          ),
+        }));
+      }
+    } catch (error) {
+      console.error('保存课时进度失败:', error);
+    }
   };
 
   const currentLessonData = lessonsList.find((l: any) => l.id === currentLesson) || lessonsList[0];
@@ -288,6 +374,17 @@ export default function CourseDetailPage() {
                             >
                               {lesson.completed ? '复习' : currentLesson === lesson.id ? '播放中' : '播放'}
                             </Button>
+                            {isEnrolled && (
+                              <Button
+                                size="sm"
+                                variant={lesson.completed ? 'default' : 'outline'}
+                                className={lesson.completed ? 'bg-green-500 hover:bg-green-600' : ''}
+                                onClick={() => toggleLessonComplete(lesson.id, !lesson.completed)}
+                                title={lesson.completed ? '标记为未完成' : '标记为已完成'}
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </div>
                         ))}
                       </div>

@@ -1,10 +1,11 @@
 /**
- * AI 讲师问答页面 - 支持流式响应
+ * AI 讲师问答页面 - 支持流式响应和对话历史
  */
 
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +25,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   RefreshCw,
+  Trash2,
+  Plus,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -32,6 +35,14 @@ interface Message {
   content: string;
   timestamp: Date;
   isStreaming?: boolean;
+}
+
+interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: { messages: number };
 }
 
 const suggestedQuestions = [
@@ -43,6 +54,7 @@ const suggestedQuestions = [
 ];
 
 export default function AIPage() {
+  const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
@@ -53,6 +65,96 @@ export default function AIPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 会话历史管理
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // 加载会话历史
+  useEffect(() => {
+    if (session?.user) {
+      loadChatSessions();
+    }
+  }, [session]);
+
+  const loadChatSessions = async () => {
+    try {
+      const res = await fetch('/api/chat/history');
+      if (res.ok) {
+        const sessions = await res.json();
+        setChatSessions(sessions);
+      }
+    } catch (error) {
+      console.error('加载会话历史失败:', error);
+    }
+  };
+
+  const loadSessionMessages = async (sessionId: string) => {
+    try {
+      const res = await fetch(`/api/chat/history?sessionId=${sessionId}`);
+      if (res.ok) {
+        const historyMessages = await res.json();
+        const formattedMessages: Message[] = historyMessages.map((msg: any) => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: new Date(msg.createdAt),
+        }));
+        setMessages(formattedMessages);
+        setCurrentSessionId(sessionId);
+        setShowHistory(false);
+      }
+    } catch (error) {
+      console.error('加载会话消息失败:', error);
+    }
+  };
+
+  const startNewChat = () => {
+    setMessages([
+      {
+        role: 'assistant',
+        content: '阿弥陀佛！我是您的金刚经 AI 讲师。您可以问我任何关于《金刚经》的问题，包括经义解析、修行实践、哲学思考等。',
+        timestamp: new Date(),
+      },
+    ]);
+    setCurrentSessionId(null);
+    setShowHistory(false);
+  };
+
+  const deleteSession = async (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/chat/history?sessionId=${sessionId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setChatSessions((prev) => prev.filter((s) => s.id !== sessionId));
+        if (currentSessionId === sessionId) {
+          startNewChat();
+        }
+      }
+    } catch (error) {
+      console.error('删除会话失败:', error);
+    }
+  };
+
+  const saveMessage = async (role: 'user' | 'assistant', content: string) => {
+    if (!session?.user) return;
+
+    try {
+      await fetch('/api/chat/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: currentSessionId,
+          role,
+          content,
+        }),
+      });
+    } catch (error) {
+      console.error('保存消息失败:', error);
+    }
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -70,8 +172,12 @@ export default function AIPage() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setIsLoading(true);
+
+    // 保存用户消息
+    await saveMessage('user', userInput);
 
     // 创建流式响应的消息占位符
     const assistantMessage: Message = {
@@ -143,6 +249,14 @@ export default function AIPage() {
               : msg
           )
         );
+
+        // 保存助手响应
+        await saveMessage('assistant', fullContent);
+
+        // 更新会话列表
+        if (session?.user) {
+          loadChatSessions();
+        }
       }
     } catch (error) {
       // 回退到非流式响应
@@ -212,15 +326,93 @@ export default function AIPage() {
       <div className="container max-w-5xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <Badge className="mb-4">
-            <Sparkles className="w-3 h-3 mr-1" />
-            Powered by Gemini 2.0
-          </Badge>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Badge className="mb-4">
+              <Sparkles className="w-3 h-3 mr-1" />
+              Powered by Gemini 2.0
+            </Badge>
+            {session?.user && chatSessions.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowHistory(!showHistory)}
+                className="mb-4"
+              >
+                <History className="w-4 h-4 mr-1" />
+                对话历史 ({chatSessions.length})
+              </Button>
+            )}
+          </div>
           <h1 className="text-3xl font-bold mb-2">AI 讲师问答</h1>
           <p className="text-muted-foreground">
             关于《金刚经》的任何问题，随时为您解答
           </p>
         </div>
+
+        {/* 会话历史面板 */}
+        {showHistory && session?.user && (
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center">
+                  <History className="w-5 h-5 mr-2" />
+                  对话历史
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={startNewChat}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    新对话
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowHistory(false)}
+                  >
+                    关闭
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-3 gap-3">
+                {chatSessions.map((chatSession) => (
+                  <div
+                    key={chatSession.id}
+                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                      currentSessionId === chatSession.id
+                        ? 'border-amber-500 bg-amber-50'
+                        : 'hover:bg-muted'
+                    }`}
+                    onClick={() => loadSessionMessages(chatSession.id)}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">
+                          {chatSession.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {chatSession._count?.messages || 0} 条消息
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 shrink-0"
+                        onClick={(e) => deleteSession(chatSession.id, e)}
+                      >
+                        <Trash2 className="w-3 h-3 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid md:grid-cols-4 gap-6">
           {/* Sidebar */}
