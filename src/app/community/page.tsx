@@ -5,11 +5,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,7 +23,50 @@ import {
   Bookmark,
   TrendingUp,
   Clock,
+  X,
+  Plus,
 } from 'lucide-react';
+
+interface Post {
+  id: string;
+  title: string;
+  content: string;
+  tags: string[];
+  likeCount: number;
+  commentCount: number;
+  createdAt: Date | string;
+  author: {
+    id: string;
+    name: string;
+    avatar?: string | null;
+  };
+}
+
+// 示例帖子数据（用作备用）
+const samplePosts = [
+  {
+    id: '1',
+    author: { name: '慧明', avatar: '慧', id: '1' },
+    title: '如何理解"无住生心"在日常生活中的应用？',
+    content: '最近在研读《金刚经》，对"无住生心"这个概念很感兴趣。但是在实际生活中，我们应该如何做到"心无所住"呢？希望大家分享自己的修行体验。我理解的"无住"是：做事时专注当下，做完后不执着结果。但实际操作起来还是有难度，尤其是遇到挫折的时候...',
+    tags: ['无住生心', '修行实践', '生活应用'],
+    likeCount: 142,
+    commentCount: 58,
+    hoursAgo: 2,
+    isHot: true,
+  },
+  {
+    id: '2',
+    author: { name: '妙音', avatar: '妙', id: '2' },
+    title: '分享我的每日诵读心得',
+    content: '每天早晨诵读《金刚经》已经成为我的习惯。经过三个月的坚持，感觉内心平静了许多，对很多事情的看法也改变了。以前很容易被外界影响情绪，现在能够更冷静地面对顺境和逆境。建议大家尝试每天固定时间诵读，即使只是几分钟也会有收获。',
+    tags: ['每日诵读', '心得分享', '修行体验'],
+    likeCount: 189,
+    commentCount: 84,
+    hoursAgo: 5,
+    isHot: true,
+  },
+];
 
 // 示例帖子数据 - 使用固定的时间差避免 hydration 错误
 const samplePosts = [
