@@ -78,8 +78,6 @@ export async function POST() {
       created++;
     }
 
-    await prisma.$disconnect();
-
     console.log(`Created ${created} chapters`);
 
     return NextResponse.json({
@@ -90,7 +88,6 @@ export async function POST() {
     });
   } catch (error) {
     console.error('Seeding error:', error);
-    await prisma.$disconnect();
     return NextResponse.json(
       { success: false, error: (error as Error).message },
       { status: 500 }

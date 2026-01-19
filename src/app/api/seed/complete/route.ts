@@ -297,14 +297,11 @@ export async function POST() {
       results.chaptersUpdated++
     }
 
-    await prisma.$disconnect()
-
     results.success = true
     results.message = `成功补充 ${results.chaptersUpdated} 章，共 ${results.versesAdded} 条偈颂！`
 
     return NextResponse.json(results)
   } catch (error: any) {
-    await prisma.$disconnect()
     results.errors.push(error.message)
     return NextResponse.json(results, { status: 500 })
   }

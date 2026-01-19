@@ -294,8 +294,6 @@ export async function POST() {
     }
     console.log(`✓ 已创建 ${results.courses} 个课程`)
 
-    await prisma.$disconnect()
-
     return NextResponse.json({
       success: true,
       message: '金刚经数据填充成功！',
@@ -303,7 +301,6 @@ export async function POST() {
     })
   } catch (error) {
     console.error('填充数据时出错:', error)
-    await prisma.$disconnect()
     return NextResponse.json(
       {
         success: false,
