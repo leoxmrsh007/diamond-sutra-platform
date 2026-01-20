@@ -3,6 +3,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+
+export const dynamic = 'force-static';
+export const fetchCache = 'force-cache';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 

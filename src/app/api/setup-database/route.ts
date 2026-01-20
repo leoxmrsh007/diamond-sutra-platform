@@ -4,6 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+
+export const dynamic = 'force-static';
+export const fetchCache = 'force-cache';
 import { prisma } from '@/lib/prisma';
 
 // 仅在首次设置时使用，之后应该删除此文件

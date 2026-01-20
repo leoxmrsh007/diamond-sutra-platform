@@ -4,6 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+
+export const dynamic = 'force-static';
+export const fetchCache = 'force-cache';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 // 无需会话即可获取课程详情；是否已报名在客户端基于会话判断

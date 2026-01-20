@@ -1,0 +1,60 @@
+# 阿里云 OSS + CDN 部署配置
+# 适合国内访问的静态部署方案
+
+edition: 3.0.0
+name: diamond-sutra-platform
+access: default
+
+resources:
+  # OSS 静态网站托管
+  website:
+    component: oss
+    props:
+      region: cn-hangzhou
+      bucket: diamond-sutra-platform
+      acl: private
+      website:
+        index: index.html
+        error: 404.html
+        subdirectoryStatus: enabled
+
+      # CDN 配置
+      cdn:
+        enabled: true
+        domain: ""  # 需要配置自定义域名
+        https:
+          enabled: true
+          certId: ""  # SSL 证书 ID
+
+  # 阿里云函数计算 - API 路由
+  api:
+    component: fc3
+    props:
+      region: cn-hangzhou
+      serviceName: diamond-sutra-api
+      functionName: nextjs-api
+      runtime: nodejs20
+      handler: index.handler
+      memorySize: 2048
+      timeout: 60
+      code: ./
+
+      environmentVariables:
+        DATABASE_URL: ${env.DATABASE_URL}
+        NEXTAUTH_URL: ${env.NEXTAUTH_URL}
+        NEXTAUTH_SECRET: ${env.NEXTAUTH_SECRET}
+        GEMINI_API_KEY: ${env.GEMINI_API_KEY}
+        NODE_ENV: production
+
+      triggers:
+        - triggerName: httpTrigger
+          triggerType: http
+          triggerConfig:
+            authType: anonymous
+            methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            path: /api/*

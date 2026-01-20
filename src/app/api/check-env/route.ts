@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-static'
+export const fetchCache = 'force-cache'
+
 export async function GET() {
   const result = {
     databaseUrlSet: !!process.env.DATABASE_URL,

@@ -3,6 +3,9 @@
  */
 
 import NextAuth from 'next-auth';
+
+export const dynamic = 'force-static';
+export const fetchCache = 'force-cache';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';

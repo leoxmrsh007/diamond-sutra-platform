@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-static';
+export const fetchCache = 'force-cache';
 import { prisma } from '@/lib/prisma';
 
 export async function POST() {
