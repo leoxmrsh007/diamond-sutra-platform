@@ -11,14 +11,6 @@ const nextConfig: NextConfig = {
 
   // 路由配置
   trailingSlash: true,
-
-  // 禁用一些在静态构建中不支持的功能
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
 };
 
 export default nextConfig;
