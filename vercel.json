@@ -4,6 +4,9 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["hkg1"],
+  "git": {
+    "deploymentEnabled": true
+  }
   "headers": [
     {
       "source": "/(.*)",
