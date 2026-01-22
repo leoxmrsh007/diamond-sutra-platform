@@ -338,12 +338,20 @@ export default function ResearchPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button asChild>
-                  <Link href="/study?mode=compare">
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    开始对照阅读
-                  </Link>
-                </Button>
+                <div className="flex gap-2">
+                  <Button asChild>
+                    <Link href="/versions-1-3">
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      第1-3章对照
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/study?mode=compare">
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      开始对照阅读
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
