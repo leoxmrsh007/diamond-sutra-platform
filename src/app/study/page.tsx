@@ -356,6 +356,10 @@ export default function StudyPage() {
     );
   }
 
+  // 版本对照章节选择器 - 激活第1-3章
+  const versionCompareChapterIds = [chapters[0]?.id, chapters[1]?.id, chapters[2]?.id].filter(Boolean);
+  const [showVersionCompare, setShowVersionCompare] = useState(false);
+
   const verses = currentChapter?.verses || [];
 
   return (
