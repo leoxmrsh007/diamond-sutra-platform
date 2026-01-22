@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -110,6 +110,7 @@ model Verse {
   commentaries Commentary[]
   notes       Note[]
   studyProgress StudyProgress[]
+  versions    SutraVersion[]
 
   order       Int       @default(0)
 
@@ -119,6 +120,31 @@ model Verse {
   @@unique([chapterId, verseNum])
   @@index([chapterId])
   @@map("verses")
+}
+
+// ==================== 版本对照系统 ====================
+
+model SutraVersion {
+  id          String    @id @default(cuid())
+  verseId     String
+  verse       Verse     @relation(fields: [verseId], references: [id], onDelete: Cascade)
+
+  versionType String    // kumarajiva | xuanzang | yijing | sanskrit | tibetan | english
+  versionName String    // 鸠摩罗什译本 | 玄奘译本 | 义净译本 | 梵文原典 | 藏文译本 | 英译本
+  language   String    // zh | sa | bo | en
+  content    String    
+  
+  translator String?   // 译者名称：鸠摩罗什 | 玄奘 | 义净 | Edward Conze 等
+  year       String?   // 翻译年代：402 | 660 | 703 等
+  notes      String?   // 版本注释
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([verseId, versionType])
+  @@index([verseId])
+  @@index([versionType])
+  @@map("sutra_versions")
 }
 
 // ==================== 注释系统 ====================
@@ -316,7 +342,7 @@ model CourseEnrollment {
   course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   progress    Float     @default(0) // 0-100
-  lessonProgress Json?  @default("{}") // 每个课时的完成状态 { lessonId: { completed, progressPercent, completedAt } }
+  lessonProgress String?  @default("{}") // 每个课时的完成状态 { lessonId: { completed, progressPercent, completedAt } }
   completedAt DateTime?
 
   createdAt   DateTime  @default(now())
