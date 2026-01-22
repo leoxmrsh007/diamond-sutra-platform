@@ -318,8 +318,9 @@ export default function ResearchPage() {
         </div>
 
         <Tabs defaultValue="versions" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto">
+          <TabsList className="grid w-full grid-cols-5 max-w-3xl mx-auto">
             <TabsTrigger value="versions">版本对照</TabsTrigger>
+            <TabsTrigger value="chapters-1-3">第1-3章对照</TabsTrigger>
             <TabsTrigger value="commentaries">历代注释</TabsTrigger>
             <TabsTrigger value="papers">学术论文</TabsTrigger>
             <TabsTrigger value="knowledge">知识图谱</TabsTrigger>
@@ -440,6 +441,103 @@ export default function ResearchPage() {
                   </CardContent>
                 </Card>
               ))}
+             </div>
+           </TabsContent>
+
+          {/* 第1-2-3章对照 */}
+          <TabsContent value="chapters-1-3" className="space-y-6">
+            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-6 rounded-lg border border-amber-200">
+              <h3 className="text-2xl font-bold mb-4 text-amber-900">第1-2-3章详细版本对照</h3>
+              <p className="text-gray-700 mb-4">点击下方卡片查看各版本对比</p>
+              
+              <div className="grid md:grid-cols-3 gap-4 mb-6">
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-white" onClick={() => document.getElementById('chapter-1')?.scrollIntoView({ behavior: 'smooth' })}>
+                  <CardContent className="pt-6 text-center">
+                    <Badge variant="outline" className="mb-2">第1分</Badge>
+                    <h4 className="font-bold text-lg">法会因由分</h4>
+                    <p className="text-sm text-gray-600 mt-2">2个偈颂 · 5种版本</p>
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-white" onClick={() => document.getElementById('chapter-2')?.scrollIntoView({ behavior: 'smooth' })}>
+                  <CardContent className="pt-6 text-center">
+                    <Badge variant="outline" className="mb-2">第2分</Badge>
+                    <h4 className="font-bold text-lg">善现启请分</h4>
+                    <p className="text-sm text-gray-600 mt-2">3个偈颂 · 5种版本</p>
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-white" onClick={() => document.getElementById('chapter-3')?.scrollIntoView({ behavior: 'smooth' })}>
+                  <CardContent className="pt-6 text-center">
+                    <Badge variant="outline" className="mb-2">第3分</Badge>
+                    <h4 className="font-bold text-lg">大乘正宗分</h4>
+                    <p className="text-sm text-gray-600 mt-2">2个偈颂 · 5种版本</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* 第1分 */}
+              <div id="chapter-1" className="scroll-mt-20">
+                <Card className="border-2 mb-6">
+                  <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+                    <div className="flex items-center gap-3">
+                      <Badge variant="secondary">第1分</Badge>
+                      <CardTitle>法会因由分第一</CardTitle>
+                    </div>
+                    <CardDescription>佛陀在舍卫国祇树给孤独园示现般若法会，与大比丘众千二百五十人俱。说明本法会之缘起与时间地点。</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6 pt-6">
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Badge variant="outline">偈颂 1.1</Badge>
+                      </div>
+                      <Tabs defaultValue="kumarajiva">
+                        <TabsList className="grid w-full grid-cols-5 h-auto">
+                          <TabsTrigger value="kumarajiva" className="data-[state=active]:bg-red-100">鸠摩罗什 (402)</TabsTrigger>
+                          <TabsTrigger value="xuanzang" className="data-[state=active]:bg-blue-100">玄奘 (660)</TabsTrigger>
+                          <TabsTrigger value="yijing" className="data-[state=active]:bg-green-100">义净 (703)</TabsTrigger>
+                          <TabsTrigger value="sanskrit" className="data-[state=active]:bg-purple-100">梵文</TabsTrigger>
+                          <TabsTrigger value="tibetan" className="data-[state=active]:bg-orange-100">藏文</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="kumarajiva" className="mt-4 p-4 bg-red-50 rounded-lg">
+                          <p className="text-lg">如是我闻：一时，佛在舍卫国祇树给孤独园，与大比丘众千二百五十人俱。</p>
+                        </TabsContent>
+                        <TabsContent value="xuanzang" className="mt-4 p-4 bg-blue-50 rounded-lg">
+                          <p className="text-lg">如是我闻。一时，薄伽梵在室罗筏、誓多林给孤独园，与大苾刍众千二百五十人俱。</p>
+                        </TabsContent>
+                        <TabsContent value="yijing" className="mt-4 p-4 bg-green-50 rounded-lg">
+                          <p className="text-lg">如是我闻。一时，薄伽梵在室罗伐、誓多林给孤独园，与大苾刍众千二百五十人俱。</p>
+                        </TabsContent>
+                        <TabsContent value="sanskrit" className="mt-4 p-4 bg-purple-50 rounded-lg">
+                          <p className="text-base">Evam mayā śrutam - ekasmin samaye bhagavān śrāvastīyām viharati jetavane anāthapindikasya ārāme...</p>
+                        </TabsContent>
+                        <TabsContent value="tibetan" className="mt-4 p-4 bg-orange-50 rounded-lg">
+                          <p className="text-base">དེ་བཞིན་བདག་གིས་ཐོས་པ་ཡིན། དུས་གཅིག་ལ་བླ་མ་སངས་རྒྱས་ཤཱཀྱ་ཐུབ་དགེ་སློང་གི་ཚང་དུ་བཞུགས་ནས་དགེ་སྦྱང་སྟོང་ཕྲག་གཉིས་བརྒྱ་བ་དང་ལྷན་དུ་བཞུགས་པ་ཡོད་པ་རེད།</p>
+                        </TabsContent>
+                      </Tabs>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Badge variant="outline">偈颂 1.2</Badge>
+                      </div>
+                      <Tabs defaultValue="kumarajiva">
+                        <TabsList className="grid w-full grid-cols-3 h-auto">
+                          <TabsTrigger value="kumarajiva">鸠摩罗什</TabsTrigger>
+                          <TabsTrigger value="xuanzang">玄奘</TabsTrigger>
+                          <TabsTrigger value="yijing">义净</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="kumarajiva" className="mt-4 p-4 bg-red-50 rounded-lg">
+                          <p className="text-lg">尔时，世尊食时，着衣持钵，入舍卫大城乞食。于其城中次第乞已，还至本处。饭食讫，收衣钵，洗足已，敷座而坐。</p>
+                        </TabsContent>
+                        <TabsContent value="xuanzang" className="mt-4 p-4 bg-blue-50 rounded-lg">
+                          <p className="text-lg">尔时，世尊于日初分时，着衣持钵，入室罗筏大城乞食。于其城中次第乞已，还至本处。饭食讫，收衣钵，洗足已，敷座而坐。</p>
+                        </TabsContent>
+                        <TabsContent value="yijing" className="mt-4 p-4 bg-green-50 rounded-lg">
+                          <p className="text-lg">尔时，世尊于日初分时，着衣持钵，入室罗伐大城乞食。于其城中次第乞已，还至本处。饭食讫，收衣钵，洗足已，敷座而坐。</p>
+                        </TabsContent>
+                      </Tabs>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
 
