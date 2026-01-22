@@ -108,7 +108,10 @@ export default function ResearchPage() {
       
       <div className="container max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <Badge className="mb-4">学术研究</Badge>
+          <div className="flex items-center gap-2 mb-4">
+            <Badge>学术研究</Badge>
+            <span className="text-xs text-muted-foreground">版本 v2.0 - 2025-01-22</span>
+          </div>
           <h1 className="text-4xl font-bold mb-4">深度研究</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             多版本对照、历代注释、学术论文，深入探索《金刚经》的丰富内涵
