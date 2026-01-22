@@ -117,7 +117,7 @@ export default function ResearchPage() {
 
         <Tabs defaultValue="versions-123" className="space-y-8">
           <TabsList className="grid w-full grid-cols-5 max-w-3xl mx-auto">
-            <TabsTrigger value="versions-123">第1-3章对照</TabsTrigger>
+            <TabsTrigger value="versions-123" className="font-semibold">第1-3章对照</TabsTrigger>
             <TabsTrigger value="versions">版本列表</TabsTrigger>
             <TabsTrigger value="commentaries">历代注释</TabsTrigger>
             <TabsTrigger value="papers">学术论文</TabsTrigger>
