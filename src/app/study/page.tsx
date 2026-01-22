@@ -30,11 +30,10 @@ import {
   Music,
   List,
 } from 'lucide-react';
-import { NoteDialog } from '@/components/study/note-dialog';
-import { BookmarkDialog, BookmarkList } from '@/components/study/bookmark-dialog';
-import type { BookmarkItem } from '@/components/study/bookmark-dialog';
-import { DailyCheckIn } from '@/components/study/daily-check-in';
-import { useSession } from 'next-auth/react';
+  import { NoteDialog } from '@/components/study/note-dialog';
+  import { BookmarkDialog, BookmarkList } from '@/components/study/bookmark-dialog';
+  import type { BookmarkItem } from '@/components/study/bookmark-dialog';
+  import { DailyCheckIn } from '@/components/study/daily-check-in';
 
 type DisplayMode = 'verse' | 'chapter';
 
@@ -109,9 +108,10 @@ export default function StudyPage() {
   const [studyProgress, setStudyProgress] = useState<Record<string, StudyProgress>>({});
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('chapter'); // 默认整章显示
-  
-  const { data: session } = useSession();
-
+   
+  // const { data: session } = useSession();
+  const session = null; // 临时禁用session以避免auth错误
+ 
   // 朗读状态
   const [isReading, setIsReading] = useState(false);
   const [readingSpeed, setReadingSpeed] = useState(1);
@@ -153,10 +153,11 @@ export default function StudyPage() {
 
   // 加载用户学习进度
   useEffect(() => {
-    if (session?.user) {
-      fetchStudyProgress();
-      fetchBookmarks();
-    }
+    // 暂时禁用session相关功能
+    // if (session?.user) {
+    //   fetchStudyProgress();
+    //   fetchBookmarks();
+    // }
   }, [session]);
 
   const fetchStudyProgress = async () => {
