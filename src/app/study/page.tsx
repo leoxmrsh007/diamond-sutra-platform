@@ -374,6 +374,56 @@ export default function StudyPage() {
           </p>
         </div>
 
+        {/* 版本对照章节选择器 */}
+        {(selectedChapterId === chapters[0]?.id || selectedChapterId === chapters[1]?.id || selectedChapterId === chapters[2]?.id) && (
+          <div className="mb-6 bg-gradient-to-r from-amber-50 to-yellow-50 p-6 rounded-lg border-2 border-amber-200">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-amber-900">📖 第1-3章版本对照</h3>
+                <p className="text-sm text-amber-700 mt-1">
+                  鸠摩罗什 · 玄奘 · 义净 · 梵文 · 藏文
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedChapterId('')}
+                className="text-sm px-4 py-2 bg-white rounded-lg border border-amber-300 hover:bg-amber-50"
+              >
+                关闭对照
+              </button>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-4">
+              {chapters.slice(0, 3).map((chapter) => (
+                <button
+                  key={chapter.id}
+                  onClick={() => handleChapterChange(chapter.id)}
+                  className={`p-4 rounded-lg border-2 transition-all text-left ${
+                    selectedChapterId === chapter.id
+                      ? 'bg-amber-100 border-amber-500 shadow-lg scale-105'
+                      : 'bg-white border-amber-300 hover:border-amber-400 hover:shadow-md'
+                  }`}
+                >
+                  <div className="font-bold text-lg mb-1">
+                    第{chapter.chapterNum}分
+                  </div>
+                  <div className="text-sm font-medium text-gray-700">
+                    {chapter.title}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2">
+                    {chapter.verses.length} 个偈颂
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 p-4 bg-white rounded-lg">
+              <p className="text-sm text-gray-600">
+                💡 点击上方章节按钮查看详细版本对照
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Chapter List */}
           <Card className="lg:col-span-1">
