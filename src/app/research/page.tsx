@@ -124,7 +124,10 @@ export default function ResearchPage() {
   const [versionData, setVersionData] = useState<VerseWithVersions[]>([]);
   const [commentaryData, setCommentaryData] = useState<VerseWithCommentaries[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showVersionComparison, setShowVersionComparison] = useState(false);
+  const [selectedChapter, setSelectedChapter] = useState<number>(1);
 
   useEffect(() => {
     async function fetchResearchData() {
@@ -132,31 +135,37 @@ export default function ResearchPage() {
         setIsLoading(true);
         setError(null);
 
-        // 并行获取所有数据
-        const [statsRes, versionsRes, commentariesRes] = await Promise.all([
-          fetch('/api/research'),
-          fetch('/api/research/versions?limit=10'),
-          fetch('/api/research/commentaries?limit=10'),
-        ]);
+        // 先只加载基础统计数据
+        const statsRes = await fetch('/api/research');
 
-        if (!statsRes.ok || !versionsRes.ok || !commentariesRes.ok) {
+        if (!statsRes.ok) {
           throw new Error('获取研究数据失败');
         }
 
-        const [stats, versions, commentaries] = await Promise.all([
-          statsRes.json(),
-          versionsRes.json(),
-          commentariesRes.json(),
+        const stats = await statsRes.json();
+        setResearchStats(stats);
+
+        // 延迟加载详细数据
+        setIsLoadingDetails(true);
+        const [versionsRes, commentariesRes] = await Promise.all([
+          fetch('/api/research/versions?limit=5'),
+          fetch('/api/research/commentaries?limit=5'),
         ]);
 
-        setResearchStats(stats);
-        setVersionData(versions.data || []);
-        setCommentaryData(commentaries.data || []);
+        if (versionsRes.ok && commentariesRes.ok) {
+          const [versions, commentaries] = await Promise.all([
+            versionsRes.json(),
+            commentariesRes.json(),
+          ]);
+          setVersionData(versions.data || []);
+          setCommentaryData(commentaries.data || []);
+        }
       } catch (err) {
         console.error('获取研究数据错误:', err);
         setError(err instanceof Error ? err.message : '未知错误');
       } finally {
         setIsLoading(false);
+        setIsLoadingDetails(false);
       }
     }
 
@@ -508,30 +517,30 @@ export default function ResearchPage() {
                </Card>
              )}
 
-             <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">版本比较工具</CardTitle>
-                  <CardDescription>并行查看多个版本</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                     <div className="flex items-center justify-between">
-                       <span className="text-sm">选择版本:</span>
-                       <div className="flex gap-2 flex-wrap">
-                         {versions.slice(0, 3).map((version, index) => (
-                           <Badge key={index} variant="outline">
-                             {version.name.split(' ')[0]}
-                           </Badge>
-                         ))}
-                       </div>
-                     </div>
-                    <Button className="w-full" asChild>
-                      <Link href="/study?comparison=true">启动版本比较</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="grid md:grid-cols-2 gap-6">
+               <Card>
+                 <CardHeader>
+                   <CardTitle className="text-lg">版本比较工具</CardTitle>
+                   <CardDescription>并行查看多个版本</CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                   <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">选择版本:</span>
+                        <div className="flex gap-2 flex-wrap">
+                          {versions.slice(0, 3).map((version, index) => (
+                            <Badge key={index} variant="outline">
+                              {version.name.split(' ')[0]}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                     <Button className="w-full" onClick={() => setShowVersionComparison(true)}>
+                       启动版本比较
+                     </Button>
+                   </div>
+                 </CardContent>
+               </Card>
 
               <Card>
                 <CardHeader>
@@ -557,8 +566,112 @@ export default function ResearchPage() {
                    </div>
                  </CardContent>
               </Card>
-            </div>
-          </TabsContent>
+
+              {/* 内联版本对照 */}
+              {showVersionComparison && (
+                <Card className="border-2 border-blue-200">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl">版本对照</CardTitle>
+                        <CardDescription>查看不同译本的差异</CardDescription>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setShowVersionComparison(false)}>
+                        关闭
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* 章节选择 */}
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">选择章节</label>
+                        <select
+                          value={selectedChapter}
+                          onChange={(e) => setSelectedChapter(parseInt(e.target.value))}
+                          className="w-full max-w-xs px-3 py-2 border rounded-md"
+                        >
+                          {Array.from({ length: 32 }, (_, i) => (
+                            <option key={i + 1} value={i + 1}>
+                              第{i + 1}章
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* 版本对照内容 */}
+                      {isLoadingDetails ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                          <span className="ml-2 text-muted-foreground">加载版本对照数据...</span>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {versionData
+                            .filter(v => v.chapterNum === selectedChapter)
+                            .slice(0, 5)
+                            .map((verse, index) => (
+                              <div key={index} className="border rounded-lg p-4">
+                                <div className="mb-3">
+                                  <Badge variant="outline" className="mr-2">
+                                    第{verse.verseNum}偈
+                                  </Badge>
+                                  <span className="text-sm text-muted-foreground">
+                                    {verse.chapterTitle}
+                                  </span>
+                                </div>
+                                <div className="space-y-3">
+                                  {verse.versions.map((version, vIndex) => {
+                                    const versionColors: Record<string, string> = {
+                                      kumarajiva: 'border-red-400 bg-red-50',
+                                      xuanzang: 'border-blue-400 bg-blue-50',
+                                      yijing: 'border-green-400 bg-green-50',
+                                      sanskrit: 'border-purple-400 bg-purple-50',
+                                      tibetan: 'border-orange-400 bg-orange-50',
+                                      english: 'border-indigo-400 bg-indigo-50',
+                                    };
+                                    return (
+                                      <div
+                                        key={vIndex}
+                                        className={`border-l-4 pl-3 py-2 ${versionColors[version.versionType] || 'border-gray-400'}`}
+                                      >
+                                        <div className="flex justify-between items-start">
+                                          <div>
+                                            <span className="font-medium">{version.versionName}</span>
+                                            {version.translator && (
+                                              <span className="text-sm text-muted-foreground ml-2">
+                                                {version.translator}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <Badge variant="secondary">{version.language}</Badge>
+                                        </div>
+                                        <p className="text-sm mt-2">{version.content}</p>
+                                        {version.notes && (
+                                          <p className="text-xs text-muted-foreground mt-1 italic">
+                                            注：{version.notes}
+                                          </p>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                          {versionData.filter(v => v.chapterNum === selectedChapter).length === 0 && (
+                            <div className="text-center py-8 text-muted-foreground">
+                              暂无该章节的版本对照数据
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+             </div>
+           </TabsContent>
 
           {/* 注释汇集 */}
           <TabsContent value="commentaries" className="space-y-6">
