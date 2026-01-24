@@ -303,6 +303,90 @@ async function seedConcepts() {
   }
 }
 
+async function seedSutraVersions(sutraId: string) {
+  // 获取前3个章节的前2个偈颂
+  const verses = await prisma.verse.findMany({
+    where: { chapter: { sutraId } },
+    orderBy: [{ chapterId: 'asc' }, { verseNum: 'asc' }],
+    take: 6, // 3章 × 2偈颂
+    include: {
+      chapter: true,
+    },
+  })
+
+  console.log(` 为 ${verses.length} 个偈颂添加版本数据`)
+
+  for (const verse of verses) {
+    const versionTypes = [
+      {
+        versionType: 'kumarajiva',
+        versionName: '鸠摩罗什译本',
+        language: 'zh',
+        translator: '鸠摩罗什',
+        year: '402',
+        notes: '流传最广的汉译本，语言优美流畅',
+      },
+      {
+        versionType: 'xuanzang',
+        versionName: '玄奘译本',
+        language: 'zh',
+        translator: '玄奘',
+        year: '660',
+        notes: '直译精确，忠实于梵文原典',
+      },
+      {
+        versionType: 'yijing',
+        versionName: '义净译本',
+        language: 'zh',
+        translator: '义净',
+        year: '703',
+        notes: '文质兼备，补充罗什译本',
+      },
+    ]
+
+    for (const version of versionTypes) {
+      // 为每个偈颂生成不同版本的内容
+      let content = ''
+      if (version.versionType === 'kumarajiva') {
+        content = `【鸠摩罗什译】第${verse.chapter.chapterNum}章第${verse.verseNum}偈：${verse.chinese || '如是我闻...'}`
+      } else if (version.versionType === 'xuanzang') {
+        content = `【玄奘译】第${verse.chapter.chapterNum}章第${verse.verseNum}偈：${verse.chinese ? verse.chinese.replace(/。/g, '，') : '如是闻，一时...'}`
+      } else if (version.versionType === 'yijing') {
+        content = `【义净译】第${verse.chapter.chapterNum}章第${verse.verseNum}偈：${verse.chinese ? verse.chinese.replace(/。/g, '；') : '如是我闻，一时...'}`
+      }
+
+      await prisma.sutraVersion.upsert({
+        where: {
+          verseId_versionType: {
+            verseId: verse.id,
+            versionType: version.versionType,
+          },
+        },
+        update: {
+          versionName: version.versionName,
+          language: version.language,
+          content,
+          translator: version.translator,
+          year: version.year,
+          notes: version.notes,
+        },
+        create: {
+          verseId: verse.id,
+          versionType: version.versionType,
+          versionName: version.versionName,
+          language: version.language,
+          content,
+          translator: version.translator,
+          year: version.year,
+          notes: version.notes,
+        },
+      })
+    }
+  }
+
+  console.log(' 版本对照数据就绪')
+}
+
 async function seedCourses(teacherId: string) {
   for (const course of courses) {
     await prisma.course.upsert({
@@ -409,6 +493,9 @@ async function main() {
 
   await seedSampleCommentaries(sutra.id)
   console.log(' 示例注释就绪')
+
+  await seedSutraVersions(sutra.id)
+  console.log(' 版本对照数据就绪')
 
   await seedConcepts()
   console.log(' 概念知识库就绪')

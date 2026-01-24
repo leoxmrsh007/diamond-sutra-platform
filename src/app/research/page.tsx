@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -27,25 +27,158 @@ import {
   BarChart,
   Download,
   Share2,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
+
+interface VersionData {
+  versionType: string;
+  versionName: string;
+  language: string;
+  translator?: string;
+  year?: string;
+}
+
+interface CommentaryData {
+  author: string;
+  source?: string;
+  language: string;
+  content: string;
+  order: number;
+}
+
+interface VerseWithVersions {
+  chapterNum: number;
+  chapterTitle: string;
+  verseNum: number;
+  versions: Array<{
+    id: string;
+    versionType: string;
+    versionName: string;
+    language: string;
+    content: string;
+    translator?: string;
+    year?: string;
+    notes?: string;
+  }>;
+}
+
+interface VerseWithCommentaries {
+  chapterNum: number;
+  chapterTitle: string;
+  verseNum: number;
+  commentaries: CommentaryData[];
+}
+
+interface ResearchStats {
+  summary: {
+    versions: number;
+    commentaries: number;
+    concepts: number;
+    chapters: number;
+    verses: number;
+  };
+  versions: {
+    available: VersionData[];
+    byType: Array<{
+      versionType: string;
+      versionName: string;
+      _count: { id: number };
+    }>;
+    recent: Array<{
+      id: string;
+      versionType: string;
+      versionName: string;
+      chapterNum: number;
+      verseNum: number;
+      contentPreview: string;
+    }>;
+  };
+  commentaries: {
+    availableAuthors: Array<{ author: string; source?: string }>;
+    byAuthor: Array<{
+      author: string;
+      _count: { id: number };
+    }>;
+    recent: Array<{
+      id: string;
+      author: string;
+      source?: string;
+      chapterNum: number;
+      verseNum: number;
+      contentPreview: string;
+    }>;
+  };
+  tools: {
+    versionComparison: boolean;
+    commentaryBrowser: boolean;
+    conceptExplorer: boolean;
+    searchAvailable: boolean;
+    exportAvailable: boolean;
+  };
+}
 
 export default function ResearchPage() {
   const [activeTab, setActiveTab] = useState('versions');
+  const [researchStats, setResearchStats] = useState<ResearchStats | null>(null);
+  const [versionData, setVersionData] = useState<VerseWithVersions[]>([]);
+  const [commentaryData, setCommentaryData] = useState<VerseWithCommentaries[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchResearchData() {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // 并行获取所有数据
+        const [statsRes, versionsRes, commentariesRes] = await Promise.all([
+          fetch('/api/research'),
+          fetch('/api/research/versions?limit=10'),
+          fetch('/api/research/commentaries?limit=10'),
+        ]);
+
+        if (!statsRes.ok || !versionsRes.ok || !commentariesRes.ok) {
+          throw new Error('获取研究数据失败');
+        }
+
+        const [stats, versions, commentaries] = await Promise.all([
+          statsRes.json(),
+          versionsRes.json(),
+          commentariesRes.json(),
+        ]);
+
+        setResearchStats(stats);
+        setVersionData(versions.data || []);
+        setCommentaryData(commentaries.data || []);
+      } catch (err) {
+        console.error('获取研究数据错误:', err);
+        setError(err instanceof Error ? err.message : '未知错误');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchResearchData();
+  }, []);
 
   const researchTools = [
     {
       title: '版本对照',
-      description: '梵文、藏文、汉译多版本逐句对照',
+      description: `梵文、藏文、汉译多版本逐句对照（${researchStats?.summary.versions || 0}个版本）`,
       icon: Languages,
       color: 'bg-blue-100 text-blue-600',
       href: '/study?tab=comparison',
+      enabled: researchStats?.tools.versionComparison || false,
     },
     {
       title: '注释研究',
-      description: '历代高僧大德注释汇集',
+      description: `历代高僧大德注释汇集（${researchStats?.summary.commentaries || 0}条注释）`,
       icon: BookMarked,
       color: 'bg-green-100 text-green-600',
       href: '#',
+      enabled: researchStats?.tools.commentaryBrowser || false,
     },
     {
       title: '学术论文',
@@ -53,6 +186,7 @@ export default function ResearchPage() {
       icon: FileText,
       color: 'bg-purple-100 text-purple-600',
       href: '#',
+      enabled: false,
     },
     {
       title: '词汇索引',
@@ -60,6 +194,7 @@ export default function ResearchPage() {
       icon: Search,
       color: 'bg-amber-100 text-amber-600',
       href: '#',
+      enabled: researchStats?.tools.searchAvailable || false,
     },
     {
       title: '历史流变',
@@ -67,6 +202,7 @@ export default function ResearchPage() {
       icon: History,
       color: 'bg-red-100 text-red-600',
       href: '#',
+      enabled: false,
     },
     {
       title: '统计分析',
@@ -74,74 +210,143 @@ export default function ResearchPage() {
       icon: BarChart,
       color: 'bg-indigo-100 text-indigo-600',
       href: '#',
+      enabled: false,
     },
   ];
 
-  const versions = [
-    {
-      name: '鸠摩罗什译本 (402)',
-      language: '古汉语',
-      features: ['流传最广', '语言优美', '意境深远'],
-      color: 'border-red-300 bg-red-50',
-    },
-    {
-      name: '玄奘译本 (660)',
-      language: '古汉语',
-      features: ['直译精确', '忠实原文', '学术研究'],
-      color: 'border-blue-300 bg-blue-50',
-    },
-    {
-      name: '义净译本 (703)',
-      language: '古汉语',
-      features: ['文质兼备', '补充罗什', '文献价值'],
-      color: 'border-green-300 bg-green-50',
-    },
-    {
-      name: '梵文原典',
-      language: '梵语',
-      features: ['原始文本', '学术研究', '语言分析'],
-      color: 'border-purple-300 bg-purple-50',
-    },
-    {
-      name: '藏文译本',
-      language: '藏语',
-      features: ['藏文大藏经', '注疏丰富', '藏传佛教'],
-      color: 'border-orange-300 bg-orange-50',
-    },
-    {
-      name: '英译本',
-      language: '英语',
-      features: ['Edward Conze', '现代翻译', '国际研究'],
-      color: 'border-indigo-300 bg-indigo-50',
-    },
-  ];
+  // 基于API数据动态生成版本信息
+  const versions = researchStats?.versions.available.map((version, index) => {
+    const colors = [
+      'border-red-300 bg-red-50',
+      'border-blue-300 bg-blue-50',
+      'border-green-300 bg-green-50', 
+      'border-purple-300 bg-purple-50',
+      'border-orange-300 bg-orange-50',
+      'border-indigo-300 bg-indigo-50',
+    ];
+    
+    const featuresMap: Record<string, string[]> = {
+      'kumarajiva': ['流传最广', '语言优美', '意境深远'],
+      'xuanzang': ['直译精确', '忠实原文', '学术研究'],
+      'yijing': ['文质兼备', '补充罗什', '文献价值'],
+      'sanskrit': ['原始文本', '学术研究', '语言分析'],
+      'tibetan': ['藏文大藏经', '注疏丰富', '藏传佛教'],
+      'english': ['Edward Conze', '现代翻译', '国际研究'],
+    };
 
-  const commentaries = [
-    {
-      author: '六祖慧能',
-      work: '《金刚经口诀》',
-      dynasty: '唐',
-      summary: '禅宗视角的《金刚经》解读，强调顿悟',
-    },
-    {
-      author: '智者大师',
-      work: '《金刚经疏》',
-      dynasty: '隋',
-      summary: '天台宗教理体系下的经文阐释',
-    },
-    {
-      author: '窥基大师',
-      work: '《金刚般若经赞述》',
-      dynasty: '唐',
-      summary: '唯识宗对《金刚经》的注解',
-    },
-    {
-      author: '宗喀巴大师',
-      work: '《金刚经广释》',
-      dynasty: '明',
-      summary: '格鲁派中观见地的详细开示',
-    },
-  ];
+    const languageNames: Record<string, string> = {
+      'zh': '古汉语',
+      'sa': '梵语', 
+      'bo': '藏语',
+      'en': '英语',
+    };
+
+    return {
+      name: version.versionName,
+      language: languageNames[version.language] || version.language,
+      features: featuresMap[version.versionType] || ['学术研究', '文献价值'],
+      color: colors[index % colors.length],
+      versionType: version.versionType,
+      translator: version.translator,
+      year: version.year,
+    };
+  }) || [];
+
+  // 基于API数据动态生成注释信息
+  const commentaries = researchStats?.commentaries.availableAuthors.slice(0, 4).map((item) => {
+    const authorInfo: Record<string, { work: string; dynasty: string; summary: string }> = {
+      '六祖慧能': {
+        work: '《金刚经口诀》',
+        dynasty: '唐',
+        summary: '禅宗视角的《金刚经》解读，强调顿悟',
+      },
+      '智者大师': {
+        work: '《金刚经疏》',
+        dynasty: '隋',
+        summary: '天台宗教理体系下的经文阐释',
+      },
+      '窥基大师': {
+        work: '《金刚般若经赞述》',
+        dynasty: '唐',
+        summary: '唯识宗对《金刚经》的注解',
+      },
+      '宗喀巴大师': {
+        work: '《金刚经广释》',
+        dynasty: '明',
+        summary: '格鲁派中观见地的详细开示',
+      },
+    };
+
+    const info = authorInfo[item.author] || {
+      work: item.source || '《金刚经注疏》',
+      dynasty: '历代',
+      summary: '对《金刚经》的深刻阐释与解读',
+    };
+
+    return {
+      author: item.author,
+      work: info.work,
+      dynasty: info.dynasty,
+      summary: info.summary,
+    };
+  }) || [];
+
+  // 加载状态
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container max-w-7xl mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-amber-600 mx-auto mb-4" />
+            <p className="text-lg text-muted-foreground">正在加载研究数据...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // 错误状态
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container max-w-7xl mx-auto px-4 py-8">
+          <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-6 h-6 text-red-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="text-lg font-medium text-red-800">数据加载失败</h3>
+                <p className="text-red-700 mt-1">{error}</p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => window.location.reload()}
+                >
+                  重试
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // 无数据状态
+  if (!researchStats) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container max-w-7xl mx-auto px-4 py-8 text-center">
+          <p className="text-lg text-muted-foreground">暂无研究数据</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -159,10 +364,31 @@ export default function ResearchPage() {
               <p className="text-muted-foreground">学术研究工具与资源库</p>
             </div>
           </div>
-          <p className="text-lg text-muted-foreground mt-4 max-w-3xl">
-            提供《金刚般若波罗蜜经》的多版本对照、历代注释、学术论文等研究资源，
-            支持学者、修行者进行深入学习和研究。
-          </p>
+           <p className="text-lg text-muted-foreground mt-4 max-w-3xl">
+             提供《金刚般若波罗蜜经》的多版本对照、历代注释、学术论文等研究资源，
+             支持学者、修行者进行深入学习和研究。
+           </p>
+           
+           {/* 研究统计数据 */}
+           {researchStats && (
+             <div className="flex flex-wrap gap-3 mt-6">
+               <div className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm">
+                 <span className="font-medium">{researchStats.summary.versions}</span> 个版本
+               </div>
+               <div className="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-sm">
+                 <span className="font-medium">{researchStats.summary.commentaries}</span> 条注释
+               </div>
+               <div className="px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg text-sm">
+                 <span className="font-medium">{researchStats.summary.concepts}</span> 个概念
+               </div>
+               <div className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-sm">
+                 <span className="font-medium">{researchStats.summary.chapters}</span> 章
+               </div>
+               <div className="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-sm">
+                 <span className="font-medium">{researchStats.summary.verses}</span> 偈
+               </div>
+             </div>
+           )}
         </div>
 
         {/* Research Tabs */}
@@ -222,11 +448,67 @@ export default function ResearchPage() {
                       </CardFooter>
                     </Card>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
+                 </div>
+               </CardContent>
+             </Card>
 
-            <div className="grid md:grid-cols-2 gap-6">
+             {/* 实际版本对照数据 */}
+             {versionData.length > 0 && (
+               <Card>
+                 <CardHeader>
+                   <CardTitle className="text-xl">实际版本对照示例</CardTitle>
+                   <CardDescription>
+                     数据库中的实际版本对照数据（共 {researchStats.summary.versions} 个版本记录）
+                   </CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                   <div className="space-y-6">
+                     {versionData.slice(0, 3).map((verse, index) => (
+                       <div key={index} className="border rounded-lg p-4">
+                         <div className="mb-3">
+                           <Badge variant="outline" className="mr-2">
+                             第{verse.chapterNum}章
+                           </Badge>
+                           <Badge variant="outline">
+                             第{verse.verseNum}偈
+                           </Badge>
+                           <span className="text-sm text-muted-foreground ml-2">
+                             {verse.chapterTitle}
+                           </span>
+                         </div>
+                         <div className="space-y-3">
+                           {verse.versions.map((version, vIndex) => (
+                             <div key={vIndex} className="border-l-4 border-l-blue-500 pl-3 py-2">
+                               <div className="flex justify-between items-start">
+                                 <div>
+                                   <span className="font-medium">{version.versionName}</span>
+                                   <span className="text-sm text-muted-foreground ml-2">
+                                     {version.translator} ({version.year})
+                                   </span>
+                                 </div>
+                                 <Badge variant="secondary">{version.language}</Badge>
+                               </div>
+                               <p className="text-sm mt-1">{version.content}</p>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                   {versionData.length > 3 && (
+                     <div className="mt-4 text-center">
+                       <Button variant="outline" asChild>
+                         <Link href="/study?tab=comparison">
+                           查看完整版本对照
+                         </Link>
+                       </Button>
+                     </div>
+                   )}
+                 </CardContent>
+               </Card>
+             )}
+
+             <div className="grid md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">版本比较工具</CardTitle>
@@ -234,14 +516,16 @@ export default function ResearchPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">选择版本:</span>
-                      <div className="flex gap-2">
-                        <Badge variant="outline">鸠摩罗什</Badge>
-                        <Badge variant="outline">玄奘</Badge>
-                        <Badge variant="outline">梵文</Badge>
-                      </div>
-                    </div>
+                     <div className="flex items-center justify-between">
+                       <span className="text-sm">选择版本:</span>
+                       <div className="flex gap-2 flex-wrap">
+                         {versions.slice(0, 3).map((version, index) => (
+                           <Badge key={index} variant="outline">
+                             {version.name.split(' ')[0]}
+                           </Badge>
+                         ))}
+                       </div>
+                     </div>
                     <Button className="w-full" asChild>
                       <Link href="/study?comparison=true">启动版本比较</Link>
                     </Button>
@@ -254,29 +538,24 @@ export default function ResearchPage() {
                   <CardTitle className="text-lg">翻译历史</CardTitle>
                   <CardDescription>从梵文到汉译的流传过程</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>梵文原典 (1世纪)</span>
-                      <span className="text-muted-foreground">→</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>鸠摩罗什译 (402年)</span>
-                      <span className="text-muted-foreground">→</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>玄奘译 (660年)</span>
-                      <span className="text-muted-foreground">→</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>义净译 (703年)</span>
-                      <span className="text-muted-foreground">→</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>现代研究</span>
-                    </div>
-                  </div>
-                </CardContent>
+                 <CardContent>
+                   <div className="space-y-3">
+                     {versions
+                       .filter(v => v.year && !isNaN(parseInt(v.year)))
+                       .sort((a, b) => parseInt(a.year || '0') - parseInt(b.year || '0'))
+                       .map((version, index, arr) => (
+                         <div key={index} className="flex items-center justify-between text-sm">
+                           <span>{version.translator || version.name.split(' ')[0]} ({version.year}年)</span>
+                           {index < arr.length - 1 && (
+                             <span className="text-muted-foreground">→</span>
+                           )}
+                         </div>
+                       ))}
+                     {versions.length === 0 && (
+                       <div className="text-sm text-muted-foreground">暂无翻译历史数据</div>
+                     )}
+                   </div>
+                 </CardContent>
               </Card>
             </div>
           </TabsContent>
@@ -324,12 +603,70 @@ export default function ResearchPage() {
                       </CardFooter>
                     </Card>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                 </div>
+               </CardContent>
+             </Card>
 
-          {/* 研究工具 */}
+             {/* 实际注释数据 */}
+             {commentaryData.length > 0 && (
+               <Card>
+                 <CardHeader>
+                   <CardTitle className="text-xl">实际注释示例</CardTitle>
+                   <CardDescription>
+                     数据库中的实际注释数据（共 {researchStats.summary.commentaries} 条注释）
+                   </CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                   <div className="space-y-6">
+                     {commentaryData.slice(0, 3).map((verse, index) => (
+                       <div key={index} className="border rounded-lg p-4">
+                         <div className="mb-3">
+                           <Badge variant="outline" className="mr-2">
+                             第{verse.chapterNum}章
+                           </Badge>
+                           <Badge variant="outline">
+                             第{verse.verseNum}偈
+                           </Badge>
+                           <span className="text-sm text-muted-foreground ml-2">
+                             {verse.chapterTitle}
+                           </span>
+                         </div>
+                         <div className="space-y-3">
+                           {verse.commentaries.slice(0, 2).map((commentary, cIndex) => (
+                             <div key={cIndex} className="border-l-4 border-l-green-500 pl-3 py-2">
+                               <div className="flex justify-between items-start">
+                                 <div>
+                                   <span className="font-medium">{commentary.author}</span>
+                                   {commentary.source && (
+                                     <span className="text-sm text-muted-foreground ml-2">
+                                       {commentary.source}
+                                     </span>
+                                   )}
+                                 </div>
+                                 <Badge variant="secondary">{commentary.language}</Badge>
+                               </div>
+                               <p className="text-sm mt-1 line-clamp-2">{commentary.content}</p>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                   {commentaryData.length > 3 && (
+                     <div className="mt-4 text-center">
+                       <Button variant="outline" asChild>
+                         <Link href="/study?tab=commentaries">
+                           查看完整注释
+                         </Link>
+                       </Button>
+                     </div>
+                   )}
+                 </CardContent>
+               </Card>
+             )}
+           </TabsContent>
+
+           {/* 研究工具 */}
           <TabsContent value="tools" className="space-y-6">
             <Card>
               <CardHeader>
@@ -339,24 +676,38 @@ export default function ResearchPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {researchTools.map((tool, index) => (
-                    <Card key={index} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <div className={`w-12 h-12 rounded-lg ${tool.color} flex items-center justify-center mb-4`}>
-                          <tool.icon className="w-6 h-6" />
-                        </div>
-                        <CardTitle>{tool.title}</CardTitle>
-                        <CardDescription>{tool.description}</CardDescription>
-                      </CardHeader>
-                      <CardFooter>
-                        <Button variant="outline" size="sm" className="w-full" asChild>
-                          <Link href={tool.href}>使用工具</Link>
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
+                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                   {researchTools.map((tool, index) => (
+                     <Card 
+                       key={index} 
+                       className={`hover:shadow-lg transition-shadow ${!tool.enabled ? 'opacity-60' : ''}`}
+                     >
+                       <CardHeader>
+                         <div className={`w-12 h-12 rounded-lg ${tool.color} flex items-center justify-center mb-4`}>
+                           <tool.icon className="w-6 h-6" />
+                         </div>
+                         <CardTitle>{tool.title}</CardTitle>
+                         <CardDescription>{tool.description}</CardDescription>
+                         {!tool.enabled && (
+                           <Badge variant="outline" className="mt-2 w-fit">开发中</Badge>
+                         )}
+                       </CardHeader>
+                       <CardFooter>
+                         <Button 
+                           variant="outline" 
+                           size="sm" 
+                           className="w-full" 
+                           asChild
+                           disabled={!tool.enabled}
+                         >
+                           <Link href={tool.enabled ? tool.href : '#'}>
+                             {tool.enabled ? '使用工具' : '即将推出'}
+                           </Link>
+                         </Button>
+                       </CardFooter>
+                     </Card>
+                   ))}
+                 </div>
               </CardContent>
             </Card>
           </TabsContent>
