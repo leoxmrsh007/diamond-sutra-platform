@@ -3,6 +3,7 @@
 ## 🚀 部署状态概览
 
 ✅ **代码已就绪**: 最新代码已提交到 GitHub (leoxmrsh007/diamond-sutra-platform)  
+✅ **主域名**: https://jinganjing.cn
 ✅ **Vercel项目已存在**: https://diamond-sutra-platform-dc43r6kfk-leo007s-projects.vercel.app  
 ✅ **构建配置**: vercel.json 配置正确，已设置香港区域和安全头部  
 ✅ **认证系统**: NextAuth 配置完成，支持邮箱/密码登录  
@@ -19,22 +20,13 @@
 ```
 DATABASE_URL=postgresql://username:password@host:port/database?sslmode=require
 ```
-**选项A：Vercel Postgres（推荐）**
-1. 在 Vercel Dashboard 中点击 "Storage" → "Create Database"
-2. 选择 PostgreSQL，设置名称和区域（建议香港 hkg1）
-3. 创建完成后，复制连接字符串到 DATABASE_URL
-
-**选项B：Supabase（免费额度）**
-1. 访问 https://supabase.com 创建免费项目
-2. 在 Project Settings → Database 获取连接字符串
-3. 格式：`postgresql://postgres:[password]@[host]:5432/postgres`
 
 #### 🔐 NextAuth 配置（必需）
 ```
-NEXTAUTH_URL=https://diamond-sutra-platform-*.vercel.app
+NEXTAUTH_URL=https://jinganjing.cn
 NEXTAUTH_SECRET=2b0240a45b5eddfeb0c1935e3d2b9845543797b28307b7ed0620e9cd95afc393
 ```
-- **NEXTAUTH_URL**: 使用实际部署域名（可在Vercel项目概览页查看）
+- **NEXTAUTH_URL**: 必须设置为您的主域名 `https://jinganjing.cn`
 - **NEXTAUTH_SECRET**: 已提供安全密钥，可直接使用
 
 #### 🤖 AI 服务（可选但推荐）

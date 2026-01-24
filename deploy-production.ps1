@@ -32,8 +32,8 @@ Write-Host ""
 Write-Host "[2/6] 检查生产部署状态..." -ForegroundColor Yellow
 
 # 检查当前部署域名
-$vercelUrl = "https://diamond-sutra-platform-dc43r6kfk-leo007s-projects.vercel.app"
-Write-Host "当前部署URL: $vercelUrl" -ForegroundColor Gray
+$vercelUrl = "https://jinganjing.cn"
+Write-Host "主域名URL: $vercelUrl" -ForegroundColor Gray
 
 try {
     $response = Invoke-WebRequest -Uri "$vercelUrl/api/check-env" -Method GET -TimeoutSec 10
