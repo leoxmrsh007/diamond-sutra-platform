@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -28,7 +28,6 @@ import {
   Users,
   Sparkles,
   FileText,
-  Clock,
   Activity,
 } from 'lucide-react';
 
@@ -49,10 +48,31 @@ interface SystemInfo {
 
 export default function DebugPage() {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
-  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
+  const systemInfo = useMemo<SystemInfo>(
+    () => ({
+      environment: process.env.NODE_ENV || 'unknown',
+      nodeVersion: process.version,
+      nextVersion: '16.1.1',
+      reactVersion: '19.2.3',
+      buildTime: new Date().toLocaleString('zh-CN'),
+    }),
+    [],
+  );
 
   // 测试套件定义
-  const testSuites = [
+  type TestDefinition = {
+  name: string;
+  url: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  body?: unknown;
+  checkData?: boolean;
+};
+
+const testSuites: Array<{
+  category: string;
+  icon: typeof Server;
+  tests: TestDefinition[];
+}> = [
     {
       category: 'API服务',
       icon: Server,
@@ -85,12 +105,12 @@ export default function DebugPage() {
   ];
 
   // 运行测试
-  const runTest = async (test: any, index: number): Promise<TestResult> => {
+  const runTest = async (test: TestDefinition): Promise<TestResult> => {
     const startTime = Date.now();
 
     try {
       const options: RequestInit = {
-        method: test.method || 'GET',
+        method: test.method ?? 'GET',
       };
 
       if (test.body) {
@@ -153,8 +173,7 @@ export default function DebugPage() {
     setTestResults(initialResults);
 
     // 运行所有测试
-    for (let i = 0; i < testSuites.length; i++) {
-      const suite = testSuites[i];
+    for (const suite of testSuites) {
 
       for (const test of suite.tests) {
         // 更新为loading状态
@@ -167,14 +186,12 @@ export default function DebugPage() {
         );
 
         // 运行测试
-        const result = await runTest(test, i);
+        const result = await runTest(test);
         await new Promise((resolve) => setTimeout(resolve, 300)); // 短暂延迟
 
         // 更新结果
         setTestResults((prev) =>
-          prev.map((r, idx) =>
-            r.name === result.name ? result : r
-          )
+          prev.map((r) => (r.name === result.name ? result : r))
         );
       }
     }
@@ -199,17 +216,6 @@ export default function DebugPage() {
   const getTotalCount = () => {
     return testResults.length;
   };
-
-  // 获取系统信息
-  useEffect(() => {
-    setSystemInfo({
-      environment: process.env.NODE_ENV || 'unknown',
-      nodeVersion: process.version,
-      nextVersion: '16.1.1',
-      reactVersion: '19.2.3',
-      buildTime: new Date().toLocaleString('zh-CN'),
-    });
-  }, []);
 
   const StatusIcon = ({ status }: { status: TestResult['status'] }) => {
     switch (status) {

@@ -1,5 +1,9 @@
 /// <reference types="node" />
+import { config as loadEnv } from 'dotenv'
 import { PrismaClient, UserRole, CourseLevel } from '@prisma/client'
+
+loadEnv({ path: '.env.local' })
+loadEnv()
 
 const prisma = new PrismaClient()
 

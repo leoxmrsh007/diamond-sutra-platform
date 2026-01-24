@@ -2,7 +2,7 @@
  * Simple JS Seed Script - Reads from JSON file
  */
 
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -10,7 +10,7 @@ async function main() {
   console.log('=== Starting database seeding ===');
 
   // Load data from JSON
-  const data = require('./seed-data.json');
+  const data = await import('./seed-data.json', { assert: { type: 'json' } });
 
   // Create sutra
   const sutra = await prisma.sutra.upsert({

@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server';
+import type { CourseEnrollment, Chapter } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
-import { prisma } from '@/lib/prisma';
+
+type SyncDatabaseResult = {
+  connected: boolean;
+  hasLessonProgress: boolean;
+  hasImageFields: boolean;
+  enrollmentSample: { hasLessonProgress: boolean } | null;
+  chapterSample: { hasImageUrl: boolean; hasImagePrompt: boolean } | null;
+  error?: string;
+};
 
 export async function POST() {
   try {
@@ -10,33 +20,41 @@ export async function POST() {
     await prisma.$connect();
 
     // 检查 lessonProgress 字段是否存在
-    const testEnrollment = await prisma.courseEnrollment.findFirst();
-    const hasLessonProgress = testEnrollment && 'lessonProgress' in testEnrollment;
+    const testEnrollment: CourseEnrollment | null = await prisma.courseEnrollment.findFirst();
+    const hasLessonProgress = Boolean(testEnrollment?.lessonProgress !== undefined);
 
     // 检查 Chapter 是否有 imageUrl 和 imagePrompt 字段
-    const testChapter = await prisma.chapter.findFirst();
-    const hasImageFields = testChapter && 'imageUrl' in testChapter;
+    const testChapter: Chapter | null = await prisma.chapter.findFirst();
+    const hasImageFields = Boolean(testChapter && (testChapter.imageUrl !== null || testChapter.imagePrompt !== null));
 
-    const result = {
+    const result: SyncDatabaseResult = {
       connected: true,
       hasLessonProgress,
       hasImageFields,
-      enrollmentSample: testEnrollment ? {
-        hasLessonProgress: (testEnrollment as any).lessonProgress !== undefined,
-      } : null,
-      chapterSample: testChapter ? {
-        hasImageUrl: (testChapter as any).imageUrl !== undefined,
-        hasImagePrompt: (testChapter as any).imagePrompt !== undefined,
-      } : null,
+      enrollmentSample: testEnrollment
+        ? {
+            hasLessonProgress: testEnrollment.lessonProgress !== undefined && testEnrollment.lessonProgress !== null,
+          }
+        : null,
+      chapterSample: testChapter
+        ? {
+            hasImageUrl: testChapter.imageUrl !== null,
+            hasImagePrompt: testChapter.imagePrompt !== null,
+          }
+        : null,
     };
 
     return NextResponse.json(result);
-  } catch (error: any) {
-    return NextResponse.json({
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    const result: SyncDatabaseResult = {
       connected: false,
-      error: error.message,
-    }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+      hasLessonProgress: false,
+      hasImageFields: false,
+      enrollmentSample: null,
+      chapterSample: null,
+      error: message,
+    };
+    return NextResponse.json(result, { status: 500 });
   }
 }

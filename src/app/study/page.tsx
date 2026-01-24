@@ -5,7 +5,8 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
+import { useEffect, useRef, useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,10 +31,11 @@ import {
   Music,
   List,
 } from 'lucide-react';
-  import { NoteDialog } from '@/components/study/note-dialog';
-  import { BookmarkDialog, BookmarkList } from '@/components/study/bookmark-dialog';
-  import type { BookmarkItem } from '@/components/study/bookmark-dialog';
-  import { DailyCheckIn } from '@/components/study/daily-check-in';
+
+import { NoteDialog } from '@/components/study/note-dialog';
+import { BookmarkDialog, BookmarkList } from '@/components/study/bookmark-dialog';
+import type { BookmarkItem } from '@/components/study/bookmark-dialog';
+import { DailyCheckIn } from '@/components/study/daily-check-in';
 
 type DisplayMode = 'verse' | 'chapter';
 
@@ -69,34 +71,6 @@ interface StudyProgress {
   lastStudiedAt: Date | null;
 }
 
-type BookmarkResponse = {
-  id: string;
-  verseId: string;
-  note?: string | null;
-  createdAt: string | Date;
-  verse?: {
-    chinese?: string | null;
-    chapter?: {
-      title?: string | null;
-    } | null;
-  } | null;
-};
-
-const isBookmarkResponse = (value: unknown): value is BookmarkResponse => {
-  if (!value || typeof value !== 'object') return false;
-  const candidate = value as Record<string, unknown>;
-  return typeof candidate.id === 'string' && typeof candidate.verseId === 'string';
-};
-
-const normalizeBookmark = (bookmark: BookmarkResponse): BookmarkItem => ({
-  id: bookmark.id,
-  verseId: bookmark.verseId,
-  verse: bookmark.verse?.chinese ?? '经文不可用',
-  chapter: bookmark.verse?.chapter?.title ?? '未知章节',
-  note: bookmark.note ?? undefined,
-  createdAt: new Date(bookmark.createdAt).toISOString().split('T')[0],
-});
-
 export default function StudyPage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
@@ -106,11 +80,11 @@ export default function StudyPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('chinese');
   const [studyProgress, setStudyProgress] = useState<Record<string, StudyProgress>>({});
-  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
+  const bookmarks: BookmarkItem[] = [];
   const [displayMode, setDisplayMode] = useState<DisplayMode>('chapter'); // 默认整章显示
    
   // const { data: session } = useSession();
-  const session = null; // 临时禁用session以避免auth错误
+  const isAuthenticated = false; // TODO: 集成身份验证后替换
  
   // 朗读状态
   const [isReading, setIsReading] = useState(false);
@@ -153,12 +127,11 @@ export default function StudyPage() {
 
   // 加载用户学习进度
   useEffect(() => {
-    // 暂时禁用session相关功能
-    // if (session?.user) {
+    // 暂时禁用 session 相关功能，未来接入身份验证后启用
+    // if (isAuthenticated) {
     //   fetchStudyProgress();
-    //   fetchBookmarks();
     // }
-  }, [session]);
+  }, [isAuthenticated]);
 
   const fetchStudyProgress = async () => {
     try {
@@ -173,21 +146,6 @@ export default function StudyPage() {
       }
     } catch (error) {
       console.error('Failed to fetch study progress:', error);
-    }
-  };
-
-  const fetchBookmarks = async () => {
-    try {
-      const res = await fetch('/api/bookmarks');
-      if (res.ok) {
-        const data: unknown = await res.json();
-        if (Array.isArray(data)) {
-          const normalized = data.filter(isBookmarkResponse).map(normalizeBookmark);
-          setBookmarks(normalized);
-        }
-      }
-    } catch {
-      setBookmarks([]);
     }
   };
 
@@ -251,7 +209,7 @@ export default function StudyPage() {
 
   // 保存学习进度
   const saveStudyProgress = async (status: StudyProgress['status']) => {
-    if (!session?.user || !selectedVerse) return;
+    if (!isAuthenticated || !selectedVerse) return;
 
     try {
       await fetch('/api/study-progress', {
@@ -356,10 +314,6 @@ export default function StudyPage() {
       </div>
     );
   }
-
-  // 版本对照章节选择器 - 激活第1-3章
-  const versionCompareChapterIds = [chapters[0]?.id, chapters[1]?.id, chapters[2]?.id].filter(Boolean);
-  const [showVersionCompare, setShowVersionCompare] = useState(false);
 
   const verses = currentChapter?.verses || [];
 
@@ -533,13 +487,13 @@ export default function StudyPage() {
                           <TabsTrigger value="yijing">义净</TabsTrigger>
                         </TabsList>
                         <TabsContent value="kumarajiva" className="mt-4 p-4 bg-red-50 rounded-lg">
-                          <p className="text-lg leading-relaxed">佛言："善哉善哉！须菩提！如汝所说，如来善护念诸菩萨，善付嘱诸菩萨。汝今谛听！当为汝说。"</p>
+                          <p className="text-lg leading-relaxed">佛言：&ldquo;善哉善哉！须菩提！如汝所说，如来善护念诸菩萨，善付嘱诸菩萨。汝今谛听！当为汝说。&rdquo;</p>
                         </TabsContent>
                         <TabsContent value="xuanzang" className="mt-4 p-4 bg-blue-50 rounded-lg">
-                          <p className="text-lg leading-relaxed">佛言："善哉善哉！须菩提！如汝所说，如来善护念诸菩萨，善付嘱诸菩萨。汝今谛听！当为汝说。" 善男子、善女人，发阿耨多罗三藐三菩提心，应如是住，如是降伏其心。</p>
+                          <p className="text-lg leading-relaxed">佛言：&ldquo;善哉善哉！须菩提！如汝所说，如来善护念诸菩萨，善付嘱诸菩萨。汝今谛听！当为汝说。&rdquo; 善男子、善女人，发阿耨多罗三藐三菩提心，应如是住，如是降伏其心。</p>
                         </TabsContent>
                         <TabsContent value="yijing" className="mt-4 p-4 bg-green-50 rounded-lg">
-                          <p className="text-lg leading-relaxed">佛言："善哉善哉！须菩提！如汝所说，如来善护念诸菩萨，善付嘱诸菩萨。汝今谛听！当为汝说。"</p>
+                          <p className="text-lg leading-relaxed">佛言：&ldquo;善哉善哉！须菩提！如汝所说，如来善护念诸菩萨，善付嘱诸菩萨。汝今谛听！当为汝说。&rdquo;</p>
                         </TabsContent>
                       </Tabs>
                     </div>
@@ -554,13 +508,13 @@ export default function StudyPage() {
                           <TabsTrigger value="yijing">义净</TabsTrigger>
                         </TabsList>
                         <TabsContent value="kumarajiva" className="mt-4 p-4 bg-red-50 rounded-lg">
-                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心："所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。" 如是灭度无量无数无边众生，实无众生得灭度者。</p>
+                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心：&ldquo;所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。&rdquo; 如是灭度无量无数无边众生，实无众生得灭度者。</p>
                         </TabsContent>
                         <TabsContent value="xuanzang" className="mt-4 p-4 bg-blue-50 rounded-lg">
-                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心："所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。" 如是灭度无量无数无边众生，实无众生得灭度者。</p>
+                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心：&ldquo;所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。&rdquo; 如是灭度无量无数无边众生，实无众生得灭度者。</p>
                         </TabsContent>
                         <TabsContent value="yijing" className="mt-4 p-4 bg-green-50 rounded-lg">
-                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心："所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。" 如是灭度无量无数无边众生，实无众生得灭度者。</p>
+                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心：&ldquo;所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。&rdquo; 如是灭度无量无数无边众生，实无众生得灭度者。</p>
                         </TabsContent>
                       </Tabs>
                     </div>
@@ -581,19 +535,19 @@ export default function StudyPage() {
                           <TabsTrigger value="tibetan">藏文</TabsTrigger>
                         </TabsList>
                         <TabsContent value="kumarajiva" className="mt-4 p-4 bg-red-50 rounded-lg">
-                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心："所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。" 如是灭度无量无数无边众生，实无众生得灭度者。</p>
+                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心：&ldquo;所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。&rdquo; 如是灭度无量无数无边众生，实无众生得灭度者。</p>
                         </TabsContent>
                         <TabsContent value="xuanzang" className="mt-4 p-4 bg-blue-50 rounded-lg">
-                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心："所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。" 如是灭度无量无数无边众生，实无众生得灭度者。</p>
+                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心：&ldquo;所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。&rdquo; 如是灭度无量无数无边众生，实无众生得灭度者。</p>
                         </TabsContent>
                         <TabsContent value="yijing" className="mt-4 p-4 bg-green-50 rounded-lg">
-                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心："所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。" 如是灭度无量无数无边众生，实无众生得灭度者。</p>
+                          <p className="text-lg leading-relaxed">诸菩萨摩诃萨，应如是降伏其心：&ldquo;所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。&rdquo; 如是灭度无量无数无边众生，实无众生得灭度者。</p>
                         </TabsContent>
                         <TabsContent value="sanskrit" className="mt-4 p-4 bg-purple-50 rounded-lg">
                           <p className="text-base leading-relaxed">Subhūti sarvabhūtānām kṣayādānām aprameyānām anantānām nirvāṇadhātum prajñāpāramitāyām śikṣitavyam.</p>
                         </TabsContent>
                         <TabsContent value="tibetan" className="mt-4 p-4 bg-orange-50 rounded-lg">
-                          <p className="text-base leading-relaxed">诸菩萨摩诃萨，应如是降伏其心："所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。" 如是灭度无量无数无边众生，实无众生得灭度者。</p>
+                          <p className="text-base leading-relaxed">诸菩萨摩诃萨，应如是降伏其心：&ldquo;所有一切众生之类，若卵生、若胎生、若湿生、若化生，若有色、若无色，若有想、若无想、若非有想非无想，我皆令入无余涅槃而灭度之。&rdquo; 如是灭度无量无数无边众生，实无众生得灭度者。</p>
                         </TabsContent>
                       </Tabs>
                     </div>
@@ -736,11 +690,14 @@ export default function StudyPage() {
 
               {/* 章节配图 */}
               {currentChapter?.imageUrl && (
-                <div className="mt-4 rounded-lg overflow-hidden border">
-                  <img
+                <div className="mt-4 rounded-lg overflow-hidden border relative h-48">
+                  <Image
                     src={currentChapter.imageUrl}
                     alt={currentChapter.title}
-                    className="w-full h-48 object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="(min-width: 1024px) 768px, 100vw"
+                    priority
                   />
                 </div>
               )}
@@ -819,7 +776,7 @@ export default function StudyPage() {
                               <Badge variant="outline" className="text-amber-700 border-amber-300">
                                 偈 {verse.verseNum}
                               </Badge>
-                              {session?.user && studyProgress[verse.id] && (
+                              {isAuthenticated && studyProgress[verse.id] && (
                                 <Badge
                                   variant={
                                     studyProgress[verse.id].status === 'MASTERED'
@@ -887,7 +844,7 @@ export default function StudyPage() {
 
                             {/* 操作按钮 */}
                             <div className="flex gap-2 mt-3">
-                              {session?.user && (
+                              {isAuthenticated && (
                                 <>
                                   <BookmarkDialog
                                     verseId={verse.id}
@@ -978,7 +935,7 @@ export default function StudyPage() {
                     </ScrollArea>
 
                     {/* 学习状态 */}
-                    {session?.user && studyProgress[selectedVerse.id] && (
+                    {isAuthenticated && studyProgress[selectedVerse.id] && (
                       <div className="flex gap-2 pt-2">
                         {studyProgress[selectedVerse.id].status === 'LEARNING' && (
                           <Badge variant="outline" className="text-blue-600 border-blue-600">
@@ -1001,7 +958,7 @@ export default function StudyPage() {
                     {/* Actions */}
                     <div className="flex justify-between pt-4 border-t">
                       <div className="flex gap-2">
-                        {session?.user && (
+                        {isAuthenticated && (
                           <>
                             <BookmarkDialog
                               verseId={selectedVerse.id}
@@ -1023,7 +980,7 @@ export default function StudyPage() {
                           <Volume2 className="w-4 h-4 mr-2" />
                           朗读此偈
                         </Button>
-                        {session?.user && studyProgress[selectedVerse.id]?.status !== 'MASTERED' && (
+                        {isAuthenticated && studyProgress[selectedVerse.id]?.status !== 'MASTERED' && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -1098,7 +1055,7 @@ export default function StudyPage() {
             )}
 
             {/* Bookmarks */}
-            {session?.user && (
+            {isAuthenticated && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center gap-2">

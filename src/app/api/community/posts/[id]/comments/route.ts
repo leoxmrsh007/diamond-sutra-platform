@@ -3,11 +3,18 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
+
 
 // GET - 获取帖子评论
 export async function GET(
@@ -62,16 +69,16 @@ export async function POST(
 ) {
   try {
     const { id: postId } = await params;
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '请先登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const body = await request.json();
     const { content } = body;
 

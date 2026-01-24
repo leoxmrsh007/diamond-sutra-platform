@@ -4,14 +4,12 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,27 +21,25 @@ import {
   Bookmark,
   TrendingUp,
   Clock,
-  X,
-  Plus,
 } from 'lucide-react';
 
-interface Post {
-  id: string;
+interface CommunityPost {
+  id: number;
+  author: {
+    name: string;
+    avatar: string;
+  };
   title: string;
   content: string;
   tags: string[];
-  likeCount: number;
-  commentCount: number;
-  createdAt: Date | string;
-  author: {
-    id: string;
-    name: string;
-    avatar?: string | null;
-  };
+  likes: number;
+  comments: number;
+  hoursAgo: number;
+  isHot: boolean;
 }
 
 // 示例帖子数据 - 使用固定的时间差避免 hydration 错误
-const samplePosts = [
+const samplePosts: CommunityPost[] = [
   {
     id: 1,
     author: { name: '慧明', avatar: '慧' },
@@ -157,7 +153,6 @@ const samplePosts = [
 ];
 
 export default function CommunityPage() {
-  const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
 
   return (
@@ -220,7 +215,7 @@ export default function CommunityPage() {
               </TabsContent>
 
               <TabsContent value="hot" className="space-y-4">
-                {samplePosts.filter(p => p.isHot).map((post) => (
+                {samplePosts.filter((p) => p.isHot).map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}
               </TabsContent>
@@ -315,7 +310,7 @@ export default function CommunityPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-amber-800 font-serif italic">
-                  "一切有为法，如梦幻泡影，如露亦如电，应作如是观。"
+                  &ldquo;一切有为法，如梦幻泡影，如露亦如电，应作如是观。&rdquo;
                 </p>
                 <p className="text-xs text-amber-700 mt-2">— 《金刚经》第三十二品</p>
               </CardContent>
@@ -329,7 +324,7 @@ export default function CommunityPage() {
   );
 }
 
-function PostCard({ post }: { post: any }) {
+function PostCard({ post }: { post: CommunityPost }) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader>

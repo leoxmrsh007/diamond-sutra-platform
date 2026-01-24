@@ -4,11 +4,18 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
+
 
 // GET - 获取课程的所有课时
 export async function GET(
@@ -17,11 +24,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const session = await auth();
+    const session = await getSession();
     let userId: string | null = null;
 
-    if (session?.user) {
-      userId = (session.user as any).id;
+    if (assertSessionUser(session)) {
+      userId = session.user.id;
     }
 
     // 验证课程存在
@@ -71,16 +78,16 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const user = (session.user as any);
+    const user = session.user;
     const course = await prisma.course.findUnique({
       where: { id },
     });

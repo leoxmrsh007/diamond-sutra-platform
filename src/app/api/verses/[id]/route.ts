@@ -4,15 +4,22 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-
-export const dynamic = 'force-static';
-export const fetchCache = 'force-cache';
+import type { Session } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
+export const dynamic = 'force-static';
+export const fetchCache = 'force-cache';
+
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
+
+
 // GET - 获取偈颂详情
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -39,14 +46,14 @@ export async function GET(
     }
 
     // 如果用户已登录，获取用户的笔记和书签
-    const session = await auth();
+    const session = await getSession();
     let userNote = null;
     let isBookmarked = false;
 
-    if (session?.user) {
+    if (assertSessionUser(session)) {
       userNote = await prisma.note.findFirst({
         where: {
-          userId: (session.user as any).id,
+          userId: session.user.id,
           verseId: id,
         },
       });
@@ -54,7 +61,7 @@ export async function GET(
       const bookmark = await prisma.bookmark.findUnique({
         where: {
           userId_verseId: {
-            userId: (session.user as any).id,
+            userId: session.user.id,
             verseId: id,
           },
         },

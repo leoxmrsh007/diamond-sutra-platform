@@ -4,6 +4,14 @@ export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
 import { prisma } from '@/lib/prisma';
 
+interface VerseSeed {
+  chapter: number;
+  num: number;
+  chinese: string;
+  sanskrit: string;
+  english: string;
+}
+
 export async function POST() {
   try {
     console.log('Starting verses seed...');
@@ -21,7 +29,7 @@ export async function POST() {
     }
 
     // 61 verses using ASCII for Chinese characters
-    const verses = [
+    const verses: VerseSeed[] = [
       { chapter: 1, num: 1, chinese: 'Ru shi wo wen. Yi shi Fo...', sanskrit: 'Evam maya srutam ekasmin samaye', english: 'Thus have I heard. At one time the Buddha was dwelling in Jeta Grove of Anathapindada at Sravasti.' },
       { chapter: 1, num: 2, chinese: 'Shi shi Shi Jia Mou Ni Fo...', sanskrit: 'Tena kho pana samayena', english: 'At that time the World-Honored One donned his robe, took his bowl, entered Sravasti for alms, then returned, ate, put away his robe and bowl, washed his feet, and sat down properly.' },
       { chapter: 2, num: 1, chinese: 'Shi Shi Shan Xian Qi Bai Fo yan...', sanskrit: 'Atha kho Subhutir', english: 'Then the venerable Subhuti rose from the assembly, bared his right shoulder, knelt on his right knee, joined his palms, and praised the Buddha’s care for bodhisattvas.' },

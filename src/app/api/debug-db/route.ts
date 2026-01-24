@@ -35,12 +35,13 @@ export async function GET() {
     await prisma.$disconnect()
 
     return NextResponse.json(results)
-  } catch (error: any) {
-    results.connected = false
-    results.error = error?.message || 'Unknown error'
-    results.errorMessage = error?.message || 'Unknown error'
-    if (error?.stack) {
-      results.errorStack = error.stack.split('\n').slice(0, 3).join('\n')
+  } catch (error: unknown) {
+    results.connected = false;
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    results.error = message;
+    results.errorMessage = message;
+    if (error instanceof Error && error.stack) {
+      results.errorStack = error.stack.split('\n').slice(0, 3).join('\n');
     }
     if (prisma) {
       await prisma.$disconnect()

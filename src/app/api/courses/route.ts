@@ -4,11 +4,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
+import type { Session } from 'next-auth';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
 
 // GET - 获取课程列表
 export async function GET(request: NextRequest) {
@@ -17,12 +19,12 @@ export async function GET(request: NextRequest) {
     const level = searchParams.get('level'); // BEGINNER, INTERMEDIATE, ADVANCED
     const isPublished = searchParams.get('published') !== 'false'; // 默认只显示已发布的课程
 
-    const session = await auth();
-    const userId = session?.user ? (session.user as any).id : null;
+    const session = (await auth()) as Session | null;
+    const userId = session?.user?.id ?? null;
 
-    const where: any = {};
+    const where: Prisma.CourseWhereInput = {};
     if (level) {
-      where.level = level;
+      where.level = level as Prisma.CourseWhereInput['level'];
     }
     if (isPublished) {
       where.isPublished = true;
@@ -73,7 +75,7 @@ export async function GET(request: NextRequest) {
 // POST - 创建课程（仅管理员）
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = (await auth()) as Session | null;
 
     if (!session?.user) {
       return NextResponse.json(
@@ -82,7 +84,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = (session.user as any);
+    const user = session.user;
     if (user.role !== 'ADMIN' && user.role !== 'TEACHER') {
       return NextResponse.json(
         { error: '无权限创建课程' },

@@ -3,11 +3,18 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
+
 
 // POST - 点赞/取消点赞
 export async function POST(
@@ -16,16 +23,14 @@ export async function POST(
 ) {
   try {
     const { id: postId } = await params;
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '请先登录' },
         { status: 401 }
       );
     }
-
-    const userId = (session.user as any).id;
 
     // 检查帖子是否存在
     const post = await prisma.post.findUnique({
@@ -68,9 +73,9 @@ export async function DELETE(
 ) {
   try {
     const { id: postId } = await params;
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '请先登录' },
         { status: 401 }

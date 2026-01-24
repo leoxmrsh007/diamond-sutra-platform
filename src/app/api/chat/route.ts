@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { askQuestion, chatStream, getAIProvider } from '@/lib/ai';
+import { askQuestion, getAIProvider } from '@/lib/ai';
 
 // 金刚经系统提示词
 const DIAMOND_SUTRA_SYSTEM = `你是一位深入研究中观的佛学学者，专精于《金刚般若波罗蜜经》（简称《金刚经》）。

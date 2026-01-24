@@ -4,11 +4,29 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
+
+
+interface LessonProgressPayload {
+  completed?: boolean;
+  progressPercent?: number;
+}
+
+interface LessonProgressRecord {
+  completed: boolean;
+  progressPercent: number;
+  completedAt?: string;
+}
 
 // GET - 获取课时进度
 export async function GET(
@@ -17,16 +35,16 @@ export async function GET(
 ) {
   try {
     const { lessonId, id: courseId } = await params;
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
 
     const enrollment = await prisma.courseEnrollment.findUnique({
       where: {
@@ -37,7 +55,8 @@ export async function GET(
       },
     });
 
-    const lessonProgress = (enrollment?.lessonProgress as any)?.[lessonId] || {
+    const progressMap = enrollment?.lessonProgress as Record<string, LessonProgressRecord> | undefined;
+    const lessonProgress = progressMap?.[lessonId] ?? {
       completed: false,
       progressPercent: 0,
     };
@@ -59,17 +78,17 @@ export async function POST(
 ) {
   try {
     const { lessonId, id: courseId } = await params;
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
-    const body = await request.json();
+    const userId = session.user.id;
+    const body = (await request.json()) as LessonProgressPayload;
     const { completed, progressPercent = 0 } = body;
 
     // 验证课程和课时存在
@@ -97,11 +116,11 @@ export async function POST(
       },
     });
 
-    const currentProgress = (enrollment?.lessonProgress as any) || {};
-    const updatedLessonProgress = {
+    const currentProgress = (enrollment?.lessonProgress as unknown as Record<string, LessonProgressRecord>) ?? {};
+    const updatedLessonProgress: LessonProgressRecord = {
       completed: completed ?? false,
       progressPercent,
-      completedAt: completed ? new Date().toISOString() : null,
+      completedAt: completed ? new Date().toISOString() : undefined,
     };
 
     // 计算整体课程进度
@@ -115,7 +134,7 @@ export async function POST(
     };
 
     const completedCount = Object.values(updatedProgress).filter(
-      (v: any) => v.completed
+      (v) => v.completed
     ).length;
     const courseProgress = (completedCount / allLessons.length) * 100;
 
@@ -129,14 +148,14 @@ export async function POST(
       },
       update: {
         progress: courseProgress,
-        lessonProgress: updatedProgress as any,
+        lessonProgress: JSON.parse(JSON.stringify(updatedProgress)),
         completedAt: courseProgress >= 100 ? new Date() : null,
       },
       create: {
         userId,
         courseId,
         progress: courseProgress,
-        lessonProgress: updatedProgress as any,
+        lessonProgress: JSON.parse(JSON.stringify(updatedProgress)),
       },
     });
 

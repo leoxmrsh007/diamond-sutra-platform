@@ -11,15 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Search,
-  BookOpen,
-  MessageSquare,
-  Users,
-  Settings,
-  HelpCircle,
-  ChevronRight,
-} from 'lucide-react';
+import { Search, HelpCircle, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface HelpArticle {

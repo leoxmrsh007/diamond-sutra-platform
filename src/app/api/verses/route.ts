@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import type { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -9,12 +8,15 @@ export async function GET(request: Request) {
   const versionType = searchParams.get('version');
 
   try {
-    const where: any = {};
-    
+    const where: Prisma.VerseWhereInput = {};
+
     if (chapterNum) {
-      where.chapter = { chapterNum: parseInt(chapterNum) };
+      const parsedChapter = Number(chapterNum);
+      if (!Number.isNaN(parsedChapter)) {
+        where.chapter = { is: { chapterNum: parsedChapter } };
+      }
     }
-    
+
     if (versionType) {
       where.versions = {
         some: {

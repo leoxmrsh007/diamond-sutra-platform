@@ -4,15 +4,14 @@
  * 使用方式: node scripts/build-static.js
  */
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 console.log('🔨 开始构建静态版本...\n');
 
 const nextConfigPath = path.join(__dirname, '../next.config.ts');
 const nextConfigBackupPath = path.join(__dirname, '../next.config.backup');
-const outDir = path.join(__dirname, '../out');
 
 // 备份原配置
 if (fs.existsSync(nextConfigPath)) {

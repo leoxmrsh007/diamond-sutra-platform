@@ -22,25 +22,34 @@ import {
   Video,
 } from 'lucide-react';
 
+type CourseLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+type CourseTab = 'beginner' | 'intermediate' | 'advanced';
+
+interface LessonSummary {
+  id: string;
+  title: string;
+  order: number;
+}
+
 interface Course {
   id: string;
   title: string;
   description: string;
-  level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  level: CourseLevel;
   duration: number | null;
   isPublished: boolean;
-  lessons: any[];
+  lessons: LessonSummary[];
   studentCount: number;
   isEnrolled: boolean;
 }
 
-const levelLabels = {
+const levelLabels: Record<CourseLevel, { label: string; color: string }> = {
   BEGINNER: { label: '初级', color: 'bg-green-100 text-green-800' },
   INTERMEDIATE: { label: '中级', color: 'bg-blue-100 text-blue-800' },
   ADVANCED: { label: '高级', color: 'bg-purple-100 text-purple-800' },
 };
 
-const levelEmojis = {
+const levelEmojis: Record<CourseLevel, string> = {
   BEGINNER: '📿',
   INTERMEDIATE: '🪷',
   ADVANCED: '🏔️',
@@ -49,7 +58,7 @@ const levelEmojis = {
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
+  const [activeTab, setActiveTab] = useState<CourseTab>('beginner');
 
   useEffect(() => {
     fetchCourses();
@@ -59,7 +68,7 @@ export default function CoursesPage() {
     try {
       const response = await fetch('/api/courses');
       if (response.ok) {
-        const data = await response.json();
+        const data: Course[] = await response.json();
         setCourses(data);
       }
     } catch (error) {
@@ -69,7 +78,7 @@ export default function CoursesPage() {
     }
   };
 
-  const coursesByLevel = (level: string) => {
+  const coursesByLevel = (level: CourseLevel) => {
     return courses.filter((c) => c.level === level);
   };
 
@@ -135,7 +144,7 @@ export default function CoursesPage() {
         </Card>
 
         {/* Course Tabs */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as CourseTab)} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
             <TabsTrigger value="beginner">初级课程</TabsTrigger>
             <TabsTrigger value="intermediate">中级课程</TabsTrigger>

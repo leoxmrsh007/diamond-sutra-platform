@@ -42,9 +42,10 @@ export async function GET() {
     }
 
     return NextResponse.json(results)
-  } catch (error: any) {
-    results.error = error?.message || 'Unknown error'
-    return NextResponse.json(results, { status: 500 })
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    results.error = err.message || 'Unknown error';
+    return NextResponse.json(results, { status: 500 });
   }
 }
 
@@ -142,8 +143,9 @@ export async function POST() {
 
     results.success = true
     return NextResponse.json(results)
-  } catch (error: any) {
-    results.error = error?.message || 'Unknown error'
-    return NextResponse.json(results, { status: 500 })
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    results.error = err.message || 'Unknown error';
+    return NextResponse.json(results, { status: 500 });
   }
 }

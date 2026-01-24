@@ -31,10 +31,10 @@ export async function POST() {
         `;
         results.changes.push('Added lessonProgress column to course_enrollments');
       }
-    } catch (e: any) {
-      // 可能列已存在，继续
-      if (!e.message.includes('already exists')) {
-        results.changes.push(`lessonProgress check: ${e.message}`);
+    } catch (e: unknown) {
+      const error = e instanceof Error ? e : new Error(String(e));
+      if (!error.message.includes('already exists')) {
+        results.changes.push(`lessonProgress check: ${error.message}`);
       }
     }
 
@@ -55,9 +55,10 @@ export async function POST() {
         `;
         results.changes.push('Added imageUrl column to chapters');
       }
-    } catch (e: any) {
-      if (!e.message.includes('already exists')) {
-        results.changes.push(`imageUrl check: ${e.message}`);
+    } catch (e: unknown) {
+      const error = e instanceof Error ? e : new Error(String(e));
+      if (!error.message.includes('already exists')) {
+        results.changes.push(`imageUrl check: ${error.message}`);
       }
     }
 
@@ -78,9 +79,10 @@ export async function POST() {
         `;
         results.changes.push('Added imagePrompt column to chapters');
       }
-    } catch (e: any) {
-      if (!e.message.includes('already exists')) {
-        results.changes.push(`imagePrompt check: ${e.message}`);
+    } catch (e: unknown) {
+      const error = e instanceof Error ? e : new Error(String(e));
+      if (!error.message.includes('already exists')) {
+        results.changes.push(`imagePrompt check: ${error.message}`);
       }
     }
 
@@ -88,9 +90,10 @@ export async function POST() {
     results.message = `Database schema synced. Changes: ${results.changes.length}`;
 
     return NextResponse.json(results);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
     results.success = false;
-    results.message = error.message;
+    results.message = err.message;
     return NextResponse.json(results, { status: 500 });
   }
 }

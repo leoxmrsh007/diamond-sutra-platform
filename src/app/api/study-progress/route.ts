@@ -4,25 +4,38 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
+import { ProgressStatus } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+
+interface StudyProgressPayload {
+  verseId?: string;
+  status?: ProgressStatus;
+  recitationCount?: number;
+}
+
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
 
 // GET - 获取用户学习进度
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const verseId = searchParams.get('verseId');
 
@@ -70,17 +83,17 @@ export async function GET(request: NextRequest) {
 // POST - 更新或创建学习进度
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
-    const body = await request.json();
+    const userId = session.user.id;
+    const body = (await request.json()) as StudyProgressPayload;
     const { verseId, status, recitationCount } = body;
 
     if (!verseId) {
@@ -111,15 +124,15 @@ export async function POST(request: NextRequest) {
         },
       },
       update: {
-        status: status,
+        ...(status && { status }),
         recitationCount: recitationCount ?? undefined,
         lastStudiedAt: new Date(),
       },
       create: {
         userId,
         verseId,
-        status: status || 'LEARNING',
-        recitationCount: recitationCount || 0,
+        status: status ?? ProgressStatus.NOT_STARTED,
+        recitationCount: recitationCount ?? 0,
         lastStudiedAt: new Date(),
       },
     });
@@ -137,17 +150,17 @@ export async function POST(request: NextRequest) {
 // PATCH - 部分更新学习进度
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
-    const body = await request.json();
+    const userId = session.user.id;
+    const body = (await request.json()) as StudyProgressPayload;
     const { verseId, status, recitationCount } = body;
 
     if (!verseId) {
@@ -184,16 +197,16 @@ export async function PATCH(request: NextRequest) {
 // DELETE - 删除学习进度
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const verseId = searchParams.get('verseId');
 

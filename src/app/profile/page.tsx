@@ -270,7 +270,7 @@ export default function ProfilePage() {
               hasCheckedToday: true,
             }
       );
-    } catch (err) {
+    } catch {
       setError('签到失败，请稍后重试。');
     } finally {
       setSigningIn(false);

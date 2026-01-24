@@ -147,12 +147,11 @@ export function SearchContent() {
   const query = searchParams.get('q') || '';
   const [searchQuery, setSearchQuery] = useState(query);
   const [activeTab, setActiveTab] = useState('all');
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<SearchResult[]>(allResults);
 
-  const performSearch = useCallback(async (q: string) => {
+  const performSearch = useCallback(async (q: string): Promise<SearchResult[]> => {
     if (!q.trim()) {
-      setResults(allResults);
-      return;
+      return allResults;
     }
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
@@ -169,22 +168,32 @@ export function SearchContent() {
         href: r.href,
         chapter: r.chapter,
       }));
-      setResults(apiResults);
+      return apiResults.length > 0 ? apiResults : allResults;
     } catch {
-      setResults([]);
+      return [];
     }
   }, []);
 
   useEffect(() => {
-    if (query) {
-      void performSearch(query);
-    } else {
-      setResults(allResults);
-    }
+    let cancelled = false;
+
+    void (async () => {
+      const next = await performSearch(query);
+      if (!cancelled) {
+        setResults(next);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [performSearch, query]);
 
   const handleSearch = () => {
-    void performSearch(searchQuery);
+    void (async () => {
+      const next = await performSearch(searchQuery);
+      setResults(next);
+    })();
   };
 
   const filteredResults = activeTab === 'all'
@@ -227,7 +236,7 @@ export function SearchContent() {
       {query && (
         <div className="mb-4 text-sm text-muted-foreground">
           找到 <span className="font-medium text-foreground">{results.length}</span> 条
-          与 "<span className="font-medium text-foreground">{query}</span>" 相关的结果
+          与 &ldquo;<span className="font-medium text-foreground">{query}</span>&rdquo; 相关的结果
         </div>
       )}
 

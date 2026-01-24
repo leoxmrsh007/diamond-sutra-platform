@@ -301,8 +301,9 @@ export async function POST() {
     results.message = `成功补充 ${results.chaptersUpdated} 章，共 ${results.versesAdded} 条偈颂！`
 
     return NextResponse.json(results)
-  } catch (error: any) {
-    results.errors.push(error.message)
-    return NextResponse.json(results, { status: 500 })
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    results.errors.push(err.message);
+    return NextResponse.json(results, { status: 500 });
   }
 }

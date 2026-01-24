@@ -244,16 +244,16 @@ export async function POST() {
   }
 
   try {
-    console.log('开始创建数据库表...')
+    console.log('开始创建数据库表...');
 
-    const response = await fetch(DIRECT_DATABASE_URL, {
+    await fetch(DIRECT_DATABASE_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + (process.env.DEEPSEEK_API_KEY || ''),
       },
       body: JSON.stringify({ query: CREATE_TABLES_SQL }),
-    })
+    });
 
     // 由于 Supabase 不支持这种方式的查询，改用 pg 库直接连接
     // 但在 Vercel 环境中，我们返回 SQL 让用户手动执行

@@ -4,25 +4,31 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
 
 // GET - 获取用户的对话历史列表
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '20');
     const sessionId = searchParams.get('sessionId');
@@ -67,16 +73,16 @@ export async function GET(request: NextRequest) {
 // POST - 创建新会话或保存消息
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const body = await request.json();
     const { sessionId, role, content, title } = body;
 
@@ -140,16 +146,16 @@ export async function POST(request: NextRequest) {
 // DELETE - 删除会话
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');
 

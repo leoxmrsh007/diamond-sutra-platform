@@ -13,7 +13,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
-import { LoadingSpinner } from '@/components/ui/loading';
 import {
   Send,
   Sparkles,
@@ -22,8 +21,6 @@ import {
   Lightbulb,
   History,
   Copy,
-  ThumbsUp,
-  ThumbsDown,
   RefreshCw,
   Trash2,
   Plus,
@@ -43,6 +40,12 @@ interface ChatSession {
   createdAt: Date;
   updatedAt: Date;
   _count?: { messages: number };
+}
+
+interface ChatHistoryMessage {
+  role: string;
+  content: string;
+  createdAt: string;
 }
 
 const suggestedQuestions = [
@@ -95,8 +98,8 @@ export default function AIPage() {
       const res = await fetch(`/api/chat/history?sessionId=${sessionId}`);
       if (res.ok) {
         const historyMessages = await res.json();
-        const formattedMessages: Message[] = historyMessages.map((msg: any) => ({
-          role: msg.role,
+        const formattedMessages: Message[] = historyMessages.map((msg: ChatHistoryMessage) => ({
+          role: msg.role as 'user' | 'assistant',
           content: msg.content,
           timestamp: new Date(msg.createdAt),
         }));
@@ -259,39 +262,7 @@ export default function AIPage() {
         }
       }
     } catch (error) {
-      // 回退到非流式响应
-      try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: input,
-            history: messages.slice(0, -1).map((m) => ({ role: m.role, content: m.content })),
-          }),
-        });
-
-        if (!response.ok) throw new Error('API 请求失败');
-
-        const data = await response.json();
-
-        setMessages((prev) =>
-          prev.map((msg, i) =>
-            i === prev.length - 1 && msg.role === 'assistant'
-              ? { ...msg, content: data.message, isStreaming: false }
-              : msg
-          )
-        );
-      } catch {
-        setMessages((prev) => prev.slice(0, -1));
-        const errorMessage: Message = {
-          role: 'assistant',
-          content: '抱歉，AI 服务暂时不可用。请稍后再试。',
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    } finally {
-      setIsLoading(false);
+      console.error('发送消息失败:', error);
     }
   };
 

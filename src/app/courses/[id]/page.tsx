@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -31,9 +31,15 @@ import {
   BookOpen,
 } from 'lucide-react';
 
-const levelLabelMap: Record<string, string> = { BEGINNER: '初级', INTERMEDIATE: '中级', ADVANCED: '高级' };
+type CourseLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 
-interface Lesson {
+const levelLabelMap: Record<CourseLevel, string> = {
+  BEGINNER: '初级',
+  INTERMEDIATE: '中级',
+  ADVANCED: '高级',
+};
+
+interface LessonSummary {
   id: string;
   title: string;
   duration: string;
@@ -41,24 +47,56 @@ interface Lesson {
   completed: boolean;
 }
 
-interface LessonProgress {
-  [lessonId: string]: { completed: boolean; progressPercent: number };
+interface RelatedCourse {
+  id: string;
+  title: string;
+  level: string;
+  duration?: number;
+  lessons?: number;
+  isFree?: boolean;
+}
+
+interface DetailedCourseData {
+  id: string;
+  title: string;
+  description: string;
+  levelLabel: string;
+  duration: number;
+  lessons: number;
+  students: number;
+  rating: number;
+  reviews: number;
+  isFree: boolean;
+  isPublished: boolean;
+  image: string;
+  instructor: {
+    name: string;
+    title: string;
+    bio: string;
+    avatar: string;
+  };
+  topics: string[];
+  lessonsList: LessonSummary[];
+}
+
+interface LessonProgressResponse {
+  completed?: boolean;
+  progressPercent?: number;
 }
 
 export default function CourseDetailPage() {
   const params = useParams();
   const { data: session } = useSession();
   const courseId = params.id as string;
-  const [course, setCourse] = useState<any | null>(null);
+  const [course, setCourse] = useState<DetailedCourseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [relatedCourses, setRelatedCourses] = useState<Array<{ id: string; title: string; level: string; duration?: number; lessons?: number; isFree?: boolean }>>([]);
-  const lessonsList: any[] = Array.isArray(course?.lessonsList) ? course.lessonsList : [];
+  const [relatedCourses, setRelatedCourses] = useState<RelatedCourse[]>([]);
+  const lessonsList = useMemo(() => course?.lessonsList ?? [], [course?.lessonsList]);
 
-  const [currentLesson, setCurrentLesson] = useState(1);
+  const [currentLesson, setCurrentLesson] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [activeTab, setActiveTab] = useState('lessons');
-  const [lessonProgress, setLessonProgress] = useState<LessonProgress>({});
 
   const handleEnroll = async () => {
     try {
@@ -67,46 +105,44 @@ export default function CourseDetailPage() {
     } catch {}
   };
 
-  // 加载课时进度
-  useEffect(() => {
-    if (session?.user && lessonsList.length > 0) {
-      loadLessonProgress();
-    }
-  }, [session, lessonsList]);
-
-  const loadLessonProgress = async () => {
+  const loadLessonProgress = useCallback(async () => {
+    if (!session?.user || lessonsList.length === 0) return;
     try {
       const progressRes = await fetch(`/api/courses/${courseId}/lessons`);
       if (progressRes.ok) {
-        const lessons = await progressRes.json();
-        const progressMap: LessonProgress = {};
+        const lessons: Array<{ id: string }> = await progressRes.json();
+        const progressMap: Record<string, { completed: boolean; progressPercent: number }> = {};
         for (const lesson of lessons) {
           const res = await fetch(`/api/courses/${courseId}/lessons/${lesson.id}/progress`);
           if (res.ok) {
-            const progress = await res.json();
+            const progress: LessonProgressResponse = await res.json();
             progressMap[lesson.id] = {
               completed: progress.completed || false,
               progressPercent: progress.progressPercent || 0,
             };
           }
         }
-        setLessonProgress(progressMap);
-
         // 更新课程中的课时完成状态
-        if (course?.lessonsList) {
-          setCourse((prev: any) => ({
+        setCourse((prev) => {
+          if (!prev) return prev;
+          return {
             ...prev,
-            lessonsList: prev.lessonsList.map((l: any) => ({
-              ...l,
-              completed: progressMap[l.id]?.completed || false,
+            lessonsList: prev.lessonsList.map((lesson) => ({
+              ...lesson,
+              completed: progressMap[lesson.id]?.completed || false,
             })),
-          }));
-        }
+          };
+        });
       }
     } catch (error) {
       console.error('加载课时进度失败:', error);
     }
-  };
+  }, [courseId, lessonsList, session?.user]);
+
+  // 加载课时进度
+  useEffect(() => {
+    void loadLessonProgress();
+  }, [loadLessonProgress]);
 
   // 标记课时完成
   const toggleLessonComplete = async (lessonId: string, completed: boolean) => {
@@ -120,28 +156,29 @@ export default function CourseDetailPage() {
       });
 
       if (res.ok) {
-        setLessonProgress((prev) => ({
-          ...prev,
-          [lessonId]: { completed, progressPercent: completed ? 100 : 0 },
-        }));
-
         // 更新课程中的课时完成状态
-        setCourse((prev: any) => ({
-          ...prev,
-          lessonsList: prev.lessonsList.map((l: any) =>
-            l.id === lessonId ? { ...l, completed } : l
-          ),
-        }));
+        setCourse((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            lessonsList: prev.lessonsList.map((lesson) =>
+              lesson.id === lessonId ? { ...lesson, completed } : lesson
+            ),
+          };
+        });
       }
     } catch (error) {
       console.error('保存课时进度失败:', error);
     }
   };
 
-  const currentLessonData = lessonsList.find((l: any) => l.id === currentLesson) || lessonsList[0];
+  const currentLessonData =
+    (currentLesson ? lessonsList.find((lesson) => lesson.id === currentLesson) : lessonsList[0]) || null;
 
-  const progress = (lessonsList.filter((l: any) => l.completed).length / Math.max(lessonsList.length, 1)) * 100;
-  const topics: string[] = Array.isArray(course?.topics) ? course.topics : [];
+  const progress = lessonsList.length
+    ? (lessonsList.filter((lesson) => lesson.completed).length / lessonsList.length) * 100
+    : 0;
+  const topics = course?.topics ?? [];
 
   useEffect(() => {
     (async () => {
@@ -149,10 +186,21 @@ export default function CourseDetailPage() {
         setLoading(true);
         const res = await fetch(`/api/courses/${courseId}`);
         if (!res.ok) throw new Error('课程加载失败');
-        const data = await res.json();
-        const lessonsList = (Array.isArray(data.lessons) ? data.lessons : []).map((l: any) => ({
-          id: l.id,
-          title: l.title,
+        const data: {
+          id: string;
+          title: string;
+          description: string;
+          level: CourseLevel;
+          duration: number | null;
+          lessons?: Array<{ id: string; title: string }>;
+          enrollments?: Array<{ userId: string }>;
+          studentCount?: number;
+          isPublished: boolean;
+          isEnrolled?: boolean;
+        } = await res.json();
+        const lessonsList = (Array.isArray(data.lessons) ? data.lessons : []).map((lesson) => ({
+          id: lesson.id,
+          title: lesson.title,
           duration: '—',
           isFree: true,
           completed: false,
@@ -162,9 +210,11 @@ export default function CourseDetailPage() {
           title: data.title,
           description: data.description,
           levelLabel: levelLabelMap[data.level] || '—',
-          duration: data.duration || 0,
+          duration: data.duration ?? 0,
           lessons: lessonsList.length,
-          students: (Array.isArray(data.enrollments) ? data.enrollments.length : (data.studentCount || 0)),
+          students: Array.isArray(data.enrollments)
+            ? data.enrollments.length
+            : data.studentCount ?? 0,
           rating: 4.8,
           reviews: 0,
           isFree: true,
@@ -174,6 +224,7 @@ export default function CourseDetailPage() {
           topics: [],
           lessonsList,
         });
+        setCurrentLesson((prev) => prev ?? (lessonsList[0]?.id ?? null));
         setIsEnrolled(Boolean(data.isEnrolled));
         setError(null);
       } catch (e) {
@@ -186,9 +237,22 @@ export default function CourseDetailPage() {
       try {
         const r = await fetch('/api/courses');
         if (r.ok) {
-          const list = await r.json();
+          const list: Array<{
+            id: string;
+            title: string;
+            level: CourseLevel;
+            duration?: number | null;
+            lessons?: Array<{ id: string }>;
+          }> = await r.json();
           setRelatedCourses(
-            (Array.isArray(list) ? list : []).map((c: any) => ({ id: c.id, title: c.title, level: levelLabelMap[c.level] || '—', duration: c.duration, lessons: Array.isArray(c.lessons) ? c.lessons.length : undefined, isFree: true }))
+            (Array.isArray(list) ? list : []).map((courseItem) => ({
+              id: courseItem.id,
+              title: courseItem.title,
+              level: levelLabelMap[courseItem.level],
+              duration: courseItem.duration ?? undefined,
+              lessons: courseItem.lessons ? courseItem.lessons.length : undefined,
+              isFree: true,
+            }))
           );
         }
       } catch {}
@@ -317,7 +381,7 @@ export default function CourseDetailPage() {
                     <div className="flex items-center justify-between">
                       <CardTitle>课程课时</CardTitle>
                       <span className="text-sm text-muted-foreground">
-                        {lessonsList.filter((l: any) => l.completed).length} / {lessonsList.length} 已完成
+                        {lessonsList.filter((lesson) => lesson.completed).length} / {lessonsList.length} 已完成
                       </span>
                     </div>
                     {isEnrolled && (
@@ -332,7 +396,7 @@ export default function CourseDetailPage() {
                   <CardContent>
                     <ScrollArea className="h-[400px]">
                       <div className="space-y-2 pr-4">
-                        {lessonsList.map((lesson: any, index: number) => (
+                        {lessonsList.map((lesson, index) => (
                           <div
                             key={lesson.id}
                             className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
@@ -345,7 +409,13 @@ export default function CourseDetailPage() {
                               {lesson.completed ? (
                                 <CheckCircle2 className="w-5 h-5 text-green-500" />
                               ) : (
-                                <span className={currentLesson === lesson.id ? 'bg-amber-500 text-white w-full h-full rounded-full flex items-center justify-center' : ''}>
+                                <span
+                                  className={
+                                    currentLesson === lesson.id
+                                      ? 'bg-amber-500 text-white w-full h-full rounded-full flex items-center justify-center'
+                                      : ''
+                                  }
+                                >
                                   {index + 1}
                                 </span>
                               )}
@@ -357,10 +427,14 @@ export default function CourseDetailPage() {
                                   <Clock className="w-3 h-3" />
                                   {lesson.duration}
                                 </span>
-                                {lesson.isFree && <Badge variant="secondary" className="text-xs">免费</Badge>}
+                                {lesson.isFree && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    免费
+                                  </Badge>
+                                )}
                                 {!isEnrolled && !lesson.isFree && (
-                                  <Badge variant="outline" className="text-xs">
-                                    <Lock className="w-3 h-3 mr-1" />
+                                  <Badge variant="outline" className="text-xs flex items-center gap-1">
+                                    <Lock className="w-3 h-3" />
                                     需报名
                                   </Badge>
                                 )}

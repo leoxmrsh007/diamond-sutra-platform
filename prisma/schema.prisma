@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://xin_som:xin_som_password@localhost:5433/diamond_sutra"
 }
 
 // ==================== 用户系统 ====================

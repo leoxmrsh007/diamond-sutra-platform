@@ -96,7 +96,7 @@ const diamondSutraVerses = [
 
   // 第三十二章
   { chapter: 32, num: 1, chinese: '一切有为法，如梦幻泡影，如露亦如电，应作如是观。', english: 'All conditioned dharmas are like dreams, illusions, bubbles, and shadows; like dew and lightning—thus should you contemplate them.', sanskrit: 'Sarve saṃskārā gṛdhraprasavāḥ svapnadrśyopamāḥ | Śmaśānagṛhā gṛdhraprasavāḥ viddhi mamṛptikāḥ tathā ||' },
-  { chapter: 32, num: 2, chinese: '说是经已，长老须菩提，及诸比丘、比丘尼、优婆塞、优婆夷，一切世间天人阿修罗，闻佛所说，皆大欢喜，信受奉行。', english: 'After the Buddha expounded this sūtra, Elder Subhūti, along with bhikṣus, bhikṣuṇīs, upāsakas, upāsikās, and all the world's gods, humans, and asuras, having heard the Buddha\'s teaching, were greatly filled with joy, faithfully accepted, and upheld it.' },
+  { chapter: 32, num: 2, chinese: '说是经已，长老须菩提，及诸比丘、比丘尼、优婆塞、优婆夷，一切世间天人阿修罗，闻佛所说，皆大欢喜，信受奉行。', english: 'After the Buddha expounded this sūtra, Elder Subhūti, along with bhikṣus, bhikṣuṇīs, upāsakas, upāsikās, and all the world\'s gods, humans, and asuras, having heard the Buddha\'s teaching, were greatly filled with joy, faithfully accepted, and upheld it.' },
 ];
 
 // 关键概念
@@ -158,6 +158,7 @@ const diamondSutraCourses = [
 ];
 
 // 社区帖子示例
+/*
 const diamondSutraPosts = [
   {
     title: '如何理解"应无所住而生其心"？',
@@ -170,11 +171,12 @@ const diamondSutraPosts = [
     tags: ['修行心得', '每日功课', '诵读'],
   },
   {
-    title: '《金刚经》与中观思想的关系',
-    content: '《金刚经》体现了龙树菩萨中观思想的核心——缘起性空。经中反复强调的"凡所有相皆是虚妄"，正是对空性最直接的表达。',
+    title: '《金刚经》中的中观思想',
+    content: '最近在学习龙树菩萨的中观思想，发现《金刚经》中有很多中观思想的体现。特别是"凡所有相，皆是虚妄"这句话，完美诠释了中观的缘起性空理论。',
     tags: ['中观', '空性', '佛学理论'],
   },
 ];
+*/
 
 async function seedDiamondSutraData() {
   console.log('开始填充金刚经数据...');
@@ -251,8 +253,8 @@ async function seedDiamondSutraData() {
           sanskrit: verse.sanskrit,
           tibetan: null,
           aiKeyword: ['经典名句', '核心偈颂'],
-          aiAnalysis: null,
-          embedding: null,
+          aiAnalysis: undefined,
+          embedding: undefined,
           order: verse.num,
         },
       });
@@ -275,7 +277,7 @@ async function seedDiamondSutraData() {
         nameSanskrit: concept.nameSanskrit,
         nameTibetan: concept.nameTibetan,
         description: concept.description,
-        embedding: null,
+        embedding: undefined,
       },
     });
   }
@@ -311,12 +313,7 @@ async function seedDiamondSutraData() {
     // 创建课时
     for (const lessonData of courseData.lessons) {
       await prisma.lesson.upsert({
-        where: {
-          courseId_order: {
-            courseId: course.id,
-            order: lessonData.order,
-          },
-        },
+        where: { id: `${course.id}_${lessonData.order}` },
         update: {
           title: lessonData.title,
           content: lessonData.content,

@@ -4,12 +4,18 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
-// 无需会话即可获取课程详情；是否已报名在客户端基于会话判断
+
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
+
 
 // GET - 获取课程详情
 export async function GET(
@@ -67,16 +73,16 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const user = (session.user as any);
+    const user = session.user;
     const course = await prisma.course.findUnique({
       where: { id },
     });
@@ -130,16 +136,16 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const user = (session.user as any);
+    const user = session.user;
     if (user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: '无权限删除课程' },

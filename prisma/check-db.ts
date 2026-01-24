@@ -12,21 +12,21 @@ async function main() {
 
   // 检查各个表的记录数
   const tables = [
-    { name: 'sutras', model: prisma.sutra },
-    { name: 'chapters', model: prisma.chapter },
-    { name: 'verses', model: prisma.verse },
-    { name: 'courses', model: prisma.course },
-    { name: 'concepts', model: prisma.concept },
-    { name: 'users', model: prisma.user },
-    { name: 'posts', model: prisma.post },
-    { name: 'comments', model: prisma.comment },
+    { name: 'sutras', count: () => prisma.sutra.count() },
+    { name: 'chapters', count: () => prisma.chapter.count() },
+    { name: 'verses', count: () => prisma.verse.count() },
+    { name: 'courses', count: () => prisma.course.count() },
+    { name: 'concepts', count: () => prisma.concept.count() },
+    { name: 'users', count: () => prisma.user.count() },
+    { name: 'posts', count: () => prisma.post.count() },
+    { name: 'comments', count: () => prisma.comment.count() },
   ];
 
   for (const table of tables) {
     try {
-      const count = await table.model.count();
+      const count = await table.count();
       console.log(`✓ ${table.name.padEnd(20)}: ${count} 条记录`);
-    } catch (error: {
+    } catch (error: unknown) {
       console.log(`✗ ${table.name.padEnd(20)}: 错误 - ${(error as Error).message}`);
     }
   }

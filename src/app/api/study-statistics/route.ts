@@ -4,25 +4,32 @@
  */
 
 import { NextResponse } from 'next/server';
-
-export const dynamic = 'force-static';
-export const fetchCache = 'force-cache';
+import type { Session } from 'next-auth';
+import { ProgressStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
-// GET - 获取学习统计
-export async function GET(request: Request) {
-  try {
-    const session = await auth();
+export const dynamic = 'force-static';
+export const fetchCache = 'force-cache';
 
-    if (!session?.user) {
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
+
+// GET - 获取学习统计
+export async function GET() {
+  try {
+    const session = await getSession();
+
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
 
     // 获取总学习进度
     const [totalProgress, totalVerses, chaptersProgress, recentActivity] =
@@ -61,10 +68,16 @@ export async function GET(request: Request) {
       ]);
 
     // 计算统计信息
-    const statusCounts = chaptersProgress.reduce((acc, item) => {
-      acc[item.status] = item._count.verseId;
-      return acc;
-    }, {} as Record<string, number>);
+    const statusCounts: Record<ProgressStatus, number> = {
+      NOT_STARTED: 0,
+      LEARNING: 0,
+      MEMORIZED: 0,
+      MASTERED: 0,
+    };
+
+    for (const item of chaptersProgress) {
+      statusCounts[item.status] = item._count.verseId;
+    }
 
     const statistics = {
       totalVersesStudied: totalProgress,

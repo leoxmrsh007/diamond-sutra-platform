@@ -3,22 +3,28 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
 
 // GET - 获取签到记录
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     const month = parseInt(searchParams.get('month') || String(new Date().getMonth() + 1));
@@ -47,10 +53,6 @@ export async function GET(request: NextRequest) {
 
     const todayCheckIn = checkIns.find(
       (c) => c.checkInDate.toDateString() === today.toDateString()
-    );
-
-    const yesterdayCheckIn = checkIns.find(
-      (c) => c.checkInDate.toDateString() === yesterday.toDateString()
     );
 
     const latestCheckIn = await prisma.checkIn.findFirst({
@@ -82,18 +84,18 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - 执行签到
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '未登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -147,7 +149,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 创建签到记录
-    const checkIn = await prisma.checkIn.create({
+    await prisma.checkIn.create({
       data: {
         userId,
         checkInDate: today,

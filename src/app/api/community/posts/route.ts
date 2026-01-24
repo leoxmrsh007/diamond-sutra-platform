@@ -4,11 +4,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
 
 // GET - 获取帖子列表
 export async function GET(request: NextRequest) {
@@ -18,7 +24,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
     const tab = searchParams.get('tab') || 'latest'; // latest, hot, following
 
-    let orderBy: any = { createdAt: 'desc' };
+    let orderBy: { createdAt: 'desc' } | { likeCount: 'desc' } = { createdAt: 'desc' };
     if (tab === 'hot') {
       orderBy = { likeCount: 'desc' };
     }
@@ -48,7 +54,7 @@ export async function GET(request: NextRequest) {
       id: post.id,
       title: post.title,
       content: post.content,
-      tags: (post.tags as any[]) || [],
+      tags: (post.tags as string[]) || [],
       likeCount: post.likeCount,
       commentCount: post._count.comments,
       createdAt: post.createdAt,
@@ -72,16 +78,16 @@ export async function GET(request: NextRequest) {
 // POST - 创建新帖子
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getSession();
 
-    if (!session?.user) {
+    if (!assertSessionUser(session)) {
       return NextResponse.json(
         { error: '请先登录' },
         { status: 401 }
       );
     }
 
-    const userId = (session.user as any).id;
+    const userId = session.user.id;
     const body = await request.json();
     const { title, content, tags = [] } = body;
 

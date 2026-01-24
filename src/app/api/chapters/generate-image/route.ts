@@ -4,11 +4,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
+import { prisma } from '@/lib/prisma';
+import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-static';
 export const fetchCache = 'force-cache';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/lib/auth';
+
+const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
+
+const assertSessionUser = (session: Session | null): session is Session & { user: Session['user'] } =>
+  Boolean(session?.user);
 
 // 金刚经 32 章的配图提示词
 const chapterImagePrompts: Record<number, string> = {
@@ -69,16 +75,16 @@ export async function GET(request: NextRequest) {
 
 // POST - 生成并保存章节配图信息
 export async function POST(request: NextRequest) {
-  const session = await auth();
+  const session = await getSession();
 
-  if (!session?.user) {
+  if (!assertSessionUser(session)) {
     return NextResponse.json(
       { error: '未登录' },
       { status: 401 }
     );
   }
 
-  const user = session.user as any;
+  const user = session.user;
   if (user.role !== 'ADMIN') {
     return NextResponse.json(
       { error: '需要管理员权限' },
