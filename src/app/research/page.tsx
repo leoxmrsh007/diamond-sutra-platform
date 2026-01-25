@@ -629,6 +629,12 @@ export default function ResearchPage() {
                                       sanskrit: 'border-purple-400 bg-purple-50',
                                       tibetan: 'border-orange-400 bg-orange-50',
                                       english: 'border-indigo-400 bg-indigo-50',
+                                      damoduojiduo: 'border-pink-400 bg-pink-50',
+                                      yijing_revised: 'border-teal-400 bg-teal-50',
+                                      dingfubao: 'border-cyan-400 bg-cyan-50',
+                                      conze: 'border-violet-400 bg-violet-50',
+                                      redpine: 'border-rose-400 bg-rose-50',
+                                      sangharakshita: 'border-amber-400 bg-amber-50',
                                     };
                                     return (
                                       <div

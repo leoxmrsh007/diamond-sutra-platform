@@ -139,6 +139,12 @@ export async function POST(request: Request) {
       sanskrit: '梵文原典',
       tibetan: '藏文译本',
       english: '英译本',
+      damoduojiduo: '达摩笈多译本',
+      yijing_revised: '义净重译本',
+      dingfubao: '丁福保译本',
+      conze: 'Edward Conze英译本',
+      redpine: 'Red Pine英译本',
+      sangharakshita: 'Sangharakshita英译本',
     };
 
     const versionName = versionNames[versionType] || `${versionType}译本`;
