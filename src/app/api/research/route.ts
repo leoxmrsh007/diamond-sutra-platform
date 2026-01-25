@@ -6,8 +6,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export const dynamic = 'force-static';
-export const fetchCache = 'force-cache';
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'no-store';
 
 // GET - 获取研究页面汇总数据
 export async function GET() {
