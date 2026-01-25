@@ -54,16 +54,115 @@ model Sutra {
   titleSanskrit String?
   titleTibetan  String?
   slug        String    @unique
+  tradition   Tradition
   description String?
   order       Int       @default(0)
 
   chapters    Chapter[]
+  versions    VersionMetadata[]
+  concepts    Concept[]
   metadata    Json?     // 额外元数据
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("sutras")
+}
+
+enum Tradition {
+  BUDDHISM
+  TAOISM
+  CONFUCIANISM
+  ZEN
+  PURE_LAND
+  TENDAI
+}
+
+// ==================== 难点字注释系统 ====================
+
+model DifficultCharacter {
+  id          String   @id @default(cuid())
+  scriptureId  String   // 'diamond-sutra' | 'daodejing' | 'zhuangzi'
+  character   String
+  pinyin      String
+  meaning     String
+  context     String?   // 上下文说明
+  frequency   Int?     // 出现频率
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([scriptureId, character])
+  @@index([scriptureId])
+  @@map("difficult_characters")
+}
+
+// ==================== 成语/术语提取系统 ====================
+
+model Idiom {
+  id          String   @id @default(cuid())
+  scriptureId  String
+  word        String   @unique([scriptureId, word])
+  pinyin      String?
+  meaning     String
+  chapterNum  Int?
+  verseNum    Int?
+  source      String?  // 来源文本
+  category    IdiomCategory
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([scriptureId])
+  @@map("idioms")
+}
+
+enum IdiomCategory {
+  IDIOM       // 成语
+  TERM        // 术语
+  ALLUSION    // 典故
+  PRINCIPLE   // 法数
+}
+
+// ==================== 版本元数据 ====================
+
+model VersionMetadata {
+  id          String    @id @default(cuid())
+  scriptureId  String
+  scripture   Sutra    @relation(fields: [scriptureId], references: [id])
+
+  versionType String    // commentator, translator, manuscript
+  versionName String
+  language   String
+  author      String?
+  era         String?
+  source      String?
+
+  versions    Version[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([scriptureId, versionType])
+  @@map("version_metadata")
+}
+
+model Version {
+  id          String    @id @default(cuid())
+  metadataId  String
+  metadata    VersionMetadata @relation(fields: [metadataId], references: [id])
+
+  verseId     String
+  verse       Verse     @relation(fields: [verseId], references: [id])
+
+  content     String
+  notes       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([metadataId, verseId])
+  @@map("versions")
 }
 
 model Chapter {
@@ -96,10 +195,9 @@ model Verse {
   chapter     Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   verseNum    Int
-  sanskrit    String?   
-  tibetan     String?   
-  chinese     String    
-  english     String?   
+  original    String    // 原文（Sanskrit/Chinese/etc.)
+  modern      String?   // 现代翻译
+  pinyin      String?   // 拼音（用于中文经典）
 
   // AI 生成的内容
   aiAnalysis  Json?     // AI 解析
@@ -110,12 +208,14 @@ model Verse {
   commentaries Commentary[]
   notes       Note[]
   studyProgress StudyProgress[]
-  versions    SutraVersion[]
+  versions    Version[]
+  difficultChars DifficultCharacter[]
+  idioms      Idiom[]
 
   order       Int       @default(0)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([chapterId, verseNum])
   @@index([chapterId])
