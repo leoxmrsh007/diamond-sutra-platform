@@ -51,6 +51,7 @@ import {
 } from '@/components/study/bookmark-dialog';
 import { DailyCheckIn } from '@/components/study/daily-check-in';
 import { DifficultCharacterAnnotation } from '@/components/study/difficult-characters';
+import { IdiomsDisplay } from '@/components/study/idioms-display';
 
 type DisplayMode = 'verse' | 'chapter';
 
@@ -1071,6 +1072,9 @@ export default function StudyPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Idioms Display */}
+            <IdiomsDisplay chapterId={currentChapter?.chapterNum.toString()} limit={5} />
 
             {/* Bookmarks */}
             {isAuthenticated && (

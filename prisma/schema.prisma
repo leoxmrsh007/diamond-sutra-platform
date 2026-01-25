@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://neondb_owner:npg_SuPOb2scv6hZ@ep-delicate-river-ahizjt90-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require"
 }
 
 // ==================== 用户系统 ====================
@@ -54,13 +54,12 @@ model Sutra {
   titleSanskrit String?
   titleTibetan  String?
   slug        String    @unique
-  tradition   Tradition
+  tradition   Tradition @default(ZEN)
   description String?
   order       Int       @default(0)
 
   chapters    Chapter[]
   versions    VersionMetadata[]
-  concepts    Concept[]
   metadata    Json?     // 额外元数据
 
   createdAt   DateTime @default(now())
@@ -102,7 +101,7 @@ model DifficultCharacter {
 model Idiom {
   id          String   @id @default(cuid())
   scriptureId  String
-  word        String   @unique([scriptureId, word])
+  word        String
   pinyin      String?
   meaning     String
   chapterNum  Int?
@@ -113,6 +112,7 @@ model Idiom {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@unique([scriptureId, word])
   @@index([scriptureId])
   @@map("idioms")
 }
@@ -195,7 +195,10 @@ model Verse {
   chapter     Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
   verseNum    Int
-  original    String    // 原文（Sanskrit/Chinese/etc.)
+  chinese     String    // 中文
+  english     String?   // 英文
+  sanskrit    String?   // 梵文
+  original    String?   // 原文（Sanskrit/Chinese/etc.)
   modern      String?   // 现代翻译
   pinyin      String?   // 拼音（用于中文经典）
 
@@ -209,8 +212,6 @@ model Verse {
   notes       Note[]
   studyProgress StudyProgress[]
   versions    Version[]
-  difficultChars DifficultCharacter[]
-  idioms      Idiom[]
 
   order       Int       @default(0)
 
@@ -220,31 +221,6 @@ model Verse {
   @@unique([chapterId, verseNum])
   @@index([chapterId])
   @@map("verses")
-}
-
-// ==================== 版本对照系统 ====================
-
-model SutraVersion {
-  id          String    @id @default(cuid())
-  verseId     String
-  verse       Verse     @relation(fields: [verseId], references: [id], onDelete: Cascade)
-
-  versionType String    // kumarajiva | xuanzang | yijing | sanskrit | tibetan | english
-  versionName String    // 鸠摩罗什译本 | 玄奘译本 | 义净译本 | 梵文原典 | 藏文译本 | 英译本
-  language   String    // zh | sa | bo | en
-  content    String    
-  
-  translator String?   // 译者名称：鸠摩罗什 | 玄奘 | 义净 | Edward Conze 等
-  year       String?   // 翻译年代：402 | 660 | 703 等
-  notes      String?   // 版本注释
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@unique([verseId, versionType])
-  @@index([verseId])
-  @@index([versionType])
-  @@map("sutra_versions")
 }
 
 // ==================== 注释系统 ====================

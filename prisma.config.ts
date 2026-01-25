@@ -1,8 +1,8 @@
 // Prisma configuration file
 import { defineConfig } from "prisma/config";
 
-// 直接设置数据库连接字符串
-const DATABASE_URL = "postgresql://xin_som:xin_som_password@localhost:5433/diamond_sutra";
+// 使用Neon PostgreSQL数据库
+const DATABASE_URL = "postgresql://neondb_owner:npg_SuPOb2scv6hZ@ep-delicate-river-ahizjt90-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
