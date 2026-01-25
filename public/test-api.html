@@ -1,0 +1,67 @@
+/**
+ * 测试API端点和数据库连接
+ */
+
+async function testAPIEndpoints() {
+  console.log('🧪 开始测试API端点...\n');
+
+  // 测试1: 基础API健康检查
+  console.log('1️⃣ 测试基础API...');
+  try {
+    const res = await fetch('/api/research');
+    console.log(`✅ /api/research 状态: ${res.status}`);
+    const data = await res.json();
+    console.log(`   返回数据类型: ${typeof data}`);
+    console.log(`   数据:`, data);
+  } catch (error) {
+    console.error('❌ /api/research 失败:', error);
+  }
+
+  // 测试2: 版本对照API
+  console.log('\n2️⃣ 测试版本对照API...');
+  try {
+    const res = await fetch('/api/research/versions?chapter=1&limit=3');
+    console.log(`✅ /api/research/versions 状态: ${res.status}`);
+    const data = await res.json();
+    console.log(`   数据:`, data);
+    if (data.metadata?.availableVersions) {
+      console.log(`   可用版本数: ${data.metadata.availableVersions.length}`);
+      data.metadata.availableVersions.forEach((v: any) => {
+        console.log(`      - ${v.versionName} (${v.versionType})`);
+      });
+    }
+  } catch (error) {
+    console.error('❌ /api/research/versions 失败:', error);
+  }
+
+  // 测试3: 难点字API
+  console.log('\n3️⃣ 测试难点字API...');
+  try {
+    const res = await fetch('/api/difficult-characters?scripture=diamond-sutra');
+    console.log(`✅ /api/difficult-characters 状态: ${res.status}`);
+    const data = await res.json();
+    console.log(`   数据:`, data);
+  } catch (error) {
+    console.error('❌ /api/difficult-characters 失败:', error);
+  }
+
+  // 测试4: 成语API
+  console.log('\n4️⃣ 测试成语API...');
+  try {
+    const res = await fetch('/api/idioms?scripture=diamond-sutra');
+    console.log(`✅ /api/idioms 状态: ${res.status}`);
+    const data = await res.json();
+    console.log(`   数据:`, data);
+  } catch (error) {
+    console.error('❌ /api/idioms 失败:', error);
+  }
+
+  console.log('\n✨ API测试完成！\n');
+  console.log('💡 建议：');
+  console.log('1. 如果所有API都正常，重启开发服务器');
+  console.log('2. 检查浏览器控制台的网络请求');
+  console.log('3. 确认环境变量DATABASE_URL正确配置');
+}
+
+// 在浏览器中运行
+testAPIEndpoints();
