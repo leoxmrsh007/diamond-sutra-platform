@@ -40,14 +40,23 @@ export async function GET(request: Request) {
     }
 
     // 获取版本数据
-    const versions = await prisma.sutraVersion.findMany({
+    const versions = await prisma.version.findMany({
       where,
       orderBy: [
         { verse: { chapter: { chapterNum: 'asc' } } },
         { verse: { verseNum: 'asc' } },
-        { versionType: 'asc' },
+        { metadata: { versionType: 'asc' } },
       ],
       include: {
+        metadata: {
+          select: {
+            versionType: true,
+            versionName: true,
+            language: true,
+            author: true,
+            era: true,
+          },
+        },
         verse: {
           include: {
             chapter: {
@@ -75,12 +84,12 @@ export async function GET(request: Request) {
       }
       acc[verseId].versions.push({
         id: version.id,
-        versionType: version.versionType,
-        versionName: version.versionName,
-        language: version.language,
+        versionType: version.metadata?.versionType || '',
+        versionName: version.metadata?.versionName || '',
+        language: version.metadata?.language || '',
         content: version.content,
-        translator: version.translator,
-        year: version.year,
+        translator: version.metadata?.author || null,
+        year: version.metadata?.era || null,
         notes: version.notes,
       });
       return acc;
@@ -90,15 +99,16 @@ export async function GET(request: Request) {
     const result = Object.values(groupedByVerse);
 
     // 如果没有指定具体偈颂，返回所有可用的版本类型信息
-    const availableVersions = await prisma.sutraVersion.findMany({
+    const availableVersions = await prisma.versionMetadata.findMany({
       select: {
         versionType: true,
         versionName: true,
         language: true,
-        translator: true,
-        year: true,
+        author: true,
+        era: true,
       },
       distinct: ['versionType'],
+      orderBy: { versionType: 'asc' },
     });
 
     return NextResponse.json({
@@ -149,36 +159,72 @@ export async function POST(request: Request) {
 
     const versionName = versionNames[versionType] || `${versionType}译本`;
 
-    const version = await prisma.sutraVersion.upsert({
-      where: {
-        verseId_versionType: {
-          verseId,
+    // 获取或创建版本元数据
+    let metadata;
+    try {
+      metadata = await prisma.versionMetadata.upsert({
+        where: {
+          scriptureId_versionType: {
+            scriptureId: verseId.substring(0, 20), // 简化：假设前20个字符包含经文ID，或需要修改此逻辑
+            versionType,
+          },
+        },
+        update: {},
+        create: {
           versionType,
+          versionName,
+          language: versionType === 'sanskrit' ? 'sa' :
+                   versionType === 'tibetan' ? 'bo' :
+                   versionType === 'english' ? 'en' : 'zh',
+          author: translator,
+          era: year,
+        },
+      });
+    } catch (error) {
+      // 如果upsert失败，尝试获取已存在的metadata
+      metadata = await prisma.versionMetadata.findFirst({
+        where: { versionType },
+      });
+    }
+
+    if (!metadata) {
+      return NextResponse.json(
+        { error: '无法创建版本元数据' },
+        { status: 500 }
+      );
+    }
+
+    const version = await prisma.version.upsert({
+      where: {
+        metadataId_verseId: {
+          metadataId: metadata.id,
+          verseId,
         },
       },
       update: {
         content,
-        translator,
-        year,
         notes,
       },
       create: {
+        metadataId: metadata.id,
         verseId,
-        versionType,
-        versionName,
-        language: versionType === 'sanskrit' ? 'sa' : 
-                 versionType === 'tibetan' ? 'bo' : 
-                 versionType === 'english' ? 'en' : 'zh',
         content,
-        translator,
-        year,
         notes,
       },
     });
 
     return NextResponse.json({
       message: '版本数据保存成功',
-      version,
+      version: {
+        id: version.id,
+        versionType: metadata.versionType,
+        versionName: metadata.versionName,
+        language: metadata.language,
+        author: metadata.author,
+        year: metadata.era,
+        content: version.content,
+        notes: version.notes,
+      },
     });
   } catch (error) {
     console.error('Research Versions API 错误:', error);

@@ -23,22 +23,26 @@ export async function GET() {
       recentCommentaries,
     ] = await Promise.all([
       // 版本总数
-      prisma.sutraVersion.count(),
+      prisma.version.count(),
       // 注释总数
       prisma.commentary.count(),
       // 概念总数
       prisma.concept.count(),
       // 可用的版本类型
-      prisma.sutraVersion.findMany({
-        select: {
-          versionType: true,
-          versionName: true,
-          language: true,
-          translator: true,
-          year: true,
+      prisma.version.findMany({
+        include: {
+          metadata: {
+            select: {
+              versionType: true,
+              versionName: true,
+              language: true,
+              author: true,
+              era: true,
+            },
+          },
         },
-        distinct: ['versionType'],
-        orderBy: { versionType: 'asc' },
+        distinct: ['metadataId'],
+        orderBy: { id: 'asc' },
       }),
       // 可用的注释作者
       prisma.commentary.findMany({
@@ -51,10 +55,16 @@ export async function GET() {
         take: 20,
       }),
       // 最近添加的版本数据
-      prisma.sutraVersion.findMany({
+      prisma.version.findMany({
         orderBy: { createdAt: 'desc' },
         take: 5,
         include: {
+          metadata: {
+            select: {
+              versionType: true,
+              versionName: true,
+            },
+          },
           verse: {
             include: {
               chapter: {
@@ -93,7 +103,7 @@ export async function GET() {
     ]);
 
     // 按版本类型统计
-    const versionsByType = await prisma.sutraVersion.groupBy({
+    const versionsByType = await prisma.versionMetadata.groupBy({
       by: ['versionType', 'versionName'],
       _count: {
         id: true,
@@ -128,16 +138,22 @@ export async function GET() {
       },
       // 版本数据
       versions: {
-        available: availableVersions,
+        available: availableVersions.map(v => ({
+          versionType: v.metadata?.versionType || '',
+          versionName: v.metadata?.versionName || '',
+          language: v.metadata?.language || '',
+          author: v.metadata?.author || null,
+          era: v.metadata?.era || null,
+        })),
         byType: versionsByType,
         recent: recentVersions.map(v => ({
           id: v.id,
-          versionType: v.versionType,
-          versionName: v.versionName,
+          versionType: v.metadata?.versionType || '',
+          versionName: v.metadata?.versionName || '',
           chapterNum: v.verse.chapter.chapterNum,
           verseNum: v.verse.verseNum,
-          contentPreview: v.content.length > 50 
-            ? v.content.substring(0, 50) + '...' 
+          contentPreview: v.content.length > 50
+            ? v.content.substring(0, 50) + '...'
             : v.content,
         })),
       },
@@ -149,10 +165,10 @@ export async function GET() {
           id: c.id,
           author: c.author,
           source: c.source,
-          chapterNum: c.verse.chapter.chapterNum,
-          verseNum: c.verse.verseNum,
-          contentPreview: c.content.length > 50 
-            ? c.content.substring(0, 50) + '...' 
+          chapterNum: c.verse?.chapter?.chapterNum || 0,
+          verseNum: c.verse?.verseNum || 0,
+          contentPreview: c.content.length > 50
+            ? c.content.substring(0, 50) + '...'
             : c.content,
         })),
       },
