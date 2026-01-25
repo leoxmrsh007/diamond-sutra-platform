@@ -9,8 +9,7 @@ import type { Session } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
-export const dynamic = 'force-static';
-export const fetchCache = 'force-cache';
+export const dynamic = 'force-dynamic';
 
 // GET - 获取课程列表
 export async function GET(request: NextRequest) {
