@@ -32,10 +32,25 @@ import {
   List,
 } from 'lucide-react';
 
-import { NoteDialog } from '@/components/study/note-dialog';
-import { BookmarkDialog, BookmarkList } from '@/components/study/bookmark-dialog';
-import type { BookmarkItem } from '@/components/study/bookmark-dialog';
+import { Header } from '@/components/layout/header';
+import { Footer } from '@/components/layout/footer';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Slider } from '@/components/ui/slider';
+import { LoadingSpinner } from '@/components/ui/loading';
+import {
+  NoteDialog,
+  BookmarkDialog,
+  BookmarkList,
+} from '@/components/study/note-dialog';
+import {
+  BookmarkItem,
+} from '@/components/study/bookmark-dialog';
 import { DailyCheckIn } from '@/components/study/daily-check-in';
+import { DifficultCharacterAnnotation } from '@/components/study/difficult-characters';
 
 type DisplayMode = 'verse' | 'chapter';
 
@@ -797,10 +812,13 @@ export default function StudyPage() {
                               )}
                             </div>
 
-                            {/* 中文 */}
-                            <div className="text-xl leading-loose font-serif text-foreground mb-4">
-                              {verse.chinese}
-                            </div>
+                             {/* 中文 */}
+                             <div className="text-xl leading-loose font-serif text-foreground mb-4 relative">
+                               <DifficultCharacterAnnotation
+                                 text={verse.chinese}
+                                 scripture="diamond-sutra"
+                               />
+                             </div>
 
                             {/* 英文 */}
                             {verse.english && (
