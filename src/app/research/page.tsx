@@ -136,7 +136,7 @@ export default function ResearchPage() {
         setError(null);
 
         // 先只加载基础统计数据
-        const statsRes = await fetch('/api/research');
+        const statsRes = await fetch('/api/research-simple');
 
         if (!statsRes.ok) {
           throw new Error('获取研究数据失败');
@@ -145,7 +145,7 @@ export default function ResearchPage() {
         const stats = await statsRes.json();
         setResearchStats(stats);
 
-        // 延迟加载详细数据
+        // 延迟加载详细数据（暂时禁用，因为可能导致404错误）
         setIsLoadingDetails(true);
         const [versionsRes, commentariesRes] = await Promise.all([
           fetch('/api/research/versions?limit=5'),
@@ -159,6 +159,10 @@ export default function ResearchPage() {
           ]);
           setVersionData(versions.data || []);
           setCommentaryData(commentaries.data || []);
+        } else {
+          console.warn('版本对照或注释API失败，跳过详细数据加载');
+          setVersionData([]);
+          setCommentaryData([]);
         }
       } catch (err) {
         console.error('获取研究数据错误:', err);
