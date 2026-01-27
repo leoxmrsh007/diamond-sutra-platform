@@ -141,6 +141,27 @@ export async function POST(request: Request) {
       );
     }
 
+    // 获取 verse 及其所属经文
+    const verse = await prisma.verse.findUnique({
+      where: { id: verseId },
+      include: {
+        chapter: {
+          include: {
+            sutra: true,
+          },
+        },
+      },
+    });
+
+    if (!verse) {
+      return NextResponse.json(
+        { error: '找不到指定的偈颂' },
+        { status: 404 }
+      );
+    }
+
+    const scriptureId = verse.chapter.sutra.id;
+
     // 根据versionType确定versionName
     const versionNames: Record<string, string> = {
       kumarajiva: '鸠摩罗什译本',
@@ -165,12 +186,13 @@ export async function POST(request: Request) {
       metadata = await prisma.versionMetadata.upsert({
         where: {
           scriptureId_versionType: {
-            scriptureId: verseId.substring(0, 20), // 简化：假设前20个字符包含经文ID，或需要修改此逻辑
+            scriptureId,
             versionType,
           },
         },
         update: {},
         create: {
+          scriptureId,
           versionType,
           versionName,
           language: versionType === 'sanskrit' ? 'sa' :

@@ -333,19 +333,22 @@ export async function checkAllAchievements(userId: string) {
     completedCourses,
   ] = await Promise.all([
     // 已学习的章节数（状态不为 NOT_STARTED）
-    prisma.studyProgress.groupBy({
-      by: ['verseId'],
-      where: {
-        userId,
-        status: { in: ['LEARNING', 'MEMORIZED', 'MASTERED'] },
-      },
-    }).then((groups) => {
-      const verseIds = new Set(groups.map((g) => g.verseId))
-      return prisma.verse.count({
-        where: { id: { in: Array.from(verseIds) } },
-        distinct: ['chapterId'],
+    (async () => {
+      const progress = await prisma.studyProgress.findMany({
+        where: {
+          userId,
+          status: { in: ['LEARNING', 'MEMORIZED', 'MASTERED'] },
+        },
+        select: { verseId: true },
+        distinct: ['verseId'],
       })
-    }),
+      if (progress.length === 0) return 0
+      const verses = await prisma.verse.findMany({
+        where: { id: { in: progress.map(p => p.verseId) } },
+        select: { chapterId: true },
+      })
+      return new Set(verses.map(v => v.chapterId)).size
+    })(),
     // 背诵次数
     prisma.studyProgress.aggregate({
       where: { userId },

@@ -2,6 +2,8 @@
  * 离线页面
  */
 
+'use client'
+
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 

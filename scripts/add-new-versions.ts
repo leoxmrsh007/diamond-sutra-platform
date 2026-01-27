@@ -211,8 +211,9 @@ async function main() {
         try {
           await prisma.version.create({
             data: {
-            verseId: verse.id,
-            content: content.content,
+              metadataId: metadata.id,
+              verseId: verse.id,
+              content: content.content,
             },
           });
 

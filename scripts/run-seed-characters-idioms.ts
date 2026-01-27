@@ -2,7 +2,7 @@
  * 运行种子数据脚本：添加难点字和成语
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, IdiomCategory } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import DIFFICULT_CHARACTERS from '../prisma/seed-data/diamond-sutra-difficult-chars';
 import IDIOMS from '../prisma/seed-data/diamond-sutra-idioms';
@@ -57,7 +57,7 @@ async function main() {
             meaning: idiomData.meaning,
             chapterNum: idiomData.chapter,
             source: idiomData.source,
-            category: idiomData.category,
+            category: idiomData.category as IdiomCategory,
           },
         });
         console.log(`✅ ${idiomData.word}`);

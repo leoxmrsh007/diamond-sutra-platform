@@ -8,6 +8,8 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
+export const dynamic = 'force-dynamic'
+
 async function AdminPage() {
   const session = await auth()
 
