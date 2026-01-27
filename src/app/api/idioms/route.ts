@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
 
-    let where: any = { scripture };
+    let where: any = { scriptureId: scripture };
 
     if (chapterNum) {
       where.chapterNum = parseInt(chapterNum);
@@ -35,15 +35,6 @@ export async function GET(request: NextRequest) {
     const [idioms, total] = await Promise.all([
       prisma.idiom.findMany({
         where,
-        include: {
-          verse: {
-            include: {
-              chapter: {
-                select: { chapterNum: true, title: true },
-              },
-            },
-          },
-        },
         orderBy: {
           chapterNum: 'asc',
         },

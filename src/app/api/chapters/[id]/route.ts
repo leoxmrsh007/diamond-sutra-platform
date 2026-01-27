@@ -5,8 +5,8 @@
 
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-static';
-export const fetchCache = 'force-cache';
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 import { prisma } from '@/lib/prisma';
 
 // GET - 获取章节详情
@@ -22,11 +22,6 @@ export async function GET(
         sutra: true,
         verses: {
           orderBy: { verseNum: 'asc' },
-          include: {
-            commentaries: {
-              orderBy: { order: 'asc' },
-            },
-          },
         },
       },
     });

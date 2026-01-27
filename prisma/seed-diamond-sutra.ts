@@ -95,8 +95,75 @@ const diamondSutraVerses = [
   { chapter: 14, num: 2, chinese: '须菩提！"佛言："若有善男子、善女人，于此法中，乃至受持四句偈等，为他人说，其福胜彼。"', english: '"Subhūti!" The Buddha said: "If there are good men and women who, in this dharma, receive and uphold even four lines of verse and explain them to others, their merit surpasses that."' },
 
   // 第三十二章
-  { chapter: 32, num: 1, chinese: '一切有为法，如梦幻泡影，如露亦如电，应作如是观。', english: 'All conditioned dharmas are like dreams, illusions, bubbles, and shadows; like dew and lightning—thus should you contemplate them.', sanskrit: 'Sarve saṃskārā gṛdhraprasavāḥ svapnadrśyopamāḥ | Śmaśānagṛhā gṛdhraprasavāḥ viddhi mamṛptikāḥ tathā ||' },
-  { chapter: 32, num: 2, chinese: '说是经已，长老须菩提，及诸比丘、比丘尼、优婆塞、优婆夷，一切世间天人阿修罗，闻佛所说，皆大欢喜，信受奉行。', english: 'After the Buddha expounded this sūtra, Elder Subhūti, along with bhikṣus, bhikṣuṇīs, upāsakas, upāsikās, and all the world\'s gods, humans, and asuras, having heard the Buddha\'s teaching, were greatly filled with joy, faithfully accepted, and upheld it.' },
+  { chapter: 32, num: 1, chinese: '一切有为法，如梦幻泡影，如露亦如电，应作如是观。', english: 'All conditioned dharmas are like dreams, illusions, bubbles, and shadows; like dew and lightning—thus should you contemplate them.', sanskrit: 'Sarve saṃskārā gṛdhraprasavāḥ svapnadrśyopamāḥ | Śmaśānagṛhā gṛdhraprasavāḥ viddhi mamṛptikāḥ tathā ||', pinyin: 'Yīqiè yǒuwéi fǎ, rú mènghuàn pàoyǐng, rú lù yì rú diàn, yīng zuò rúshì guān.' },
+  { chapter: 32, num: 2, chinese: '说是经已，长老须菩提，及诸比丘、比丘尼、优婆塞、优婆夷，一切世间天人阿修罗，闻佛所说，皆大欢喜，信受奉行。', english: 'After the Buddha expounded this sūtra, Elder Subhūti, along with bhikṣus, bhikṣuṇīs, upāsakas, upāsikās, and all the world\'s gods, humans, and asuras, having heard the Buddha\'s teaching, were greatly filled with joy, faithfully accepted, and upheld it.', pinyin: 'Shuō shì jīng yǐ, zhǎnglǎo Xūpútí, jí jí zhū bǐqiūnà, yōupósài, yōupóyí, yīqiè shìjiān tiānrén xiūluó, wén Fó suǒshuō, jiē dà huānxǐ, xìnshòu fèngxíng.' },
+
+  // 补充第11-13章
+  { chapter: 11, num: 1, chinese: '须菩提！随说是经乃至四句偈等，当知此处，一切世间天人阿修罗，皆应供养，如佛塔庙。', english: 'Subhūti! Wherever this sūtra is expounded, even if only four lines of verse, that place should be revered and worshipped by all gods, humans, and asuras, as if it were a Buddha stupa or temple.', sanskrit: 'Yatra tāvat Subhūti iyam dharanā pravarṇīyate vā catuṣkāraṃ vā gāthā, tatra prāṇādhāraṇam upasaṃharanti devamanuṣyāsurāḥ', pinyin: 'Xūpútí! suí shuō shì jīng nǎizhì sì jù jì děng, dāng zhī cǐ chù, yīqiè shìjiān tiānrén xiūluó, jiē yīng gòngyǎng, rú Fó tǎ miào.' },
+  { chapter: 11, num: 2, chinese: '何况有人尽能受持读诵此经。须菩提！当知是人，成就最上第一希有之法。', english: 'How much more so if there are people who can fully receive, uphold, read, and recite this sūtra. Subhūti! You should know that such people accomplish the utmost, supreme, and rarest dharma.', pinyin: 'Hékuàng yǒurén jìn néng shòuchí dúsòng cǐ jīng. Xūpútí! dāng zhī shì rén, chéngjiù zuìshàng dì-yī xīyǒu zhī fǎ.' },
+
+  { chapter: 12, num: 1, chinese: '复次，须菩提！善男子、善女人，受持读诵此经，若为人轻贱，是人先世罪业，应堕恶道。', english: 'Furthermore, Subhūti! If good men and women receive, uphold, read, and recite this sūtra, yet are despised by others, this is because their past evil karma would have caused them to fall into evil paths.', pinyin: 'Fùcì, Xūpútí! shàn nánzǐ, shàn nǚrén, shòuchí dúsòng cǐ jīng, ruò wèirén qīngjiàn, shì rén xiānshì zuìyè, yīng duò èdào.' },
+  { chapter: 12, num: 2, chinese: '以今世人轻贱故，先世罪业，即为消灭，当得阿耨多罗三藐三菩提。', english: 'Because of being despised in this life, their past evil karma is extinguished, and they will attain unexcelled perfect enlightenment.', pinyin: 'Yǐ jīnshìrén qīngjiàn gù, xiānshì zuìyè, jí wèi xiāomiè, dāng dé Ānòuduōluó Sānmiǎo Sānpútí.' },
+
+  { chapter: 13, num: 1, chinese: '须菩提！若菩萨以满恒河沙等世界七宝持用布施。', english: 'Subhūti! If a bodhisattva were to give as gift the seven treasures filling as many worlds as there are sands in the Ganges.', sanskrit: 'Subhūti yadi bodhisattvaḥ gaṅgānadyāvalukābhiḥ sapta ratnaparītaiḥ lokadhātubhiḥ dānamdadāti', pinyin: 'Xūpútí! ruò púsà yǐ mǎn Hénghéshā děng shìjiè qī bǎo chíyòng bùshī.' },
+  { chapter: 13, num: 2, chinese: '若有善男子、善女人，发菩提心者，持于此经，乃至四句偈等，受持读诵，为人演说。', english: 'If there are good men and women who give rise to bodhicitta, uphold this sūtra, even if only four lines of verse, receive, uphold, read, recite, and expound it for others.', pinyin: 'Ruò yǒu shàn nánzǐ, shàn nǚrén, fā pútíxīn zhě, chí yú cǐ jīng, nǎizhì sì jù jì děng, shòuchí dúsòng, wèirén yǎnshuō.' },
+  { chapter: 13, num: 3, chinese: '其福胜彼。云何为人演说？不取于相，如如不动。', english: 'Their merit surpasses that. How should one expound it to others? Without grasping at appearances, in accordance with reality, unmoving.', pinyin: 'Qí fú shèng bǐ. rúhé wèirén yǎnshuō? bù qǔ yú xiàng, rúrú bùdòng.' },
+
+  // 补充第15-17章
+  { chapter: 15, num: 1, chinese: '须菩提！是经义不可思议，果报亦不可思议。', english: 'Subhūti! The meaning of this sūtra is inconceivable, and the resulting merit is also inconceivable.', pinyin: 'Xūpútí! shì jīng yì bùkě sīyì, guǒbào yì bùkě sīyì.' },
+
+  { chapter: 16, num: 1, chinese: '若复有人，闻此经典，信心不逆，其福胜彼。', english: 'If there are people who hear this sūtra and their faith is unwavering, their merit surpasses that.', pinyin: 'Ruò fù yǒurén, wén cǐ jīngdiǎn, xìnxīn bù nì, qí fú shèng bǐ.' },
+  { chapter: 16, num: 2, chinese: '何况书写受持读诵为人解说。', english: 'How much more so if they copy, receive, uphold, read, recite, and explain it for others.', pinyin: 'Hékuàng shūxiě shòuchí dúsòng wèirén jiěshuō.' },
+
+  { chapter: 17, num: 1, chinese: '须菩提！当知是经义，则为不可称、不可量、无有边。', english: 'Subhūti! You should know that the meaning of this sūtra is unnameable, immeasurable, and limitless.', pinyin: 'Xūpútí! dāng zhī shì jīng yì, zé wèi bùkě chēng, bùkě liáng, wúyǒu biān.' },
+  { chapter: 17, num: 2, chinese: '如来所说法，皆不可取、不可说，非法、非非法。', english: 'The dharma expounded by the Tathāgata cannot be grasped or spoken; it is neither dharma nor non-dharma.', pinyin: 'Rúlái suǒshuō fǎ, jiē bùkě qǔ, bùkě shuō, fēi fǎ, fēi fēi fǎ.' },
+
+  // 补充第18-20章
+  { chapter: 18, num: 1, chinese: '须菩提！于意云何？如来有肉眼不？""如是，世尊！如来有肉眼。"', english: 'Subhūti! What do you think? Does the Tathāgata have the physical eye? "Yes, World-Honored One! The Tathāgata has the physical eye."', pinyin: 'Xūpútí! yú yì yún hé? Rúlái yǒu ròuyǎn bù? "Rúshì, Shìzūn! Rúlái yǒu ròuyǎn."' },
+  { chapter: 18, num: 2, chinese: '"须菩提！于意云何？如来有天眼不？""如是，世尊！如来有天眼。"', english: '"Subhūti! What do you think? Does the Tathāgata have the heavenly eye? "Yes, World-Honored One! The Tathāgata has the heavenly eye."', pinyin: '"Xūpútí! yú yì yún hé? Rúlái yǒu tiānyǎn bù? "Rúshì, Shìzūn! Rúlái yǒu tiānyǎn."' },
+  { chapter: 18, num: 3, chinese: '如来慧眼、法眼、佛眼，皆亦如是。', english: 'The Tathāgata\'s wisdom eye, dharma eye, and Buddha eye are likewise.', pinyin: 'Rúlái huìyǎn, fǎyǎn, fóyǎn, jiē yì rúshì.' },
+
+  { chapter: 19, num: 1, chinese: '须菩提！若有人以满无量阿僧祇世界七宝持用布施。', english: 'Subhūti! If someone were to give as gift the seven treasures filling innumerable worlds of incalculable number.', pinyin: 'Xūpútí! ruò yǒurén yǐ mǎn wúliàng āsēngqí shìjiè qī bǎo chíyòng bùshī.' },
+  { chapter: 19, num: 2, chinese: '若有善男子、善女人，发菩提心者，持于此经，乃至四句偈等，受持读诵，为人演说，其福胜彼。', english: 'If there are good men and women who give rise to bodhicitta, uphold this sūtra, even if only four lines of verse, receive, uphold, read, recite, and expound it for others, their merit surpasses that.', pinyin: 'Ruò yǒu shàn nánzǐ, shàn nǚrén, fā pútíxīn zhě, chí yú cǐ jīng, nǎizhì sì jù jì děng, shòuchí dúsòng, wèirén yǎnshuō, qí fú shèng bǐ.' },
+
+  { chapter: 20, num: 1, chinese: '须菩提！若菩萨作是念："我当度无量众生。"即不名菩萨。', english: 'Subhūti! If a bodhisattva thinks: "I should liberate innumerable sentient beings," they are not called a bodhisattva.', pinyin: 'Xūpútí! ruò púsà zuò shì niàn: "Wǒ dāng dù wúliàng zhòngshēng." jí bù míng púsà.' },
+  { chapter: 20, num: 2, chinese: '何以故？须菩提！实无有法名菩萨，是故佛说一切法无我、无人、无众生、无寿者。', english: 'Why? Subhūti! In reality there is no dharma called bodhisattva. Therefore the Buddha says that all dharmas are without self, without person, without sentient being, without life span.', pinyin: 'Héyǐ gù? Xūpútí! shí wúyǒu fǎ míng púsà, shìgù Fó shuō yīqiè fǎ wú wǒ, wú rén, wú zhòngshēng, wú shòuzhě.' },
+
+  // 补充第21-23章
+  { chapter: 21, num: 1, chinese: '须菩提！汝勿谓如来作是念："我当有所说法。"莫作是念！', english: 'Subhūti! Do not say that the Tathāgata thinks: "I should expound some dharma." Do not think this!', pinyin: 'Xūpútí! rǔ wù wèi Rúlái zuò shì niàn: "Wǒ dāng yǒusuǒshuō fǎ." mò zuò shì niàn!' },
+  { chapter: 21, num: 2, chinese: '何以故？若人言：如来有所说法，即为谤佛，不能解我所说故。', english: 'Why? If someone says: The Tathāgata has expounded some dharma, they slander the Buddha, because they cannot understand what I say.', pinyin: 'Héyǐ gù? ruò rén yán: Rúlái yǒusuǒshuō fǎ, jí wèi bàng Fó, bùnéng jiě wǒ suǒshuō gù.' },
+
+  { chapter: 22, num: 1, chinese: '须菩提！说法者，无法可说，是名说法。', english: 'Subhūti! One who expounds the dharma has no dharma to expound; this is called expounding the dharma.', pinyin: 'Xūpútí! shuōfǎ zhě, wú fǎ kě shuō, shì míng shuōfǎ.' },
+
+  { chapter: 23, num: 1, chinese: '须菩提！若有人言：佛说我见、人见、众生见、寿者见。须菩提！于意云何？是人解我所说义不？"不也，世尊！"', english: 'Subhūti! If someone says: The Buddha speaks of the view of self, person, sentient being, life span. Subhūti! What do you think? Does this person understand my meaning? "No, World-Honored One!"', pinyin: 'Xūpútí! ruò yǒurén yán: Fó shuō wǒjiàn, rénjiàn, zhòngshēngjiàn, shòuzhějiàn. Xūpútí! yú yì yún hé? shì rén jiě wǒ suǒshuō yì bù? "Bù yě, Shìzūn!"' },
+  { chapter: 23, num: 2, chinese: '"世尊！是人不解如来所说义。何以故？世尊说我见、人见、众生见、寿者见，即非我见、人见、众生见、寿者见，是名我见、人见、众生见、寿者见。"', english: '"World-Honored One! This person does not understand the Tathāgata\'s meaning. Why? World-Honored One, when I speak of the view of self, person, sentient being, life span, it is not truly a view; therefore it is called the view of self, person, sentient being, life span."', pinyin: '"Shìzūn! shì rén bùjiě Rúlái suǒshuō yì. Héyǐ gù? Shìzūn shuō wǒjiàn, rénjiàn, zhòngshēngjiàn, shòuzhějiàn, jí fēi wǒjiàn, rénjiàn, zhòngshēngjiàn, shòuzhějiàn, shì míng wǒjiàn, rénjiàn, zhòngshēngjiàn, shòuzhějiàn."' },
+
+  // 补充第24-26章
+  { chapter: 24, num: 1, chinese: '须菩提！若菩萨以满恒河沙等世界七宝持用布施。', english: 'Subhūti! If a bodhisattva were to give as gift the seven treasures filling as many worlds as there are sands in the Ganges.', pinyin: 'Xūpútí! ruò púsà yǐ mǎn Hénghéshā děng shìjiè qī bǎo chíyòng bùshī.' },
+  { chapter: 24, num: 2, chinese: '若有善男子、善女人，发菩提心者，于此经中，乃至受持四句偈等，为他人说，其福胜彼。', english: 'If there are good men and women who give rise to bodhicitta, in this sūtra, even if they receive and uphold only four lines of verse and explain them to others, their merit surpasses that.', pinyin: 'Ruò yǒu shàn nánzǐ, shàn nǚrén, fā pútíxīn zhě, yú cǐ jīng zhōng, nǎizhì shòuchí sì jù jì děng, wèi tārén shuō, qí fú shèng bǐ.' },
+
+  { chapter: 25, num: 1, chinese: '须菩提！于意云何？汝等勿谓如来作是念："我当度众生。"', english: 'Subhūti! What do you think? Do not say that the Tathāgata thinks: "I should liberate sentient beings."', pinyin: 'Xūpútí! yú yì yún hé? rǔ děng wù wèi Rúlái zuò shì niàn: "Wǒ dāng dù zhòngshēng."' },
+  { chapter: 25, num: 2, chinese: '须菩提！莫作是念！何以故？实无有众生如来度者。', english: 'Subhūti! Do not think this! Why? In reality there are no sentient beings for the Tathāgata to liberate.', pinyin: 'Xūpútí! mò zuò shì niàn! Héyǐ gù? Shí wúyǒu zhòngshēng Rúlái dù zhě.' },
+  { chapter: 25, num: 3, chinese: '若有众生如来度者，如来则有我人众生寿者。', english: 'If there were sentient beings for the Tathāgata to liberate, then the Tathāgata would have self, person, sentient being, life span.', pinyin: 'Ruò yǒu zhòngshēng Rúlái dù zhě, Rúlái zé yǒu wǒ rén zhòngshēng shòuzhě.' },
+
+  { chapter: 26, num: 1, chinese: '须菩提！于意云何？可以三十二相观如来不？"不也，世尊！"', english: 'Subhūti! What do you think? Can one perceive the Tathāgata through the thirty-two marks? "No, World-Honored One!"', pinyin: 'Xūpútí! yú yì yún hé? kěyǐ sānshíèr xiāng guān Rúlái bù? "Bù yě, Shìzūn!"' },
+  { chapter: 26, num: 2, chinese: '"何以故？世尊说三十二相，即非三十二相，是名三十二相。"', english: '"Why? What the World-Honored One calls the thirty-two marks are not truly marks; therefore they are called the thirty-two marks."', pinyin: '"Héyǐ gù? Shìzūn shuō sānshíèr xiāng, jí fēi sānshíèr xiāng, shì míng sānshíèr xiāng."' },
+
+  // 补充第27-31章
+  { chapter: 27, num: 1, chinese: '须菩提！若菩萨作是念："我当庄严佛土。"是不名菩萨。', english: 'Subhūti! If a bodhisattva thinks: "I should adorn Buddha lands," they are not called a bodhisattva.', pinyin: 'Xūpútí! ruò púsà zuò shì niàn: "Wǒ dāng zhuāngyán fótǔ." shì bù míng púsà.' },
+  { chapter: 27, num: 2, chinese: '何以故？如来说庄严佛土者，即非庄严，是名庄严。', english: 'Why? What the Tathāgata calls adorning Buddha lands is not truly adorning; therefore it is called adorning.', pinyin: 'Héyǐ gù? Rúlái shuō zhuāngyán fótǔ zhě, jí fēi zhuāngyán, shì míng zhuāngyán.' },
+
+  { chapter: 28, num: 1, chinese: '须菩提！若菩萨通达无我法者，如来说名真是菩萨。', english: 'Subhūti! If a bodhisattva understands the dharma of no-self, the Tathāgata calls them truly a bodhisattva.', pinyin: 'Xūpútí! ruò púsà tōngdá wúwǒ fǎ zhě, Rúlái shuō míng zhēn shì púsà.' },
+
+  { chapter: 29, num: 1, chinese: '须菩提！于意云何？如来有肉眼不？如是，世尊！如来有肉眼。', english: 'Subhūti! What do you think? Does the Tathāgata have the physical eye? Yes, World-Honored One! The Tathāgata has the physical eye.', pinyin: 'Xūpútí! yú yì yún hé? Rúlái yǒu ròuyǎn bù? Rúshì, Shìzūn! Rúlái yǒu ròuyǎn.' },
+  { chapter: 29, num: 2, chinese: '须菩提！若善男子、善女人，于无量五百千万亿劫，以身布施。', english: 'Subhūti! If good men and women give their bodies as gifts for innumerable hundreds of thousands of millions of kalpas.', pinyin: 'Xūpútí! ruò shàn nánzǐ, shàn nǚrén, yú wúliàng wǔbǎi qiān wàn yì jié, yǐ shēn bùshī.' },
+  { chapter: 29, num: 3, chinese: '若复有人，闻此经典，信心不逆，其福胜彼。', english: 'If there are people who hear this sūtra and their faith is unwavering, their merit surpasses that.', pinyin: 'Ruò fù yǒurén, wén cǐ jīngdiǎn, xìnxīn bù nì, qí fú shèng bǐ.' },
+
+  { chapter: 30, num: 1, chinese: '须菩提！若有善男子、善女人，以恒河沙等身命布施。', english: 'Subhūti! If there are good men and women who give as many bodies and lives as there are sands in the Ganges.', pinyin: 'Xūpútí! ruò yǒu shàn nánzǐ, shàn nǚrén, yǐ Hénghéshā děng shēnmìng bùshī.' },
+  { chapter: 30, num: 2, chinese: '若复有人，于此经中，乃至受持四句偈等，为他人说，其福甚多。', english: 'If there are people who, in this sūtra, even if they receive and uphold only four lines of verse and explain them to others, their merit is very great.', pinyin: 'Ruò fù yǒurén, yú cǐ jīng zhōng, nǎizhì shòuchí sì jù jì děng, wèi tārén shuō, qí fú shěn duō.' },
+
+  { chapter: 31, num: 1, chinese: '须菩提！发阿耨多罗三藐三菩提心者，于一切法，应如是知，如是见，如是信解，不生法相。', english: 'Subhūti! Those who give rise to the mind for unexcelled perfect enlightenment should thus know, thus perceive, thus believe and understand all dharmas, without giving rise to appearances of dharma.', pinyin: 'Xūpútí! fā Ānòuduōluó Sānmiǎo Sānpútíxīn zhě, yú yīqiè fǎ, yīng rúshì zhī, rúshì jiàn, rúshì xìnjiě, bù shēng fǎxiāng.' },
+  { chapter: 31, num: 2, chinese: '须菩提！所言法相者，如来说即非法相，是名法相。', english: 'Subhūti! The so-called appearance of dharma—what the Tathāgata calls it is not truly an appearance; therefore it is called the appearance of dharma.', pinyin: 'Xūpútí! suǒyán fǎxiāng zhě, Rúlái shuō jí fēi fǎxiāng, shì míng fǎxiāng.' },
 ];
 
 // 关键概念
@@ -243,6 +310,8 @@ async function seedDiamondSutraData() {
           chinese: verse.chinese,
           english: verse.english,
           sanskrit: verse.sanskrit,
+          pinyin: verse.pinyin || null,
+          tibetan: verse.tibetan || null,
           aiKeyword: ['经典名句', '核心偈颂'],
         },
         create: {
@@ -251,7 +320,8 @@ async function seedDiamondSutraData() {
           chinese: verse.chinese,
           english: verse.english,
           sanskrit: verse.sanskrit,
-          tibetan: null,
+          pinyin: verse.pinyin || null,
+          tibetan: verse.tibetan || null,
           aiKeyword: ['经典名句', '核心偈颂'],
           aiAnalysis: undefined,
           embedding: undefined,

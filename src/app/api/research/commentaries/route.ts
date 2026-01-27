@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-export const fetchCache = 'no-store';
+export const fetchCache = 'force-no-store';
 
 // GET - 获取注释数据
 export async function GET(request: Request) {

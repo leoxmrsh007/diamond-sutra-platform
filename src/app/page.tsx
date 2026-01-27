@@ -1,13 +1,15 @@
 /**
- * 首页 - 金刚经研究与教学平台
+ * 首页 - 佛学经典研究与教学平台
+ * 支持多经书切换
  */
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Header } from '@/components/layout/header'
+import { Footer } from '@/components/layout/footer'
 import {
   BookOpen,
   MessageSquare,
@@ -17,7 +19,7 @@ import {
   Languages,
   Brain,
   Target,
-} from 'lucide-react';
+} from 'lucide-react'
 
 export default function HomePage() {
   return (
@@ -31,27 +33,122 @@ export default function HomePage() {
           由 Google Gemini AI 驱动
         </Badge>
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-          金刚般若波罗蜜经
-          <span className="block text-amber-600 mt-2">AI 研究与教学平台</span>
+          佛学经典研究平台
+          <span className="block text-amber-600 mt-2">智慧传承 · AI 辅助</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          融合古老智慧与现代科技，探索《金刚经》的深层奥义。
-          支持 AI 智能问答、多版本对照、语音朗读等功能。
+          融合古老智慧与现代科技，深入探索佛教经典。
+          支持 AI 智能问答、多版本对照、系统学习等功能。
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" asChild>
-            <Link href="/study">
-              <BookOpen className="w-4 h-4 mr-2" />
-              开始学习
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="/ai">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              AI 讲师问答
-            </Link>
-          </Button>
-        </div>
+      </section>
+
+      {/* 经书选择 */}
+      <section className="container px-4 py-8 mx-auto">
+        <Tabs defaultValue="diamond" className="w-full">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+            <TabsTrigger value="diamond" asChild>
+              <Link href="/">金刚经</Link>
+            </TabsTrigger>
+            <TabsTrigger value="platform" asChild>
+              <Link href="/platform-sutra">六祖坛经</Link>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="diamond" className="mt-8">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <Badge className="mb-3">般若中观</Badge>
+                <h2 className="text-3xl font-bold mb-3">金刚般若波罗蜜经</h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  《金刚经》揭示般若智慧的中道思想，勉励修行者度众生而不住于相。
+                  全经共三十二分，阐述"凡所有相，皆是虚妄"的核心奥义。
+                </p>
+                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                  <p>• 32 分完整内容</p>
+                  <p>• 梵汉藏多版本对照</p>
+                  <p>• 中观般若智慧</p>
+                </div>
+                <div className="mt-6 flex gap-3">
+                  <Button asChild>
+                    <Link href="/study">
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      开始学习
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/ai">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      AI 问答
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-amber-100 to-yellow-100 rounded-2xl p-8 border-2 border-amber-200">
+                <h3 className="font-bold text-lg mb-4 text-amber-900">核心偈颂</h3>
+                <div className="bg-white rounded-lg p-4 mb-4 border border-amber-200">
+                  <p className="text-amber-900">
+                    "一切有为法，如梦幻泡影，<br />
+                    如露亦如电，应作如是观。"
+                  </p>
+                </div>
+                <h3 className="font-bold text-lg mb-4 text-amber-900">核心思想</h3>
+                <ul className="space-y-2 text-sm">
+                  <li>• 应无所住而生其心</li>
+                  <li>• 凡所有相皆是虚妄</li>
+                  <li>• 度无量众生而无我</li>
+                </ul>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="platform" className="mt-8">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <Badge className="mb-3">禅宗经典</Badge>
+                <h2 className="text-3xl font-bold mb-3">六祖大师法宝坛经</h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  《坛经》是中国禅宗六祖惠能的言行录，是中国人撰写的唯一被称为"经"的佛教典籍。
+                  全经共十品，阐述"直指人心，见性成佛"的顿悟法门。
+                </p>
+                <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                  <p>• 10 品完整内容</p>
+                  <p>• 禅宗公案机锋</p>
+                  <p>• 顿悟法门要义</p>
+                </div>
+                <div className="mt-6 flex gap-3">
+                  <Button asChild>
+                    <Link href="/platform-sutra">
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      开始学习
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/ai?scripture=platform">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      AI 问答
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl p-8 border-2 border-green-200">
+                <h3 className="font-bold text-lg mb-4 text-green-900">核心偈颂</h3>
+                <div className="bg-white rounded-lg p-4 mb-4 border border-green-200">
+                  <p className="text-green-900">
+                    "菩提本无树，明镜亦非台。<br />
+                    本来无一物，何处惹尘埃。"
+                  </p>
+                </div>
+                <h3 className="font-bold text-lg mb-4 text-green-900">核心思想</h3>
+                <ul className="space-y-2 text-sm">
+                  <li>• 菩提自性本来清净</li>
+                  <li>• 无念为宗无相为体</li>
+                  <li>• 定慧一体不二</li>
+                  <li>• 直指人心顿悟成佛</li>
+                </ul>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </section>
 
       {/* Features */}
@@ -77,7 +174,7 @@ export default function HomePage() {
               </div>
               <CardTitle>AI 智能解析</CardTitle>
               <CardDescription>
-                Gemini AI 驱动的偈颂解析，深入浅出讲解经义
+                Gemini AI 驱动的经文解析，深入浅出讲解经义
               </CardDescription>
             </CardHeader>
           </Card>
@@ -108,71 +205,7 @@ export default function HomePage() {
         </div>
       </section>
 
-       {/* Version Comparison Preview */}
-       <section className="container px-4 py-16 mx-auto">
-         <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-3xl p-8 md:p-12 border-2 border-amber-200">
-           <div className="flex items-center gap-3 mb-6">
-             <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center text-white">
-               <Languages className="w-6 h-6" />
-             </div>
-             <div>
-               <h2 className="text-3xl font-bold text-amber-900">第1-3章版本对照</h2>
-               <p className="text-amber-700 mt-1">📖 鸠摩罗什 · 玄奘 · 义净 · 梵文 · 藏文</p>
-             </div>
-           </div>
-
-           <div className="grid md:grid-cols-3 gap-4 mb-8">
-             <Link href="/study" className="p-6 rounded-lg border-2 border-amber-300 bg-white hover:border-amber-400 hover:shadow-lg transition-all text-left">
-               <div className="font-bold text-xl mb-2 text-amber-900">第1分</div>
-               <div className="text-sm font-medium text-gray-700 mb-2">法会因由分</div>
-               <div className="text-xs text-gray-500">2个偈颂 · 5种版本</div>
-             </Link>
-             <Link href="/study" className="p-6 rounded-lg border-2 border-amber-300 bg-white hover:border-amber-400 hover:shadow-lg transition-all text-left">
-               <div className="font-bold text-xl mb-2 text-amber-900">第2分</div>
-               <div className="text-sm font-medium text-gray-700 mb-2">善现启请分</div>
-               <div className="text-xs text-gray-500">3个偈颂 · 5种版本</div>
-             </Link>
-             <Link href="/study" className="p-6 rounded-lg border-2 border-amber-300 bg-white hover:border-amber-400 hover:shadow-lg transition-all text-left">
-               <div className="font-bold text-xl mb-2 text-amber-900">第3分</div>
-               <div className="text-sm font-medium text-gray-700 mb-2">大乘正宗分</div>
-               <div className="text-xs text-gray-500">2个偈颂 · 5种版本</div>
-             </Link>
-           </div>
-
-           <div className="bg-white rounded-lg p-6 border border-amber-300">
-             <h3 className="text-xl font-bold mb-4 text-amber-900">版本对照特色</h3>
-             <div className="grid md:grid-cols-2 gap-4">
-               <div className="space-y-2">
-                 <h4 className="font-semibold text-red-900">📖 鸠摩罗什 (402)</h4>
-                 <p className="text-sm text-gray-600">流传最广，语言优美，意境深远</p>
-               </div>
-               <div className="space-y-2">
-                 <h4 className="font-semibold text-blue-900">📘 玄奘 (660)</h4>
-                 <p className="text-sm text-gray-600">直译精确，忠实原文，适合学术研究</p>
-               </div>
-               <div className="space-y-2">
-                 <h4 className="font-semibold text-green-900">📗 义净 (703)</h4>
-                 <p className="text-sm text-gray-600">文质兼备，补充罗什文献价值</p>
-               </div>
-               <div className="space-y-2">
-                 <h4 className="font-semibold text-purple-900">📜 梵文原典</h4>
-                 <p className="text-sm text-gray-600">Vajracchedikā Prajñāpāramitā Sūtra</p>
-               </div>
-               <div className="space-y-2">
-                 <h4 className="font-semibold text-orange-900">🕉 藏文译本</h4>
-                 <p className="text-sm text-gray-600">藏文大藏经甘珠尔部，注疏丰富</p>
-               </div>
-               <div className="md:col-span-2 text-center">
-                 <Link href="/study" className="inline-flex items-center px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-semibold">
-                   点击进入学习页面 →
-                 </Link>
-               </div>
-             </div>
-           </div>
-         </div>
-       </section>
-
-       {/* AI Features */}
+      {/* AI Features */}
       <section className="container px-4 py-16 mx-auto">
         <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-3xl p-8 md:p-12">
           <div className="grid md:grid-cols-2 gap-8 items-center">
@@ -193,7 +226,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-start">
                   <Sparkles className="w-5 h-5 text-amber-600 mr-3 mt-0.5" />
-                  <span>偈颂深度解析与关键词提取</span>
+                  <span>经文深度解析与关键词提取</span>
                 </li>
                 <li className="flex items-start">
                   <MessageSquare className="w-5 h-5 text-amber-600 mr-3 mt-0.5" />
@@ -208,13 +241,13 @@ export default function HomePage() {
                     你
                   </div>
                   <div className="bg-gray-100 rounded-lg p-3 text-sm">
-                    什么是“无住生心”？
+                    什么是"无住生心"？
                   </div>
                 </div>
                 <div className="flex items-start space-x-3 justify-end">
                   <div className="bg-amber-50 rounded-lg p-3 text-sm max-w-xs">
                     <p className="text-amber-900">
-                      “无住生心”是《金刚经》的核心思想之一。意指心不执着于任何事物而生起清净心...
+                      "无住生心"是《金刚经》的核心思想之一。意指心不执着于任何事物而生起清净心...
                     </p>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-xs">
@@ -245,5 +278,5 @@ export default function HomePage() {
 
       <Footer />
     </div>
-  );
+  )
 }

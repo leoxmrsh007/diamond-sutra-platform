@@ -32,10 +32,19 @@ import {
   LogOut,
   Flame,
   Bell,
+  ChevronDown,
 } from 'lucide-react';
 
 const navItems = [
-  { href: '/study', label: '经文学习', icon: BookOpen },
+  {
+    href: '/study',
+    label: '经文学习',
+    icon: BookOpen,
+    children: [
+      { href: '/study', label: '金刚经' },
+      { href: '/platform-sutra', label: '六祖坛经' },
+    ],
+  },
   { href: '/courses', label: '系统课程', icon: GraduationCap },
   { href: '/ai', label: 'AI 讲师', icon: MessageSquare },
   { href: '/community', label: '共修社区', icon: Users },
@@ -57,7 +66,7 @@ export function Header() {
             金
           </div>
           <span className="font-semibold text-lg hidden sm:inline-block">
-            金刚经研究平台
+            佛学经典研究平台
           </span>
         </Link>
 
@@ -66,6 +75,37 @@ export function Header() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname?.startsWith(item.href);
+
+            if (item.children) {
+              return (
+                <DropdownMenu key={item.href}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                        isActive
+                          ? 'bg-amber-100 text-amber-900'
+                          : 'text-foreground/60 hover:text-foreground hover:bg-muted'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {item.label}
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {item.children.map((child) => (
+                      <DropdownMenuItem key={child.href} asChild>
+                        <Link href={child.href} className="cursor-pointer">
+                          {child.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            }
+
             return (
               <Link
                 key={item.href}

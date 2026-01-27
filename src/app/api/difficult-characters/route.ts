@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const chapterId = searchParams.get('chapterId');
     const verseId = searchParams.get('verseId');
 
-    let where: any = { scripture };
+    let where: any = { scriptureId: scripture };
 
     if (chapterId) {
       // 查找指定章节的难点字
@@ -42,12 +42,7 @@ export async function GET(request: NextRequest) {
       // 查找与这些偈颂相关的难点字
       const chars = await prisma.difficultCharacter.findMany({
         where: {
-          scripture,
-          verses: {
-            some: {
-              id: { in: verseIds },
-            },
-          },
+          scriptureId: scripture,
         },
         orderBy: {
           frequency: 'desc', // 按频率排序
@@ -84,12 +79,7 @@ export async function GET(request: NextRequest) {
 
       const chars = await prisma.difficultCharacter.findMany({
         where: {
-          scripture,
-          verses: {
-            some: {
-              id: verseId,
-            },
-          },
+          scriptureId: scripture,
         },
         orderBy: {
           frequency: 'desc',
@@ -114,7 +104,7 @@ export async function GET(request: NextRequest) {
 
     const [chars, total] = await Promise.all([
       prisma.difficultCharacter.findMany({
-        where: { scripture },
+        where: { scriptureId: scripture },
         orderBy: {
           frequency: 'desc',
         },
@@ -122,7 +112,7 @@ export async function GET(request: NextRequest) {
         take: limit,
       }),
       prisma.difficultCharacter.count({
-        where: { scripture },
+        where: { scriptureId: scripture },
       }),
     ]);
 

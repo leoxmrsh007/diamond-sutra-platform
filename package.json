@@ -1,7 +1,8 @@
 {
-  "name": "diamond-sutra-platform",
-  "version": "0.1.0",
+  "name": "buddhist-classics-platform",
+  "version": "0.2.0",
   "private": true,
+  "description": "佛学经典研究平台 - 多经书 AI 辅助学习系统",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

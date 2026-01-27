@@ -7,8 +7,7 @@ import type { Session } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
-export const dynamic = 'force-static';
-export const fetchCache = 'force-cache';
+export const dynamic = 'force-dynamic';
 
 const getSession = async (): Promise<Session | null> => (await auth()) as Session | null;
 

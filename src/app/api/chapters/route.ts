@@ -4,29 +4,32 @@
  */
 
 import { NextResponse } from 'next/server';
-
-export const dynamic = 'force-static';
-export const fetchCache = 'force-cache';
 import { prisma } from '@/lib/prisma';
 
-// GET - 获取所有章节
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
+// GET - 获取所有章节（只返回元数据，不包含偈颂）
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const sutraSlug = searchParams.get('sutra') || 'diamond-sutra';
 
+    // 只选择需要的字段，不返回 summary, imagePrompt 等大字段
     const chapters = await prisma.chapter.findMany({
       where: {
         sutra: {
           slug: sutraSlug,
         },
       },
-      orderBy: { chapterNum: 'asc' },
-      include: {
-        verses: {
-          orderBy: { verseNum: 'asc' },
-        },
+      select: {
+        id: true,
+        chapterNum: true,
+        title: true,
+        summary: true,
+        imageUrl: true,
       },
+      orderBy: { chapterNum: 'asc' },
     });
 
     return NextResponse.json(chapters);

@@ -135,7 +135,7 @@ export default function ResearchPage() {
         setIsLoading(true);
         setError(null);
 
-        // 先只加载基础统计数据
+        // 只加载基础统计数据，不加载详细数据
         const statsRes = await fetch('/api/research-simple');
 
         if (!statsRes.ok) {
@@ -145,25 +145,9 @@ export default function ResearchPage() {
         const stats = await statsRes.json();
         setResearchStats(stats);
 
-        // 延迟加载详细数据（暂时禁用，因为可能导致404错误）
-        setIsLoadingDetails(true);
-        const [versionsRes, commentariesRes] = await Promise.all([
-          fetch('/api/research/versions?limit=5'),
-          fetch('/api/research/commentaries?limit=5'),
-        ]);
-
-        if (versionsRes.ok && commentariesRes.ok) {
-          const [versions, commentaries] = await Promise.all([
-            versionsRes.json(),
-            commentariesRes.json(),
-          ]);
-          setVersionData(versions.data || []);
-          setCommentaryData(commentaries.data || []);
-        } else {
-          console.warn('版本对照或注释API失败，跳过详细数据加载');
-          setVersionData([]);
-          setCommentaryData([]);
-        }
+        // 版本对照和注释数据按需加载（点击时再加载）
+        setVersionData([]);
+        setCommentaryData([]);
       } catch (err) {
         console.error('获取研究数据错误:', err);
         setError(err instanceof Error ? err.message : '未知错误');
@@ -176,13 +160,40 @@ export default function ResearchPage() {
     fetchResearchData();
   }, []);
 
+  // 按需加载详细版本对照数据
+  const loadVersionData = async (chapter: number, currentData: typeof versionData) => {
+    if (currentData.some(v => v.chapterNum === chapter)) return; // 已加载
+
+    setIsLoadingDetails(true);
+    try {
+      const versionsRes = await fetch(`/api/research/versions?chapter=${chapter}&limit=10`);
+      if (versionsRes.ok) {
+        const versions = await versionsRes.json();
+        setVersionData(prev => [...prev, ...(versions.data || [])]);
+      }
+    } catch (err) {
+      console.error('加载版本数据失败:', err);
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
+  // 当选择章节时加载该章节的版本数据
+  useEffect(() => {
+    if (selectedChapter && researchStats?.tools.versionComparison) {
+      loadVersionData(selectedChapter, versionData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChapter]);
+
   const researchTools = [
     {
       title: '版本对照',
       description: `梵文、藏文、汉译多版本逐句对照（${researchStats?.summary.versions || 0}个版本）`,
       icon: Languages,
       color: 'bg-blue-100 text-blue-600',
-      href: '/study?tab=comparison',
+      href: '#',
+      action: 'version-comparison' as const,
       enabled: researchStats?.tools.versionComparison || false,
     },
     {
@@ -228,7 +239,7 @@ export default function ResearchPage() {
   ];
 
   // 基于API数据动态生成版本信息
-  const versions = researchStats?.versions.available.map((version, index) => {
+  const versions = (researchStats?.versions.available || []).map((version, index) => {
     const colors = [
       'border-red-300 bg-red-50',
       'border-blue-300 bg-blue-50',
@@ -266,8 +277,16 @@ export default function ResearchPage() {
   }) || [];
 
   // 基于API数据动态生成注释信息
-  const commentaries = researchStats?.commentaries.availableAuthors.slice(0, 4).map((item) => {
-    const authorInfo: Record<string, { work: string; dynasty: string; summary: string }> = {
+  const commentaries = (researchStats?.commentaries.availableAuthors || [])
+    .slice(0, 4)
+    .map((item) => {
+      // 处理字符串或对象格式
+      const authorName = typeof item === 'string' ? item : item?.author;
+      const sourceValue = typeof item === 'string' ? undefined : item?.source;
+
+      if (!authorName) return null;
+
+      const authorInfo: Record<string, { work: string; dynasty: string; summary: string }> = {
       '六祖慧能': {
         work: '《金刚经口诀》',
         dynasty: '唐',
@@ -290,19 +309,19 @@ export default function ResearchPage() {
       },
     };
 
-    const info = authorInfo[item.author] || {
-      work: item.source || '《金刚经注疏》',
+    const info = authorInfo[authorName] || {
+      work: sourceValue || '《金刚经注疏》',
       dynasty: '历代',
       summary: '对《金刚经》的深刻阐释与解读',
     };
 
     return {
-      author: item.author,
+      author: authorName,
       work: info.work,
       dynasty: info.dynasty,
       summary: info.summary,
     };
-  }) || [];
+  }).filter((c): c is NonNullable<typeof c> => c !== null);
 
   // 加载状态
   if (isLoading) {
@@ -453,10 +472,11 @@ export default function ResearchPage() {
                         </ul>
                       </CardContent>
                       <CardFooter>
-                        <Button variant="outline" size="sm" className="w-full" asChild>
-                          <Link href={`/study?version=${version.name.split(' ')[0]}`}>
-                            查看对照
-                          </Link>
+                        <Button variant="outline" size="sm" className="w-full" onClick={() => {
+                          setSelectedChapter(parseInt(version.versionType === 'kumarajiva' ? '1' : '1'));
+                          setShowVersionComparison(true);
+                        }}>
+                          查看对照
                         </Button>
                       </CardFooter>
                     </Card>
@@ -510,10 +530,8 @@ export default function ResearchPage() {
                    </div>
                    {versionData.length > 3 && (
                      <div className="mt-4 text-center">
-                       <Button variant="outline" asChild>
-                         <Link href="/study?tab=comparison">
-                           查看完整版本对照
-                         </Link>
+                       <Button variant="outline" onClick={() => setShowVersionComparison(true)}>
+                         在此页面查看完整版本对照
                        </Button>
                      </div>
                    )}
@@ -534,7 +552,7 @@ export default function ResearchPage() {
                         <div className="flex gap-2 flex-wrap">
                           {versions.slice(0, 3).map((version, index) => (
                             <Badge key={index} variant="outline">
-                              {version.name.split(' ')[0]}
+                              {version.name?.split(' ')[0] || version.versionType}
                             </Badge>
                           ))}
                         </div>
@@ -558,7 +576,7 @@ export default function ResearchPage() {
                        .sort((a, b) => parseInt(a.year || '0') - parseInt(b.year || '0'))
                        .map((version, index, arr) => (
                          <div key={index} className="flex items-center justify-between text-sm">
-                           <span>{version.translator || version.name.split(' ')[0]} ({version.year}年)</span>
+                           <span>{version.translator || version.name?.split(' ')[0] || version.versionType} ({version.year}年)</span>
                            {index < arr.length - 1 && (
                              <span className="text-muted-foreground">→</span>
                            )}
@@ -704,7 +722,7 @@ export default function ResearchPage() {
                             </CardTitle>
                             <CardDescription>{commentary.dynasty}代</CardDescription>
                           </div>
-                          <Badge variant="secondary">{commentary.author.split(' ')[0]}宗</Badge>
+                          <Badge variant="secondary">{commentary.author?.split(' ')[0] || '禅'}宗</Badge>
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -777,10 +795,8 @@ export default function ResearchPage() {
                    </div>
                    {commentaryData.length > 3 && (
                      <div className="mt-4 text-center">
-                       <Button variant="outline" asChild>
-                         <Link href="/study?tab=commentaries">
-                           查看完整注释
-                         </Link>
+                       <Button variant="outline" onClick={() => setActiveTab('commentaries')}>
+                         查看更多注释
                        </Button>
                      </div>
                    )}
@@ -816,16 +832,19 @@ export default function ResearchPage() {
                          )}
                        </CardHeader>
                        <CardFooter>
-                         <Button 
-                           variant="outline" 
-                           size="sm" 
-                           className="w-full" 
-                           asChild
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           className="w-full"
                            disabled={!tool.enabled}
+                           onClick={() => {
+                             if (tool.action === 'version-comparison') {
+                               setActiveTab('versions');
+                               setShowVersionComparison(true);
+                             }
+                           }}
                          >
-                           <Link href={tool.enabled ? tool.href : '#'}>
-                             {tool.enabled ? '使用工具' : '即将推出'}
-                           </Link>
+                           {tool.enabled ? '使用工具' : '即将推出'}
                          </Button>
                        </CardFooter>
                      </Card>
@@ -900,8 +919,11 @@ export default function ResearchPage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   比较不同译本的差异，理解翻译选择
                 </p>
-                <Button className="w-full" asChild>
-                  <Link href="/study?tab=comparison">开始对照</Link>
+                <Button className="w-full" onClick={() => {
+                  setActiveTab('versions');
+                  setShowVersionComparison(true);
+                }}>
+                  开始对照
                 </Button>
               </CardContent>
             </Card>

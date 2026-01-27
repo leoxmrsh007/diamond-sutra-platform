@@ -1,5 +1,12 @@
+/**
+ * 全局搜索 API
+ * 支持搜索经文、章节、笔记、帖子、课程、概念
+ * 使用 Redis 缓存提升性能
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { cacheGetOrSet, cacheSearch } from '@/lib/redis'
 
 type ResultType = 'verse' | 'chapter' | 'note' | 'post' | 'course' | 'concept'
 
@@ -11,6 +18,8 @@ interface SearchResult {
   category: string
   href: string
 }
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -28,78 +37,34 @@ export async function GET(req: NextRequest) {
     })
   }
 
+  // 尝试从缓存获取搜索结果
+  const cacheKey = `search:${q}:${limit}`
+  const cached = await cacheGetOrSet<SearchResult[]>(
+    cacheKey,
+    async () => performSearch(q, limit),
+    300 // 5分钟缓存
+  )
+
+  // 同时异步更新缓存
+  cacheSearch(q, cached).catch(() => {})
+
+  return NextResponse.json({ results: cached })
+}
+
+/**
+ * 执行搜索操作
+ */
+async function performSearch(q: string, limit: number): Promise<SearchResult[]> {
   const like = q
 
+  // 并行执行所有搜索
   const [verses, chapters, notes, posts, courses, concepts] = await Promise.all([
-    prisma.verse.findMany({
-      where: {
-        OR: [
-          { chinese: { contains: like, mode: 'insensitive' } },
-          { sanskrit: { contains: like, mode: 'insensitive' } },
-          { tibetan: { contains: like, mode: 'insensitive' } },
-          { english: { contains: like, mode: 'insensitive' } },
-        ],
-      },
-      include: { chapter: true },
-      take: limit,
-    }),
-    prisma.chapter.findMany({
-      where: {
-        OR: [
-          { title: { contains: like, mode: 'insensitive' } },
-          { summary: { contains: like, mode: 'insensitive' } },
-        ],
-      },
-      include: { sutra: true },
-      take: Math.ceil(limit / 2),
-    }),
-    prisma.note.findMany({
-      where: {
-        OR: [
-          { title: { contains: like, mode: 'insensitive' } },
-          { content: { contains: like, mode: 'insensitive' } },
-        ],
-      },
-      include: {
-        verse: {
-          include: {
-            chapter: true,
-          },
-        },
-      },
-      take: Math.ceil(limit / 2),
-    }),
-    prisma.post.findMany({
-      where: {
-        OR: [
-          { title: { contains: like, mode: 'insensitive' } },
-          { content: { contains: like, mode: 'insensitive' } },
-        ],
-      },
-      take: Math.ceil(limit / 2),
-      orderBy: { updatedAt: 'desc' },
-    }),
-    prisma.course.findMany({
-      where: {
-        OR: [
-          { title: { contains: like, mode: 'insensitive' } },
-          { description: { contains: like, mode: 'insensitive' } },
-        ],
-        isPublished: true,
-      },
-      take: Math.ceil(limit / 2),
-      include: { lessons: true },
-    }),
-    prisma.concept.findMany({
-      where: {
-        OR: [
-          { name: { contains: like, mode: 'insensitive' } },
-          { nameSanskrit: { contains: like, mode: 'insensitive' } },
-          { description: { contains: like, mode: 'insensitive' } },
-        ],
-      },
-      take: Math.ceil(limit / 2),
-    }),
+    searchVerses(like, limit),
+    searchChapters(like, Math.ceil(limit / 2)),
+    searchNotes(like, Math.ceil(limit / 2)),
+    searchPosts(like, Math.ceil(limit / 2)),
+    searchCourses(like, Math.ceil(limit / 2)),
+    searchConcepts(like, Math.ceil(limit / 2)),
   ])
 
   const results: SearchResult[] = [
@@ -153,6 +118,115 @@ export async function GET(req: NextRequest) {
     })),
   ]
 
-  return NextResponse.json({ results })
+  return results
 }
 
+/**
+ * 搜索偈颂
+ */
+async function searchVerses(q: string, limit: number) {
+  return prisma.verse.findMany({
+    where: {
+      OR: [
+        { chinese: { contains: q, mode: 'insensitive' } },
+        { sanskrit: { contains: q, mode: 'insensitive' } },
+        { tibetan: { contains: q, mode: 'insensitive' } },
+        { english: { contains: q, mode: 'insensitive' } },
+        { pinyin: { contains: q, mode: 'insensitive' } },
+        { modern: { contains: q, mode: 'insensitive' } },
+      ],
+    },
+    include: { chapter: true },
+    take: limit,
+  })
+}
+
+/**
+ * 搜索章节
+ */
+async function searchChapters(q: string, limit: number) {
+  return prisma.chapter.findMany({
+    where: {
+      OR: [
+        { title: { contains: q, mode: 'insensitive' } },
+        { summary: { contains: q, mode: 'insensitive' } },
+        { titleSanskrit: { contains: q, mode: 'insensitive' } },
+      ],
+    },
+    include: { sutra: true },
+    take: limit,
+  })
+}
+
+/**
+ * 搜索笔记
+ */
+async function searchNotes(q: string, limit: number) {
+  return prisma.note.findMany({
+    where: {
+      OR: [
+        { title: { contains: q, mode: 'insensitive' } },
+        { content: { contains: q, mode: 'insensitive' } },
+      ],
+      isPublic: true, // 只搜索公开笔记
+    },
+    include: {
+      verse: {
+        include: {
+          chapter: true,
+        },
+      },
+    },
+    take: limit,
+  })
+}
+
+/**
+ * 搜索帖子
+ */
+async function searchPosts(q: string, limit: number) {
+  return prisma.post.findMany({
+    where: {
+      OR: [
+        { title: { contains: q, mode: 'insensitive' } },
+        { content: { contains: q, mode: 'insensitive' } },
+      ],
+    },
+    take: limit,
+    orderBy: { updatedAt: 'desc' },
+  })
+}
+
+/**
+ * 搜索课程
+ */
+async function searchCourses(q: string, limit: number) {
+  return prisma.course.findMany({
+    where: {
+      OR: [
+        { title: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+      ],
+      isPublished: true,
+    },
+    take: limit,
+    include: { lessons: true },
+  })
+}
+
+/**
+ * 搜索概念
+ */
+async function searchConcepts(q: string, limit: number) {
+  return prisma.concept.findMany({
+    where: {
+      OR: [
+        { name: { contains: q, mode: 'insensitive' } },
+        { nameSanskrit: { contains: q, mode: 'insensitive' } },
+        { nameTibetan: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+      ],
+    },
+    take: limit,
+  })
+}

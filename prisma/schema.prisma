@@ -1,43 +1,534 @@
-// 金刚经研究与教学平台数据模型
-// Diamond Sutra Research & Teaching Platform
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://neondb_owner:npg_SuPOb2scv6hZ@ep-delicate-river-ahizjt90-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require"
+  url      = env("DATABASE_URL")
 }
 
-// ==================== 用户系统 ====================
-
 model User {
-  id            String    @id @default(cuid())
+  id            String             @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?            @unique
   emailVerified DateTime?
   image         String?
   password      String?
-  role          UserRole  @default(STUDENT)
-
-  // 学习数据
-  studyProgress StudyProgress[]
-  notes         Note[]
-  questions     Question[]
+  role          UserRole           @default(STUDENT)
+  level         Int                @default(1)
+  experience    Int                @default(0)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
   answers       Answer[]
-  enrollments   CourseEnrollment[]
+  achievements  UserAchievement[]
   bookmarks     Bookmark[]
   checkIns      CheckIn[]
-
-  // 社区数据
-  posts         Post[]
   comments      Comment[]
+  enrollments   CourseEnrollment[]
+  notes         Note[]
+  posts         Post[]
+  postLikes     PostLike[]
+  questions     Question[]
+  studyProgress StudyProgress[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
+  @@index([role])
+  @@index([level])
+  @@index([experience])
+  @@index([createdAt])
   @@map("users")
+}
+
+model Achievement {
+  id          String             @id @default(cuid())
+  key         String             @unique
+  title       String
+  description String
+  icon        String?
+  category    AchievementCategory
+  level       Int                @default(1)
+  experience  Int                @default(0)
+  condition   Json               // 存储解锁条件
+  createdAt   DateTime           @default(now())
+  users       UserAchievement[]
+
+  @@index([category])
+  @@index([level])
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@index([unlockedAt])
+  @@map("user_achievements")
+}
+
+model Sutra {
+  id            String            @id @default(cuid())
+  title         String
+  titleSanskrit String?
+  titleTibetan  String?
+  slug          String            @unique
+  description   String?
+  order         Int               @default(0)
+  metadata      Json?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  tradition     Tradition         @default(ZEN)
+  chapters      Chapter[]
+  versions      VersionMetadata[]
+
+  @@index([tradition])
+  @@index([order])
+  @@map("sutras")
+}
+
+model Chapter {
+  id            String     @id @default(cuid())
+  sutraId       String
+  chapterNum    Int
+  title         String
+  titleSanskrit String?
+  summary       String?
+  order         Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  imageUrl      String?
+  imagePrompt   String?
+  sutra         Sutra      @relation(fields: [sutraId], references: [id], onDelete: Cascade)
+  verses        Verse[]
+  sections      Section[]
+
+  @@unique([sutraId, chapterNum])
+  @@index([sutraId])
+  @@index([sutraId, order])
+  @@index([title])
+  @@map("chapters")
+}
+
+model Verse {
+  id            String          @id @default(cuid())
+  chapterId     String
+  verseNum      Int
+  sanskrit      String?
+  chinese       String
+  english       String?
+  aiAnalysis    Json?
+  aiKeyword     Json
+  embedding     Json?
+  order         Int             @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  modern        String?
+  original      String?
+  pinyin        String?
+  tibetan       String?
+  commentaries  Commentary[]
+  notes         Note[]
+  studyProgress StudyProgress[]
+  chapter       Chapter         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  versions      Version[]
+
+  @@unique([chapterId, verseNum])
+  @@index([chapterId])
+  @@index([chapterId, order])
+  @@index([chinese(255)])
+  @@index([sanskrit(255)])
+  @@index([pinyin(255)])
+  @@map("verses")
+}
+
+// Section - 用于六祖坛经等段落式经典
+model Section {
+  id            String          @id @default(cuid())
+  chapterId     String
+  sectionNum    Int
+  title         String?
+  content       String          // 段落内容
+  heading       String?         // 小标题
+  order         Int             @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  modern        String?         // 白话翻译
+  notes         String?         // 注释
+  chapter       Chapter         @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([chapterId, sectionNum])
+  @@index([chapterId])
+  @@index([chapterId, order])
+  @@index([content(255)])
+  @@map("sections")
+}
+
+model VersionMetadata {
+  id          String    @id @default(cuid())
+  scriptureId String
+  versionType String
+  versionName String
+  language    String
+  author      String?
+  era         String?
+  source      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  scripture   Sutra     @relation(fields: [scriptureId], references: [id])
+  versions    Version[]
+
+  @@unique([scriptureId, versionType])
+  @@index([language])
+  @@map("version_metadata")
+}
+
+model Version {
+  id         String          @id @default(cuid())
+  metadataId String
+  verseId    String
+  content    String
+  notes      String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  metadata   VersionMetadata @relation(fields: [metadataId], references: [id])
+  verse      Verse           @relation(fields: [verseId], references: [id])
+
+  @@unique([metadataId, verseId])
+  @@index([verseId])
+  @@map("versions")
+}
+
+model DifficultCharacter {
+  id          String   @id @default(cuid())
+  scriptureId String
+  character   String
+  pinyin      String
+  meaning     String
+  context     String?
+  frequency   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([scriptureId, character])
+  @@index([scriptureId])
+  @@index([frequency])
+  @@map("difficult_characters")
+}
+
+model Idiom {
+  id          String        @id @default(cuid())
+  scriptureId String
+  word        String
+  pinyin      String?
+  meaning     String
+  chapterNum  Int?
+  verseNum    Int?
+  source      String?
+  category    IdiomCategory
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([scriptureId, word])
+  @@index([scriptureId])
+  @@index([category])
+  @@index([chapterNum, verseNum])
+  @@map("idioms")
+}
+
+model Commentary {
+  id        String   @id @default(cuid())
+  verseId   String
+  author    String
+  source    String?
+  language  String   @default("zh")
+  content   String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  verse     Verse    @relation(fields: [verseId], references: [id], onDelete: Cascade)
+
+  @@index([verseId])
+  @@index([author])
+  @@index([language])
+  @@map("commentaries")
+}
+
+model CheckIn {
+  id              String   @id @default(cuid())
+  userId          String
+  checkInDate     DateTime @default(now())
+  consecutiveDays Int      @default(1)
+  rewardPoints    Int      @default(10)
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, checkInDate])
+  @@index([userId])
+  @@index([checkInDate])
+  @@index([userId, checkInDate])
+  @@map("check_ins")
+}
+
+model StudyProgress {
+  id              String         @id @default(cuid())
+  userId          String
+  verseId         String
+  status          ProgressStatus @default(NOT_STARTED)
+  recitationCount Int            @default(0)
+  lastStudiedAt   DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verse           Verse          @relation(fields: [verseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, verseId])
+  @@index([userId])
+  @@index([verseId])
+  @@index([userId, status])
+  @@index([lastStudiedAt])
+  @@map("study_progress")
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    String
+  verseId   String
+  title     String?
+  content   String
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verse     Verse    @relation(fields: [verseId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([verseId])
+  @@index([isPublic])
+  @@index([createdAt])
+  @@map("notes")
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  verseId   String
+  note      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, verseId])
+  @@index([userId])
+  @@map("bookmarks")
+}
+
+model Question {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String
+  content      String
+  aiAnswer     String?
+  aiConfidence Float?
+  isResolved   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  answers      Answer[]
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isResolved])
+  @@index([createdAt])
+  @@map("questions")
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  questionId String
+  userId     String
+  content    String
+  isAccepted Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@index([userId])
+  @@index([isAccepted])
+  @@map("answers")
+}
+
+model Course {
+  id          String             @id @default(cuid())
+  title       String
+  description String
+  coverImage  String?
+  teacherId   String?
+  level       CourseLevel        @default(BEGINNER)
+  duration    Int?
+  isPublished Boolean            @default(false)
+  order       Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  enrollments CourseEnrollment[]
+  lessons     Lesson[]
+
+  @@index([isPublished])
+  @@index([level])
+  @@index([order])
+  @@index([createdAt])
+  @@map("courses")
+}
+
+model CourseEnrollment {
+  id             String    @id @default(cuid())
+  userId         String
+  courseId       String
+  progress       Float     @default(0)
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lessonProgress Json?     @default("{}")
+  course         Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([progress])
+  @@map("course_enrollments")
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  courseId  String
+  title     String
+  content   String
+  videoUrl  String?
+  audioUrl  String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([courseId, order])
+  @@map("lessons")
+}
+
+model Post {
+  id           String      @id @default(cuid())
+  userId       String
+  title        String
+  content      String
+  tags         Json
+  likeCount    Int         @default(0)
+  commentCount Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  comments     Comment[]
+  likes        PostLike[]
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@index([updatedAt(sort: Desc)])
+  @@index([likeCount(sort: Desc)])
+  @@map("posts")
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([userId])
+  @@index([postId])
+  @@index([createdAt])
+  @@map("post_likes")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String?
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([postId])
+  @@index([createdAt(sort: Desc)])
+  @@map("comments")
+}
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  userId    String?
+  title     String?
+  model     String        @default("gemini-2.0-flash-exp")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+
+  @@index([userId])
+  @@index([updatedAt(sort: Desc)])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String          @id @default(cuid())
+  sessionId String
+  content   String
+  createdAt DateTime        @default(now())
+  role      ChatMessageRole @default(USER)
+  session   ChatSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([sessionId, createdAt(sort: Asc)])
+  @@map("chat_messages")
+}
+
+model Concept {
+  id           String            @id @default(cuid())
+  name         String            @unique
+  nameSanskrit String?
+  nameTibetan  String?
+  description  String?
+  embedding    Json?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  relations    ConceptRelation[] @relation("ConceptFrom")
+  relatedTo    ConceptRelation[] @relation("ConceptTo")
+
+  @@index([name])
+  @@map("concepts")
+}
+
+model ConceptRelation {
+  id           String   @id @default(cuid())
+  fromId       String
+  toId         String
+  relationType String
+  createdAt    DateTime @default(now())
+  from         Concept  @relation("ConceptFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to           Concept  @relation("ConceptTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@unique([fromId, toId, relationType])
+  @@index([fromId])
+  @@index([toId])
+  @@index([relationType])
+  @@map("concept_relations")
 }
 
 enum UserRole {
@@ -46,26 +537,12 @@ enum UserRole {
   STUDENT
 }
 
-// ==================== 经文系统 ====================
-
-model Sutra {
-  id          String    @id @default(cuid())
-  title       String
-  titleSanskrit String?
-  titleTibetan  String?
-  slug        String    @unique
-  tradition   Tradition @default(ZEN)
-  description String?
-  order       Int       @default(0)
-
-  chapters    Chapter[]
-  versions    VersionMetadata[]
-  metadata    Json?     // 额外元数据
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("sutras")
+enum AchievementCategory {
+  STUDY
+  SOCIAL
+  CHECKIN
+  MILESTONE
+  SPECIAL
 }
 
 enum Tradition {
@@ -77,214 +554,11 @@ enum Tradition {
   TENDAI
 }
 
-// ==================== 难点字注释系统 ====================
-
-model DifficultCharacter {
-  id          String   @id @default(cuid())
-  scriptureId  String   // 'diamond-sutra' | 'daodejing' | 'zhuangzi'
-  character   String
-  pinyin      String
-  meaning     String
-  context     String?   // 上下文说明
-  frequency   Int?     // 出现频率
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([scriptureId, character])
-  @@index([scriptureId])
-  @@map("difficult_characters")
-}
-
-// ==================== 成语/术语提取系统 ====================
-
-model Idiom {
-  id          String   @id @default(cuid())
-  scriptureId  String
-  word        String
-  pinyin      String?
-  meaning     String
-  chapterNum  Int?
-  verseNum    Int?
-  source      String?  // 来源文本
-  category    IdiomCategory
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([scriptureId, word])
-  @@index([scriptureId])
-  @@map("idioms")
-}
-
 enum IdiomCategory {
-  IDIOM       // 成语
-  TERM        // 术语
-  ALLUSION    // 典故
-  PRINCIPLE   // 法数
-}
-
-// ==================== 版本元数据 ====================
-
-model VersionMetadata {
-  id          String    @id @default(cuid())
-  scriptureId  String
-  scripture   Sutra    @relation(fields: [scriptureId], references: [id])
-
-  versionType String    // commentator, translator, manuscript
-  versionName String
-  language   String
-  author      String?
-  era         String?
-  source      String?
-
-  versions    Version[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([scriptureId, versionType])
-  @@map("version_metadata")
-}
-
-model Version {
-  id          String    @id @default(cuid())
-  metadataId  String
-  metadata    VersionMetadata @relation(fields: [metadataId], references: [id])
-
-  verseId     String
-  verse       Verse     @relation(fields: [verseId], references: [id])
-
-  content     String
-  notes       String?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([metadataId, verseId])
-  @@map("versions")
-}
-
-model Chapter {
-  id          String    @id @default(cuid())
-  sutraId     String
-  sutra       Sutra     @relation(fields: [sutraId], references: [id], onDelete: Cascade)
-
-  chapterNum  Int
-  title       String
-  titleSanskrit String?
-  summary     String?
-  imageUrl    String?   // 章节配图 URL
-  imagePrompt String?   // AI 图片生成提示词
-
-  verses      Verse[]
-
-  order       Int       @default(0)
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@unique([sutraId, chapterNum])
-  @@index([sutraId])
-  @@map("chapters")
-}
-
-model Verse {
-  id          String    @id @default(cuid())
-  chapterId   String
-  chapter     Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-
-  verseNum    Int
-  chinese     String    // 中文
-  english     String?   // 英文
-  sanskrit    String?   // 梵文
-  original    String?   // 原文（Sanskrit/Chinese/etc.)
-  modern      String?   // 现代翻译
-  pinyin      String?   // 拼音（用于中文经典）
-
-  // AI 生成的内容
-  aiAnalysis  Json?     // AI 解析
-  aiKeyword   Json  // AI 提取的关键词
-  embedding   Json?     // 向量嵌入（用于语义搜索）
-
-  // 关联数据
-  commentaries Commentary[]
-  notes       Note[]
-  studyProgress StudyProgress[]
-  versions    Version[]
-
-  order       Int       @default(0)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([chapterId, verseNum])
-  @@index([chapterId])
-  @@map("verses")
-}
-
-// ==================== 注释系统 ====================
-
-model Commentary {
-  id          String    @id @default(cuid())
-  verseId     String
-  verse       Verse     @relation(fields: [verseId], references: [id], onDelete: Cascade)
-
-  author      String
-  source      String?   // 来源（如：某位法师的讲解）
-  language    String    @default("zh")
-
-  content     String    
-
-  order       Int       @default(0)
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([verseId])
-  @@map("commentaries")
-}
-
-// ==================== 每日签到系统 ====================
-
-model CheckIn {
-  id            String    @id @default(cuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  checkInDate   DateTime  @default(now()) // 签到日期
-  consecutiveDays Int       @default(1)    // 连续签到天数
-  rewardPoints  Int       @default(10)    // 奖励积分
-
-  createdAt     DateTime  @default(now())
-
-  @@unique([userId, checkInDate])
-  @@index([userId])
-  @@index([checkInDate])
-  @@map("check_ins")
-}
-
-// ==================== 学习进度系统 ====================
-
-model StudyProgress {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  verseId     String
-  verse       Verse     @relation(fields: [verseId], references: [id], onDelete: Cascade)
-
-  status      ProgressStatus @default(NOT_STARTED)
-  recitationCount Int   @default(0) // 背诵次数
-  lastStudiedAt DateTime?
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@unique([userId, verseId])
-  @@index([userId])
-  @@index([verseId])
-  @@map("study_progress")
+  IDIOM
+  TERM
+  ALLUSION
+  PRINCIPLE
 }
 
 enum ProgressStatus {
@@ -294,267 +568,14 @@ enum ProgressStatus {
   MASTERED
 }
 
-// ==================== 笔记系统 ====================
-
-model Note {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  verseId     String
-  verse       Verse     @relation(fields: [verseId], references: [id], onDelete: Cascade)
-
-  title       String?
-  content     String    
-  isPublic    Boolean   @default(false)
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([userId])
-  @@index([verseId])
-  @@map("notes")
-}
-
-// ==================== 书签系统 ====================
-
-model Bookmark {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  verseId     String
-  note        String?
-
-  createdAt   DateTime  @default(now())
-
-  @@unique([userId, verseId])
-  @@index([userId])
-  @@map("bookmarks")
-}
-
-// ==================== 问答系统 ====================
-
-model Question {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  title       String
-  content     String    
-
-  // AI 关联
-  aiAnswer    String?    // AI 生成的答案
-  aiConfidence Float?   // AI 置信度
-
-  answers     Answer[]
-
-  isResolved  Boolean   @default(false)
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([userId])
-  @@map("questions")
-}
-
-model Answer {
-  id          String    @id @default(cuid())
-  questionId  String
-  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  content     String    
-  isAccepted  Boolean   @default(false)
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([questionId])
-  @@index([userId])
-  @@map("answers")
-}
-
-// ==================== 课程系统 ====================
-
-model Course {
-  id          String    @id @default(cuid())
-  title       String
-  description String    
-  coverImage  String?
-
-  teacherId   String?
-
-  level       CourseLevel @default(BEGINNER)
-  duration    Int?      // 预计时长（分钟）
-
-  isPublished Boolean   @default(false)
-
-  enrollments CourseEnrollment[]
-  lessons     Lesson[]
-
-  order       Int       @default(0)
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@map("courses")
-}
-
 enum CourseLevel {
   BEGINNER
   INTERMEDIATE
   ADVANCED
 }
 
-model CourseEnrollment {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  courseId    String
-  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  progress    Float     @default(0) // 0-100
-  lessonProgress Json?  @default("{}") // 每个课时的完成状态 { lessonId: { completed, progressPercent, completedAt } }
-  completedAt DateTime?
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@unique([userId, courseId])
-  @@index([userId])
-  @@index([courseId])
-  @@map("course_enrollments")
-}
-
-model Lesson {
-  id          String    @id @default(cuid())
-  courseId    String
-  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  title       String
-  content     String    
-  videoUrl    String?
-  audioUrl    String?
-
-  order       Int       @default(0)
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([courseId])
-  @@map("lessons")
-}
-
-// ==================== 社区系统 ====================
-
-model Post {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  title       String
-  content     String    
-  tags        Json
-  likeCount   Int       @default(0)
-  commentCount Int      @default(0)
-
-  comments    Comment[]
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([userId])
-  @@map("posts")
-}
-
-model Comment {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  postId      String?
-  post        Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
-
-  content     String    
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([userId])
-  @@index([postId])
-  @@map("comments")
-}
-
-// ==================== AI 对话历史 ====================
-
-model ChatSession {
-  id          String    @id @default(cuid())
-  userId      String?
-
-  title       String?
-  model       String    @default("gemini-2.0-flash-exp")
-
-  messages    ChatMessage[]
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@map("chat_sessions")
-}
-
-model ChatMessage {
-  id          String    @id @default(cuid())
-  sessionId   String
-  session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  role        String    // user | assistant | system
-  content     String    
-
-  createdAt   DateTime  @default(now())
-
-  @@index([sessionId])
-  @@map("chat_messages")
-}
-
-// ==================== 知识图谱 ====================
-
-model Concept {
-  id          String    @id @default(cuid())
-  name        String
-  nameSanskrit String?
-  nameTibetan  String?
-  description String?   
-
-  embedding   Json?
-
-  relations   ConceptRelation[] @relation("ConceptFrom")
-  relatedTo   ConceptRelation[] @relation("ConceptTo")
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@unique([name])
-  @@map("concepts")
-}
-
-model ConceptRelation {
-  id          String    @id @default(cuid())
-  fromId      String
-  from        Concept   @relation("ConceptFrom", fields: [fromId], references: [id], onDelete: Cascade)
-
-  toId        String
-  to          Concept   @relation("ConceptTo", fields: [toId], references: [id], onDelete: Cascade)
-
-  relationType String   // related-to | synonym | antonym | causes | etc.
-
-  createdAt   DateTime  @default(now())
-
-  @@unique([fromId, toId, relationType])
-  @@index([fromId])
-  @@index([toId])
-  @@map("concept_relations")
+enum ChatMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
 }
