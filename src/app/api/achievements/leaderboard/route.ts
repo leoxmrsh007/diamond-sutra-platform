@@ -11,7 +11,7 @@ export async function GET() {
       ],
       include: {
         _count: {
-          select: { userAchievements: true },
+          select: { achievements: true },
         },
       },
       select: {
