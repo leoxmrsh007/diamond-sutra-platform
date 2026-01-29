@@ -1,8 +1,3 @@
-/**
- * 六祖坛经学习页面 - 与金刚经一致的交互方式
- * 支持朗读、背景音乐、学习进度、笔记等功能
- */
-
 'use client';
 
 import { useEffect, useState, useRef, useMemo, useCallback, memo } from 'react';
@@ -70,15 +65,6 @@ export interface Chapter {
   sections: Section[];
 }
 
-// Chapter类型用于目录列表
-type ChapterListItem = {
-  id: string;
-  chapterNum: number;
-  title: string;
-  summary: string | null;
-  _count?: { sections: number };
-}
-
 interface StudyProgress {
   id: string;
   sectionId: string;
@@ -97,7 +83,7 @@ interface PlatformSutraClientProps {
   initialChapterNum?: number;
 }
 
-// 优化的章节项组件
+// 完全优化的章节项组件 - 使用memo避免不必要的重渲染
 const ChapterItem = memo(({
   chapter,
   isSelected,
@@ -107,10 +93,15 @@ const ChapterItem = memo(({
   chapter: Chapter;
   isSelected: boolean;
   hasProgress: boolean;
-  onClick: () => void;
-}) => (
+  onClick: (id: string) => void;
+}) => {
+  const handleClick = useCallback(() => {
+    onClick(chapter.id);
+  }, [chapter.id, onClick]);
+
+  return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className={`w-full text-left p-3 rounded-lg transition-colors relative ${
         isSelected
           ? 'bg-green-100 dark:bg-green-900/20 text-green-900 dark:text-green-100 font-medium'
@@ -131,13 +122,13 @@ const ChapterItem = memo(({
         )}
       </div>
     </button>
-));
+  );
+});
 ChapterItem.displayName = 'ChapterItem';
 
-// 优化的段落项组件
+// 完全优化的段落项组件
 const SectionItem = memo(({
   section,
-  index,
   expanded,
   isAuthenticated,
   studyProgress,
@@ -145,28 +136,35 @@ const SectionItem = memo(({
   onRead,
 }: {
   section: Section;
-  index: number;
   expanded: boolean;
   isAuthenticated: boolean;
   studyProgress: Record<string, StudyProgress>;
-  onToggle: () => void;
-  onRead: () => void;
+  onToggle: (id: string) => void;
+  onRead: (section: Section) => void;
 }) => {
   const progress = studyProgress[section.id];
   
+  const handleToggle = useCallback(() => {
+    onToggle(section.id);
+  }, [section.id, onToggle]);
+
+  const handleRead = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onRead(section);
+  }, [section, onRead]);
+  
   return (
     <div className={`border rounded-lg overflow-hidden ${expanded ? 'bg-background' : 'bg-muted/30'}`}>
-      {/* 段落头部 - 始终显示 */}
       <div className="p-4 border-b bg-muted/50">
         <div
-          onClick={onToggle}
+          onClick={handleToggle}
           className="w-full flex items-center justify-between gap-3 text-left group cursor-pointer hover:bg-muted/50 transition-colors rounded-lg p-2 -m-2"
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              onToggle();
+              handleToggle();
             }
           }}
         >
@@ -192,17 +190,14 @@ const SectionItem = memo(({
           </div>
           <div className="flex items-center gap-2">
             <div
-              onClick={(e) => {
-                e.stopPropagation();
-                onRead();
-              }}
+              onClick={handleRead}
               className="flex items-center gap-1 cursor-pointer hover:bg-muted/50 transition-colors rounded px-2 py-1"
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  onRead();
+                  handleRead(e as unknown as React.MouseEvent);
                 }
               }}
             >
@@ -218,15 +213,12 @@ const SectionItem = memo(({
         </div>
       </div>
 
-      {/* 段落内容 - 展开显示 */}
       {expanded && (
         <div className="p-6 space-y-4">
-          {/* 原文 */}
           <div className="text-lg leading-loose font-serif text-foreground whitespace-pre-wrap break-words">
             {section.content}
           </div>
 
-          {/* 白话翻译 */}
           {section.modern && (
             <>
               <Separator />
@@ -242,7 +234,6 @@ const SectionItem = memo(({
             </>
           )}
 
-          {/* 注释 */}
           {section.notes && (
             <div className="text-sm text-muted-foreground bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
               <span className="font-medium">注：</span>
@@ -250,7 +241,6 @@ const SectionItem = memo(({
             </div>
           )}
 
-          {/* AI解析 */}
           {section.aiAnalysis?.summary && (
             <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
               <p className="text-sm text-green-900 dark:text-green-100 mb-2 font-medium flex items-center gap-2">
@@ -276,9 +266,7 @@ export default function PlatformSutraClient({
 }: PlatformSutraClientProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('chinese');
   const [studyProgress, setStudyProgress] = useState<Record<string, StudyProgress>>({});
-  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('section');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -292,7 +280,7 @@ export default function PlatformSutraClient({
   const [bgmVolume, setBgmVolume] = useState([50]);
   const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // 使用 useMemo 优化数据
+  // 使用 useMemo 优化数据 - 只在chapters或initialChapterNum变化时重新计算
   const currentChapter = useMemo(() => {
     if (!chapters || chapters.length === 0) return null;
     if (initialChapterNum) {
@@ -303,7 +291,7 @@ export default function PlatformSutraClient({
 
   const sections = useMemo(() => currentChapter?.sections || [], [currentChapter]);
 
-  // 默认展开前3个段落
+  // 默认展开前3个段落 - 只在currentChapter变化时执行
   useEffect(() => {
     if (currentChapter && sections.length > 0) {
       const defaultExpanded = new Set<string>(
@@ -311,9 +299,9 @@ export default function PlatformSutraClient({
       );
       setExpandedSections(defaultExpanded);
     }
-  }, [currentChapter?.id, sections]);
+  }, [currentChapter?.id]);
 
-  // 切换章节 - 使用本地状态而不是URL导航
+  // 切换章节 - 使用useCallback避免不必要的重渲染
   const handleChapterChange = useCallback((chapterId: string) => {
     const chapter = chapters.find((c) => c.id === chapterId);
     if (!chapter) {
@@ -327,7 +315,7 @@ export default function PlatformSutraClient({
     window.history.pushState({}, '', url.toString());
   }, [chapters]);
 
-  // 切换段落展开/收起
+  // 切换段落展开/收起 - 使用函数式更新避免依赖prev state
   const toggleSection = useCallback((sectionId: string) => {
     setExpandedSections((prev) => {
       const next = new Set(prev);
@@ -367,13 +355,7 @@ export default function PlatformSutraClient({
     }
   }, [chapters, currentChapter, handleChapterChange]);
 
-  // 保存学习进度
-  const saveStudyProgress = async (sectionId: string, status: StudyProgress['status']) => {
-    if (!isAuthenticated) return;
-    // TODO: 实现保存进度
-  };
-
-  // 朗读功能
+  // 朗读功能 - 使用useCallback
   const startReading = useCallback((section?: Section) => {
     const textToRead = section ? section.content : sections[0]?.content;
     if (!textToRead) return;
@@ -393,16 +375,12 @@ export default function PlatformSutraClient({
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
     setIsReading(true);
-    
-    if (section) {
-      saveStudyProgress(section.id, 'LEARNING');
-    }
-  }, [sections, readingSpeed, isAuthenticated]);
+  }, [sections, readingSpeed]);
 
-  const pauseReading = () => {
+  const pauseReading = useCallback(() => {
     window.speechSynthesis.cancel();
     setIsReading(false);
-  };
+  }, []);
 
   // 背景音乐功能
   useEffect(() => {
@@ -418,7 +396,7 @@ export default function PlatformSutraClient({
     };
   }, []);
 
-  const toggleBGM = () => {
+  const toggleBGM = useCallback(() => {
     if (!bgmAudioRef.current) return;
 
     if (isBGMPlaying) {
@@ -429,21 +407,36 @@ export default function PlatformSutraClient({
       });
     }
     setIsBGMPlaying(!isBGMPlaying);
-  };
+  }, [isBGMPlaying]);
 
-  const handleVolumeChange = (value: number[]) => {
+  const handleVolumeChange = useCallback((value: number[]) => {
     setBgmVolume(value);
     if (bgmAudioRef.current) {
       bgmAudioRef.current.volume = value[0] / 100;
     }
-  };
+  }, []);
 
-  // 计算学习进度
-  const getProgressPercentage = () => {
+  // 计算学习进度 - 使用useMemo缓存
+  const progressPercentage = useMemo(() => {
     if (!currentChapter) return 0;
     const currentIndex = chapters.findIndex((c) => c.id === currentChapter.id);
     return currentIndex >= 0 ? Math.round(((currentIndex + 1) / chapters.length) * 100) : 0;
-  };
+  }, [currentChapter, chapters]);
+
+  // 预计算章节进度数据 - 避免在render中重复计算
+  const chapterProgressData = useMemo(() => {
+    return chapters.map((chapter) => {
+      const firstSectionId = chapter.sections.length > 0 ? chapter.sections[0].id : null;
+      const progress = firstSectionId ? studyProgress[firstSectionId] : null;
+      const hasProgress = Boolean(progress && progress.status !== 'NOT_STARTED');
+      const isSelected = currentChapter?.id === chapter.id;
+      return {
+        chapter,
+        hasProgress,
+        isSelected,
+      };
+    });
+  }, [chapters, studyProgress, currentChapter?.id]);
 
   if (loading) {
     return (
@@ -488,22 +481,15 @@ export default function PlatformSutraClient({
             <CardContent>
               <div className="h-[500px] overflow-y-auto">
                 <div className="space-y-1">
-                  {chapters.map((chapter) => {
-                    const firstSectionId = chapter.sections.length > 0 ? chapter.sections[0].id : null;
-                    const progress = firstSectionId ? studyProgress[firstSectionId] : null;
-                    const hasProgress = Boolean(progress && progress.status !== 'NOT_STARTED');
-                    const isSelected = currentChapter?.id === chapter.id;
-
-                    return (
-                      <ChapterItem
-                        key={chapter.id}
-                        chapter={chapter}
-                        isSelected={isSelected}
-                        hasProgress={hasProgress}
-                        onClick={() => handleChapterChange(chapter.id)}
-                      />
-                    );
-                  })}
+                  {chapterProgressData.map(({ chapter, hasProgress, isSelected }) => (
+                    <ChapterItem
+                      key={chapter.id}
+                      chapter={chapter}
+                      isSelected={isSelected}
+                      hasProgress={hasProgress}
+                      onClick={handleChapterChange}
+                    />
+                  ))}
                 </div>
               </div>
             </CardContent>
@@ -646,16 +632,15 @@ export default function PlatformSutraClient({
                     <div className="space-y-4">
                       <div className="h-[500px] overflow-y-auto pr-4">
                         <div className="space-y-4">
-                          {sections.map((section, index) => (
+                          {sections.map((section) => (
                             <SectionItem
                               key={section.id}
                               section={section}
-                              index={index}
                               expanded={expandedSections.has(section.id)}
                               isAuthenticated={isAuthenticated}
                               studyProgress={studyProgress}
-                              onToggle={() => toggleSection(section.id)}
-                              onRead={() => startReading(section)}
+                              onToggle={toggleSection}
+                              onRead={startReading}
                             />
                           ))}
                         </div>
@@ -713,11 +698,11 @@ export default function PlatformSutraClient({
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-green-500 rounded-full transition-all"
-                      style={{ width: `${getProgressPercentage()}%` }}
+                      style={{ width: `${progressPercentage}%` }}
                     />
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    约 {getProgressPercentage()}% 完成
+                    约 {progressPercentage}% 完成
                   </div>
                 </div>
               </CardContent>
