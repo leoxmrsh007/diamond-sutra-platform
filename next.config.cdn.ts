@@ -79,7 +79,7 @@ const nextConfig: NextConfig = {
   // 性能优化
   experimental: {
     // 启用 Turbopack（已在开发中使用）
-    optimizePackageImports: true,
+    optimizePackageImports: ['lucide-react'],
     optimizeCss: true,
     optimizeServerReact: true,
   },
