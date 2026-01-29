@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Page Test</title>
+  <script>
+    async function testStudyPage() {
+      console.log('开始测试Study页面...');
+
+      // 测试1: 访问study页面
+      console.log('\n=== 测试1: 访问study页面 ===');
+      try {
+        const response = await fetch('http://localhost:3020/study');
+        console.log('HTTP状态码:', response.status);
+        if (response.ok) {
+          const html = await response.text();
+          console.log('页面大小:', html.length, '字符');
+          console.log('是否包含章节数据:', html.includes('法会因由分第一'));
+          console.log('是否包含点击处理:', html.includes('handleChapterChange'));
+        }
+      } catch (error) {
+        console.error('测试1失败:', error);
+      }
+
+      // 测试2: 检查study-data.json
+      console.log('\n=== 测试2: 检查study-data.json ===');
+      try {
+        const dataResponse = await fetch('http://localhost:3020/api/chapters?include=verses');
+        if (dataResponse.ok) {
+          const data = await dataResponse.json();
+          console.log('章节数量:', data.length);
+          console.log('第一章标题:', data[0]?.title);
+          console.log('第一章偈颂数量:', data[0]?.verses?.length || 0);
+        }
+      } catch (error) {
+        console.error('测试2失败:', error);
+      }
+
+      // 测试3: 检查manifest.json
+      console.log('\n=== 测试3: 检查manifest.json ===');
+      try {
+        const manifestResponse = await fetch('http://localhost:3020/manifest.json');
+        if (manifestResponse.ok) {
+          const manifest = await manifestResponse.json();
+          console.log('应用名称:', manifest.name);
+          console.log('图标数量:', manifest.icons?.length || 0);
+          if (manifest.icons && manifest.icons.length > 0) {
+            console.log('图标类型:', manifest.icons[0].type);
+          }
+        }
+      } catch (error) {
+        console.error('测试3失败:', error);
+      }
+
+      console.log('\n=== 测试完成 ===');
+    }
+
+    // 页面加载后运行测试
+    window.addEventListener('DOMContentLoaded', testStudyPage);
+  </script>
+</head>
+<body>
+  <h1>Study Page Test</h1>
+  <p>请打开浏览器控制台查看测试结果</p>
+  <div id="results"></div>
+</body>
+</html>

@@ -1,58 +1,50 @@
-/**
- * 六祖坛经章节 API
- * 获取指定章节的详细内容
- */
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-
-export const dynamic = 'force-dynamic'
-
-// GET - 获取指定章节
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+  
   try {
-    const { id } = await params
+    const chapterNum = Number(id);
+    
+    if (isNaN(chapterNum) || chapterNum < 1 || chapterNum > 10) {
+      return NextResponse.json(
+        { success: false, error: '无效的章节号' },
+        { status: 400 }
+      );
+    }
 
-    const chapter = await prisma.chapter.findUnique({
-      where: { id },
+    const selectedChapter = await prisma.chapter.findFirst({
+      where: {
+        sutra: { slug: 'platform-sutra' },
+        chapterNum: chapterNum,
+      },
       include: {
-        sutra: true,
         sections: {
           orderBy: { sectionNum: 'asc' },
         },
       },
-    })
+    });
 
-    if (!chapter) {
-      return NextResponse.json({ error: '章节不存在' }, { status: 404 })
+    if (!selectedChapter) {
+      return NextResponse.json(
+        { success: false, error: '章节未找到' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({
-      id: chapter.id,
-      chapterNum: chapter.chapterNum,
-      title: chapter.title,
-      summary: chapter.summary,
-      imageUrl: chapter.imageUrl,
-      sutra: {
-        id: chapter.sutra.id,
-        title: chapter.sutra.title,
-        slug: chapter.sutra.slug,
-      },
-      sections: chapter.sections.map((section) => ({
-        id: section.id,
-        sectionNum: section.sectionNum,
-        title: section.title,
-        heading: section.heading,
-        content: section.content,
-        modern: section.modern,
-        notes: section.notes,
-      })),
-    })
+      success: true,
+      data: selectedChapter,
+    });
   } catch (error) {
-    console.error('获取章节失败:', error)
-    return NextResponse.json({ error: '获取章节失败' }, { status: 500 })
+    console.error('获取章节失败:', error);
+    return NextResponse.json(
+      { success: false, error: '获取章节失败' },
+      { status: 500 }
+    );
   }
 }

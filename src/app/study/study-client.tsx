@@ -193,15 +193,21 @@ export function StudyPageClient({ initialData }: StudyPageClientProps) {
 
   // 切换章节 - 数据已在本地，瞬间完成
   const handleChapterChange = useCallback((chapterId: string) => {
+    console.log('切换章节:', chapterId);
     const chapter = chapters.find((c) => c.id === chapterId);
-    if (!chapter) return;
+    if (!chapter) {
+      console.error('未找到章节:', chapterId);
+      return;
+    }
 
+    console.log('找到章节:', chapter.title);
     setCurrentChapter(chapter);
     setSelectedChapterId(chapterId);
 
     if (chapter.verses && chapter.verses.length > 0) {
       setSelectedVerse(chapter.verses[0]);
       setSelectedVerseIndex(0);
+      console.log('设置第一个偈颂:', chapter.verses[0].verseNum);
     }
   }, [chapters]);
 

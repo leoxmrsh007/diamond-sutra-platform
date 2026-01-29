@@ -28,6 +28,7 @@ import {
   Download,
   Share2,
   Loader2,
+  const [activeSutra, setActiveSutra] = useState<'diamond' | 'platform'>('diamond');/
   AlertCircle,
 } from 'lucide-react';
 
@@ -120,7 +121,6 @@ interface ResearchStats {
 
 export default function ResearchPage() {
   const [activeTab, setActiveTab] = useState('versions');
-  const [activeSutra, setActiveSutra] = useState<'diamond' | 'platform'>('diamond');
   const [researchStats, setResearchStats] = useState<ResearchStats | null>(null);
   const [versionData, setVersionData] = useState<VerseWithVersions[]>([]);
   const [commentaryData, setCommentaryData] = useState<VerseWithCommentaries[]>([]);
@@ -239,45 +239,8 @@ export default function ResearchPage() {
     },
   ];
 
-  // 基于API数据动态生成版本信息（支持双经书）
-  const versions = activeSutra === 'platform' ? [
-    {
-      name: '敦煌本',
-      language: '古汉语',
-      features: ['最古老写本', '珍贵文献', '学术价值高'],
-      color: 'border-red-300 bg-red-50',
-      versionType: 'dunhuang',
-      translator: '敦煌写本',
-      year: '700-800',
-    },
-    {
-      name: '洪兴本',
-      language: '古汉语',
-      features: ['宋初刊本', '影响深远', '流传广泛'],
-      color: 'border-blue-300 bg-blue-50',
-      versionType: 'hongxing',
-      translator: '契嵩本',
-      year: '968',
-    },
-    {
-      name: '宗宝本',
-      language: '古汉语',
-      features: ['元刊本', '标准版本', '注疏丰富'],
-      color: 'border-green-300 bg-green-50',
-      versionType: 'zongbao',
-      translator: '德异本',
-      year: '1291',
-    },
-    {
-      name: '现代译本',
-      language: '白话',
-      features: ['白话翻译', '易读易懂', '现代学术研究'],
-      color: 'border-purple-300 bg-purple-50',
-      versionType: 'modern',
-      translator: '现代学者',
-      year: '2020',
-    },
-  ] : (researchStats?.versions.available || []).map((version, index) => {
+  // 基于API数据动态生成版本信息
+  const versions = (researchStats?.versions.available || []).map((version, index) => {
     const colors = [
       'border-red-300 bg-red-50',
       'border-blue-300 bg-blue-50',
@@ -314,33 +277,8 @@ export default function ResearchPage() {
     };
   }) || [];
 
-  // 基于API数据动态生成注释信息（支持双经书）
-  const commentaries = activeSutra === 'platform' ? [
-    {
-      author: '法海',
-      work: '《坛经批点》',
-      dynasty: '唐',
-      summary: '六祖坛经最早的批注本',
-    },
-    {
-      author: '德异',
-      work: '《曹溪原本》',
-      dynasty: '元',
-      summary: '德异校勘本，学术价值高',
-    },
-    {
-      author: '契嵩',
-      work: '《法宝坛经略疏》',
-      dynasty: '宋',
-      summary: '契嵩的注疏，流传广泛',
-    },
-    {
-      author: '宗宝',
-      work: '《法宝坛经宗宝》',
-      dynasty: '元',
-      summary: '宗宝本，六祖坛经的重要版本',
-    },
-  ] : (researchStats?.commentaries.availableAuthors || [])
+  // 基于API数据动态生成注释信息
+  const commentaries = (researchStats?.commentaries.availableAuthors || [])
     .slice(0, 4)
     .map((item) => {
       // 处理字符串或对象格式
@@ -350,41 +288,43 @@ export default function ResearchPage() {
       if (!authorName) return null;
 
       const authorInfo: Record<string, { work: string; dynasty: string; summary: string }> = {
-        '六祖慧能': {
-          work: '《金刚经口诀》',
-          dynasty: '唐',
-          summary: '禅宗视角的《金刚经》解读，强调顿悟',
-        },
-        '智者大师': {
-          work: '《金刚经疏》',
-          dynasty: '隋',
-          summary: '天台宗教理体系下的经文阐释',
-        },
-        '窥基大师': {
-          work: '《金刚般若经赞述》',
-          dynasty: '唐',
-          summary: '唯识宗对《金刚经》的注解',
-        },
-        '宗喀巴大师': {
-          work: '《金刚经广释》',
-          dynasty: '明',
-          summary: '格鲁派中观见地的详细开示',
-        },
-      };
+      '六祖慧能': {
+        work: '《金刚经口诀》',
+        dynasty: '唐',
+        summary: '禅宗视角的《金刚经》解读，强调顿悟',
+      },
+      '智者大师': {
+        work: '《金刚经疏》',
+        dynasty: '隋',
+        summary: '天台宗教理体系下的经文阐释',
+      },
+      '窥基大师': {
+        work: '《金刚般若经赞述》',
+        dynasty: '唐',
+        summary: '唯识宗对《金刚经》的注解',
+      },
+      '宗喀巴大师': {
+        work: '《金刚经广释》',
+        dynasty: '明',
+        summary: '格鲁派中观见地的详细开示',
+      },
+    };
 
-      const info = authorInfo[authorName] || {
-        work: sourceValue || '《金刚经注疏》',
-        dynasty: '历代',
-        summary: '对《金刚经》的深刻阐释与解读',
-      };
+    const info = authorInfo[authorName] || {
+      work: sourceValue || '《金刚经注疏》',
+      dynasty: '历代',
+      summary: '对《金刚经》的深刻阐释与解读',
+    };
 
-      return {
-        author: authorName,
-        work: info.work,
-        dynasty: info.dynasty,
-        summary: info.summary,
-      };
-    }).filter((c): c is NonNullable<typeof c> => c !== null);  // 加载状态
+    return {
+      author: authorName,
+      work: info.work,
+      dynasty: info.dynasty,
+      summary: info.summary,
+    };
+  }).filter((c): c is NonNullable<typeof c> => c !== null);
+
+  // 加载状态
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -455,29 +395,11 @@ export default function ResearchPage() {
             <div>
               <h1 className="text-3xl font-bold">深度研究</h1>
               <p className="text-muted-foreground">学术研究工具与资源库</p>
-          {/* 经书选择器 */}
-          <div className="flex gap-2 bg-muted p-1 rounded-lg">
-            <button
-              onClick={() => setActiveSutra('diamond')}
-              className={'px-4 py-2 rounded-md font-medium transition-colors ' + (activeSutra === 'diamond' ? 'bg-blue-500 text-white' : 'bg-transparent text-muted-foreground hover:bg-muted-foreground/10')}
-            >
-              金刚经
-            </button>
-            <button
-              onClick={() => setActiveSutra('platform')}
-              className={'px-4 py-2 rounded-md font-medium transition-colors ' + (activeSutra === 'platform' ? 'bg-blue-500 text-white' : 'bg-transparent text-muted-foreground hover:bg-muted-foreground/10')}
-            >
-              六祖坛经
-            </button>
-          </div>
-
             </div>
           </div>
            <p className="text-lg text-muted-foreground mt-4 max-w-3xl">
-             {activeSutra === 'diamond'
-               ? '提供《金刚般若波罗蜜经》的多版本对照、历代注释、学术论文等研究资源，支持学者、修行者进行深入学习和研究。'
-               : '提供《六祖大师法宝坛经》的版本对照、历代批注、传承历史等研究资源，支持学者、修行者进行深入学习和研究。'
-            }
+             提供《金刚般若波罗蜜经》的多版本对照、历代注释、学术论文等研究资源，
+             支持学者、修行者进行深入学习和研究。
            </p>
            
            {/* 研究统计数据 */}

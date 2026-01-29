@@ -1,5 +1,6 @@
 /**
- * 六祖坛经学习页面
+ * 六祖坛经学习页面 - 服务器组件包装器
+ * 负责数据获取，客户端组件处理交互
  */
 
 import { prisma } from '@/lib/prisma'
@@ -7,15 +8,83 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
+import PlatformSutraClient from './client'
 
-async function PlatformSutraPage({
+// 性能优化配置
+export const revalidate = 60; // 1分钟缓存
+export const dynamic = 'force-dynamic';
+
+// 使用 unstable_cache 缓存基本数据
+async function getSutraData() {
+  'use server';
+  return prisma.sutra.findUnique({
+    where: { slug: 'platform-sutra' },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+    },
+  });
+}
+
+async function getChaptersList() {
+  'use server';
+  return prisma.chapter.findMany({
+    where: { sutra: { slug: 'platform-sutra' } },
+    select: {
+      id: true,
+      chapterNum: true,
+      title: true,
+      summary: true,
+      _count: {
+        select: { sections: true },
+      },
+    },
+    orderBy: { chapterNum: 'asc' },
+  });
+}
+
+async function getChapterWithSections(chapterNum: number) {
+  'use server';
+  return prisma.chapter.findFirst({
+    where: {
+      sutra: { slug: 'platform-sutra' },
+      chapterNum: chapterNum,
+    },
+    include: {
+      sections: {
+        orderBy: { sectionNum: 'asc' },
+      },
+    },
+  });
+}
+
+async function getAllChaptersWithSections() {
+  'use server';
+  return prisma.chapter.findMany({
+    where: { sutra: { slug: 'platform-sutra' } },
+    include: {
+      sections: {
+        orderBy: { sectionNum: 'asc' },
+      },
+    },
+    orderBy: { chapterNum: 'asc' },
+  });
+}
+
+export default async function PlatformSutraPage({
   searchParams,
 }: {
-  searchParams: { chapter?: string }
+  searchParams: Promise<{ chapter?: string }>
 }) {
-  const sutra = await prisma.sutra.findUnique({
-    where: { slug: 'platform-sutra' },
-  })
+  const awaitedParams = await searchParams;
+
+  // 使用 Promise.all 并行查询所有章节数据
+  const [sutra, chaptersWithSections] = await Promise.all([
+    getSutraData(),
+    getAllChaptersWithSections(),
+  ]);
 
   if (!sutra) {
     return (
@@ -28,185 +97,18 @@ async function PlatformSutraPage({
     )
   }
 
-  const chapters = await prisma.chapter.findMany({
-    where: { sutraId: sutra.id },
-    orderBy: { chapterNum: 'asc' },
-    include: {
-      sections: {
-        orderBy: { sectionNum: 'asc' },
-      },
-    },
-  })
+  // 根据URL参数选择章节
+  const selectedChapterNum = awaitedParams.chapter ? Number(awaitedParams.chapter) : chaptersWithSections[0]?.chapterNum;
+  const selectedChapter = selectedChapterNum 
+    ? chaptersWithSections.find((c) => c.chapterNum === selectedChapterNum) || chaptersWithSections[0]
+    : chaptersWithSections[0];
 
-  const selectedChapter = searchParams.chapter
-    ? chapters.find((c) => c.id === searchParams.chapter || c.chapterNum === Number(searchParams.chapter))
-    : null
-
+  // 将完整章节数据传递给客户端组件
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* 标题区域 */}
-      <div className="mb-8 text-center">
-        <Badge className="mb-3" variant="secondary">禅宗经典</Badge>
-        <h1 className="text-4xl font-bold mb-3">{sutra.title}</h1>
-        <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          {sutra.description}
-        </p>
-      </div>
-
-      <Separator className="my-8" />
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* 左侧章节列表 */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">目录</CardTitle>
-              <CardDescription>共 {chapters.length} 品</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <nav className="space-y-1">
-                {chapters.map((chapter) => (
-                  <Link
-                    key={chapter.id}
-                    href={`/platform-sutra?chapter=${chapter.chapterNum}`}
-                    className={`block px-4 py-3 rounded-lg transition-colors ${
-                      selectedChapter?.id === chapter.id
-                        ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-900 dark:text-amber-100'
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
-                  >
-                    <div className="font-medium text-sm">
-                      第{chapter.chapterNum}品 {chapter.title}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {chapter.sections.length} 个段落
-                    </div>
-                  </Link>
-                ))}
-              </nav>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 右侧内容区域 */}
-        <div className="lg:col-span-3">
-          {!selectedChapter ? (
-            // 默认显示经书简介
-            <Card>
-              <CardHeader>
-                <CardTitle>关于本经</CardTitle>
-              </CardHeader>
-              <CardContent className="prose dark:prose-invert max-w-none">
-                <p>
-                  《六祖大师法宝坛经》，简称《坛经》，是中国禅宗第六代祖师惠能的言行录，
-                  是中国人撰写的唯一被称为"经"的佛教典籍。
-                </p>
-                <h3>核心思想</h3>
-                <ul>
-                  <li><strong>菩提自性</strong>：人人本有佛性，自性本来清净</li>
-                  <li><strong>顿悟法门</strong>：直指人心，顿悟成佛</li>
-                  <li><strong>无念为宗</strong>：于念而无念，不执著于任何念头</li>
-                  <li><strong>定慧一体</strong>：定与慧不是二法，而是一体的两个方面</li>
-                </ul>
-                <h3>特色</h3>
-                <p>
-                  《坛经》以简洁直白的语言，讲述深奥的禅理，强调"见性成佛"，
-                  认为每个人都有成佛的可能性，只需认识自性即可。全书分为十品，
-                  记录了惠能大师的生平、说法、问答机锋等内容。
-                </p>
-                <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
-                  <p className="text-sm text-amber-900 dark:text-amber-100 mb-2 font-medium">
-                    💡 点击左侧目录选择要学习的品
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            // 显示选中章节的内容
-            <div className="space-y-6">
-              <div>
-                <Badge variant="outline" className="mb-2">
-                  第{selectedChapter.chapterNum}品
-                </Badge>
-                <h2 className="text-3xl font-bold mb-2">{selectedChapter.title}</h2>
-                {selectedChapter.summary && (
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {selectedChapter.summary}
-                  </p>
-                )}
-              </div>
-
-              <Separator />
-
-              <div className="space-y-8">
-                {selectedChapter.sections.map((section) => (
-                  <div
-                    key={section.id}
-                    id={`section-${section.sectionNum}`}
-                    className="scroll-mt-8"
-                  >
-                    {section.heading && (
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-sm font-medium">
-                          {section.sectionNum}
-                        </span>
-                        <h3 className="text-lg font-semibold">{section.heading}</h3>
-                      </div>
-                    )}
-                    <div className="prose dark:prose-invert max-w-none">
-                      <p className="text-lg leading-relaxed whitespace-pre-line">
-                        {section.content}
-                      </p>
-                      {section.modern && (
-                        <>
-                          <Separator className="my-4" />
-                          <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-                            <p className="text-sm text-gray-700 dark:text-gray-300 mb-1 font-medium">
-                              白话解说
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">
-                              {section.modern}
-                            </p>
-                          </div>
-                        </>
-                      )}
-                      {section.notes && (
-                        <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                          注：{section.notes}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 底部导航 */}
-      {selectedChapter && (
-        <div className="mt-12 flex justify-between">
-          {selectedChapter.chapterNum > 1 && (
-            <Link
-              href={`/platform-sutra?chapter=${selectedChapter.chapterNum - 1}`}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              ← 上一品
-            </Link>
-          )}
-          {selectedChapter.chapterNum < chapters.length && (
-            <Link
-              href={`/platform-sutra?chapter=${selectedChapter.chapterNum + 1}`}
-              className="ml-auto flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              下一品 →
-            </Link>
-          )}
-        </div>
-      )}
-    </div>
-  )
+    <PlatformSutraClient
+      sutra={sutra}
+      chapters={chaptersWithSections}
+      initialChapterNum={selectedChapterNum}
+    />
+  );
 }
-
-export default PlatformSutraPage
