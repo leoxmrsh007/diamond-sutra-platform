@@ -14,15 +14,6 @@ export async function GET() {
           select: { achievements: true },
         },
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        level: true,
-        experience: true,
-        _count: true,
-      },
     });
 
     return NextResponse.json({
