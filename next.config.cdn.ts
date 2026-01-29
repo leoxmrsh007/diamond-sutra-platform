@@ -60,7 +60,6 @@ const nextConfig: NextConfig = {
 
   // 优化构建输出
   compress: true,
-  swcMinify: true,
 
   // 实验性功能
   logging: {
