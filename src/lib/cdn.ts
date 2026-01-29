@@ -3,7 +3,21 @@
  * Supports multiple providers: Cloudflare R2, AWS S3, Vercel Blob
  */
 
-import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3';
+// 动态导入 AWS SDK，避免在构建时出错
+let S3Client: any;
+let PutObjectCommand: any;
+let GetObjectCommand: any;
+let DeleteObjectCommand: any;
+
+try {
+  const awsSdk = require('@aws-sdk/client-s3');
+  S3Client = awsSdk.S3Client;
+  PutObjectCommand = awsSdk.PutObjectCommand;
+  GetObjectCommand = awsSdk.GetObjectCommand;
+  DeleteObjectCommand = awsSdk.DeleteObjectCommand;
+} catch (e) {
+  console.warn('AWS SDK not available, CDN service will run in local mode');
+}
 
 export type CDNProvider = 'cloudflare' | 'aws' | 'vercel' | 'local';
 
@@ -59,6 +73,12 @@ class CDNService {
       return;
     }
 
+    if (!S3Client) {
+      console.warn('AWS SDK not available, falling back to local mode');
+      this.config.provider = 'local';
+      return;
+    }
+
     this.s3Client = new S3Client({
       region: this.config.region,
       endpoint: this.config.endpoint,
@@ -88,6 +108,9 @@ class CDNService {
         throw new Error('S3 client not initialized');
       }
 
+      if (!PutObjectCommand) {
+        throw new Error('AWS SDK not available');
+      }
       const command = new PutObjectCommand({
         Bucket: this.config.bucket,
         Key: key,
@@ -145,6 +168,9 @@ class CDNService {
         throw new Error('S3 client not initialized');
       }
 
+      if (!GetObjectCommand) {
+        throw new Error('AWS SDK not available');
+      }
       const command = new GetObjectCommand({
         Bucket: this.config.bucket,
         Key: key,
@@ -184,6 +210,9 @@ class CDNService {
         throw new Error('S3 client not initialized');
       }
 
+      if (!DeleteObjectCommand) {
+        throw new Error('AWS SDK not available');
+      }
       const command = new DeleteObjectCommand({
         Bucket: this.config.bucket,
         Key: key,
