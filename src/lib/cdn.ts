@@ -45,7 +45,7 @@ export interface UploadResult {
 
 class CDNService {
   private config: CDNConfig;
-  private s3Client: S3Client | null = null;
+  private s3Client: any | null = null;
 
   constructor() {
     this.config = {
