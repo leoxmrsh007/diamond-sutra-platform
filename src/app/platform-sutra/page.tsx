@@ -106,7 +106,10 @@ export default async function PlatformSutraPage({
   // 将完整章节数据传递给客户端组件
   return (
     <PlatformSutraClient
-      sutra={sutra}
+      sutra={{
+        ...sutra,
+        description: sutra.description || '',
+      }}
       chapters={chaptersWithSections}
       initialChapterNum={selectedChapterNum}
     />
